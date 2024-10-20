@@ -1,14 +1,19 @@
+import Content from "@components/Content";
 import AppHeader from "@components/Header"
-import LoginPage from "@components/Login";
+
 import ColumnNav from "@components/NavColumn";
 
 
 const DefaultLayout = () => {
   return (
-    <main>
-      <AppHeader/>
-      <ColumnNav/>
-      <LoginPage/>
+    <main className="flex flex-col min-h-screen">
+            <AppHeader/>
+            <div className="flex flex-1">
+              <ColumnNav/>
+              <Content/>
+            </div>
+        {/* <div className="flex flex-col min-h-screen"> */}
+        {/* </div> */}
     </main>
   );
 };
