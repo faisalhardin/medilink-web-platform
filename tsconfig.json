@@ -3,7 +3,8 @@
     "baseUrl": "./src",
     "paths": {
       "@components/*": ["components/*"],
-      "@utils/*": ["utils/*"]
+      "@utils/*": ["utils/*"],
+      "@pages/*": ["pages/*"]
     },
     "target": "ES2020",
     "useDefineForClassFields": true,
