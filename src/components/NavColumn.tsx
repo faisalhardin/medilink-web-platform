@@ -1,3 +1,5 @@
+import { NavLink } from "react-router-dom";
+
 
 function ColumnNav() {
   return (
@@ -6,16 +8,20 @@ function ColumnNav() {
         Dashboard
       </div>
       <ul className="space-y-4 p-4">
+        <NavLink to="/institution">
         <li>
           <button className="w-full text-left px-4 py-2  rounded hover:bg-gray-600">
-            Patients
+            Institution
           </button>
         </li>
+        </NavLink>
+        <NavLink to="/room">
         <li>
           <button className="w-full text-left px-4 py-2  rounded hover:bg-gray-600">
             Room
           </button>
         </li>
+        </NavLink>
       </ul>
     </div>
   );
