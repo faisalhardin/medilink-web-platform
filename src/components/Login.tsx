@@ -1,6 +1,8 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 
+const medilinkAPIURL = import.meta.env.VITE_MEDILINK_API_BASE_URL
+
 const  LoginPage = () => {
 
     const googleLogin = useGoogleLogin({
@@ -8,7 +10,7 @@ const  LoginPage = () => {
 
         try {
           const tokenResponse = await axios.get(
-            `http://127.0.0.1:8080/v1/auth/google/callback?code=${codeResponse.code}`
+            `${medilinkAPIURL}/v1/auth/google/callback?code=${codeResponse.code}`
           );
           if (tokenResponse.data.data.token) {
             sessionStorage.setItem("jwt_token", tokenResponse.data.data.token);
