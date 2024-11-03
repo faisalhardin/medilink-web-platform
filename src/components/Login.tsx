@@ -1,4 +1,5 @@
 import { useGoogleLogin } from "@react-oauth/google";
+import { storeAuthentication } from "@utils/storage";
 import axios from "axios";
 
 const medilinkAPIURL = import.meta.env.VITE_MEDILINK_API_BASE_URL
@@ -13,8 +14,7 @@ const  LoginPage = () => {
             `${medilinkAPIURL}/v1/auth/google/callback?code=${codeResponse.code}`
           );
           if (tokenResponse.data.data.token) {
-            sessionStorage.setItem("jwt_token", tokenResponse.data.data.token);
-            console.log("JWT token stored successfully.");
+            storeAuthentication(tokenResponse.data.data.token)
           } else {
             console.error("Token not received in response.");
           }
