@@ -10,8 +10,8 @@ const  LoginPage = () => {
           const tokenResponse = await axios.get(
             `http://127.0.0.1:8080/v1/auth/google/callback?code=${codeResponse.code}`
           );
-          if (tokenResponse.data.token) {
-            sessionStorage.setItem("jwt_token", tokenResponse.data.token);
+          if (tokenResponse.data.data.token) {
+            sessionStorage.setItem("jwt_token", tokenResponse.data.data.token);
             console.log("JWT token stored successfully.");
           } else {
             console.error("Token not received in response.");
