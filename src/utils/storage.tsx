@@ -8,7 +8,7 @@ export const saveToken = (token: string): void => {
 
 // Function to retrieve the JWT token from localStorage
 export const getToken = (): string | null => {
-    return localStorage.getItem("jwtToken");
+    return sessionStorage.getItem(JWT_TOKEN_KEY);
 };
 
 // Function to remove the JWT token from localStorage

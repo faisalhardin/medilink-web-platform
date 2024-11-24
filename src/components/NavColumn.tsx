@@ -15,10 +15,10 @@ function ColumnNav() {
           </button>
         </li>
         </NavLink>
-        <NavLink to="/room">
+        <NavLink to="/patient">
         <li>
           <button className="w-full text-left px-4 py-2  rounded hover:bg-gray-600">
-            Room
+            Patient
           </button>
         </li>
         </NavLink>

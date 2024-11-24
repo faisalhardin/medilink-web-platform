@@ -4,7 +4,9 @@
     "paths": {
       "@components/*": ["components/*"],
       "@utils/*": ["utils/*"],
-      "@pages/*": ["pages/*"]
+      "@pages/*": ["pages/*"],
+      "@requests/*": ["requests/*"],
+      "@models/*": ["models/*"]
     },
     "target": "ES2020",
     "useDefineForClassFields": true,

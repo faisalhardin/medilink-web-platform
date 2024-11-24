@@ -1,12 +1,10 @@
-import React from "react";
+import { Component } from "react"
+import InstitutionProfileComponent from "@components/Institution"
 
 const Institution = () => {
+
     return (
-        <div>
-            <h1>
-            Institution Page
-            </h1>
-        </div>
+        <InstitutionProfileComponent/>
     )
 }
 

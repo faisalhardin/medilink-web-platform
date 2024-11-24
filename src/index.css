@@ -70,3 +70,16 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.wrap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(11.25rem, 100%), 1fr));
+  grid-gap: 1rem;
+}
+
+/* .detail-icon {
+  background-image: url("/assets/icons/wmd-detail.png");
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: 20px;
+} */
