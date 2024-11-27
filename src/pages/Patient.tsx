@@ -1,14 +1,6 @@
-import { PatientVisitsComponent, PatientListComponent, PatientRegistration } from "@components/PatientComponent";
-import { GetPatientParam } from "@models/patient";
-
+import {  PatientListComponent } from "@components/PatientComponent";
 const PatientPage = () => {
 
-    const patientParams:GetPatientParam = {
-        date_of_birth: "",
-        institution_id: 0,
-        name: "",
-        nik: ""
-      };
     return (
         <>
             <PatientListComponent/>
@@ -17,7 +9,3 @@ const PatientPage = () => {
 }
 
 export default PatientPage
-
-export const PatientDetail = () => {
-    return
-}

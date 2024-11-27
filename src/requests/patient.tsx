@@ -1,7 +1,7 @@
 import axios from "axios";
 import { PATIENT_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
-import { GetPatientParam, Patient } from "@models/patient";
+import { GetPatientParam, Patient, PatientVisit } from "@models/patient";
 
 
 export const ListPatients = async (param:GetPatientParam | null): Promise<Patient[]> => {
@@ -20,7 +20,6 @@ export const ListPatients = async (param:GetPatientParam | null): Promise<Patien
         if (responseData.data == null) {
             return [];
         } 
-
         
         return responseData.data;
     } catch (error) {
@@ -31,7 +30,7 @@ export const ListPatients = async (param:GetPatientParam | null): Promise<Patien
 }
 
 
-export const ListVisitsByPatient = async (patientID:number) => {
+export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisit[]> => {
     try {
         const token = getToken();
         const response = await axios.get(
@@ -43,7 +42,12 @@ export const ListVisitsByPatient = async (patientID:number) => {
               }
           );
 
-        return await response.data
+          const responseData = await response.data;
+          if (responseData.data == null) {
+              return [];
+          } 
+
+          return responseData.data;
     } catch (error) {
         console.error("Error fetching institution data:", error);
         // Optional: throw or return a rejected promise to propagate the error

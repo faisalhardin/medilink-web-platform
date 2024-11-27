@@ -17,3 +17,16 @@ export interface GetPatientParam {
     institution_id?: number;
     nik?: string;
 }
+
+export interface PatientVisit {
+    id: number;
+    action: string;
+    status: string;
+    notes: string;
+    create_time: string;
+    updateTime: string;
+  }
+
+  export interface PatientVisitsComponentProps {
+    patientUUID: string;
+  }

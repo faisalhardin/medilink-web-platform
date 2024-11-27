@@ -2,11 +2,8 @@
 import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { useForm } from 'react-hook-form';
 import { ListPatients } from "@requests/patient";
-import { GetPatientParam, Patient as PatientModel } from "@models/patient";
-
-interface PatientListComponentParam {
-    param: GetPatientParam
-}
+import { GetPatientParam, Patient as PatientModel, PatientVisit, PatientVisitsComponentProps } from "@models/patient";
+import { ListVisitsByPatient } from "@requests/patient"
 
 
 export const PatientListComponent = () => {
@@ -16,15 +13,12 @@ export const PatientListComponent = () => {
 
     const onSubmit = async (params: GetPatientParam) => {
         try {
-            console.log(params);
-            // Handle form submission
 
             const filteredParams: Partial<GetPatientParam> = {};
             if (params.name) filteredParams.name = params.name;
             if (params.nik) filteredParams.nik = params.nik;
             if (params.date_of_birth) filteredParams.date_of_birth = params.date_of_birth;
             if (params.institution_id) filteredParams.institution_id = params.institution_id;
-            //   if (params.patient_ids?.length > 0) filteredParams.patient_ids = params.patient_ids;
 
             const data = await ListPatients(Object.keys(filteredParams).length ? filteredParams : null);
             setPatients(data);
@@ -95,7 +89,7 @@ export const PatientListComponent = () => {
                             <td className="px-6 py-4">{patient.name}</td>
                             <td className="px-6 py-4">{patient.place_of_birth}</td>
                             <td className="px-6 py-4">{patient.date_of_birth}</td>
-                            <td className="px-6 py-4"> <img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6"></img></td>
+                            <td className="px-6 py-4"> <a href={`/patient-detail/${patient.uuid}`}><img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6" ></img></a></td>
                         </tr>
                     ))}
                     <tr>
@@ -108,69 +102,46 @@ export const PatientListComponent = () => {
     )
 }
 
-export const PatientVisitsComponent = () => {
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        businessName: "",
-        password: "",
-    });
-
-    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prevFormData) => ({
-            ...prevFormData,
-            [name]: value,
-        }));
-    };
-
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        console.log(formData);
-    };
+export const PatientVisitsComponent = ({patientUUID}:PatientVisitsComponentProps) => {
+    const [patientVisits, setPatientVisits] = useState<PatientVisit[]>([]);
+    useEffect(() => {
+        try {
+            ListVisitsByPatient(patientUUID).then((data) => {
+                setPatientVisits(data);
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }, [patientUUID])
 
     return (
-        <>
-            <main>
-                <form onSubmit={handleSubmit}>
-                    <input
-                        onChange={handleInputChange}
-                        value={formData.name}
-                        name="name"
-                        type={'text'}
-                        placeholder={'Enter User Name'}
-                    />
+        <div className="p-6">
+           <table className="table-auto w-full  shadow-md rounded-lg overflow-hidden my-6">
+                <thead className="bg-blue-600 text-white">
+                    <tr>
+                        <th className="text-left px-6 py-3">Visit Date</th>
+                        <th className="text-left px-6 py-3">Action</th>
+                        <th className="text-left px-6 py-3">Status</th>
+                        <th className="text-left px-6 py-3">Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {patientVisits.map((visit, index) => (
+                        <tr key={visit.id} className={`${
+                            index % 2 === 0 ? "bg-gray-600" : "bg-gray-700"
+                          } border-b last:border-none`}>
+                            <td className="px-6 py-4">{visit.create_time}</td>
+                            <td className="px-6 py-4">{visit.action}</td>
+                            <td className="px-6 py-4">{visit.status}</td>
+                            <td className="px-6 py-4">{visit.notes}</td>
+                        </tr>
+                    ))}
+                    <tr>
 
-                    <input
-
-                        onChange={handleInputChange}
-                        value={formData.businessName}
-                        name="businessName"
-                        type={'text'}
-                        placeholder={'Enter Business Name'}
-                    />
-
-                    <input
-                        onChange={handleInputChange}
-                        value={formData.email}
-                        name="email"
-                        type={'text'}
-                        placeholder={'Enter your Email'}
-                    />
-
-                    <input
-                        onChange={handleInputChange}
-                        value={formData.password}
-                        name="password"
-                        type={'password'}
-                        placeholder={'Enter your Password'}
-                    />
-
-                    <button type="submit">ok</button>
-                </form>
-
-            </main>
-        </>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     )
 }
 
