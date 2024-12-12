@@ -1,7 +1,8 @@
 import axios from "axios";
 import { PATIENT_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
-import { GetPatientParam, Patient, PatientVisit } from "@models/patient";
+import { GetPatientParam, Patient, PatientVisit, RegisterPatient } from "@models/patient";
+import { CommonResponse } from "@models/common";
 
 
 export const ListPatients = async (param:GetPatientParam | null): Promise<Patient[]> => {
@@ -23,7 +24,7 @@ export const ListPatients = async (param:GetPatientParam | null): Promise<Patien
         
         return responseData.data;
     } catch (error) {
-        console.error("Error fetching institution data:", error);
+        console.error("Error fetching response data:", error);
         // Optional: throw or return a rejected promise to propagate the error
         throw error;
     }
@@ -49,7 +50,28 @@ export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisi
 
           return responseData.data;
     } catch (error) {
-        console.error("Error fetching institution data:", error);
+        console.error("Error fetching response data:", error);
+        // Optional: throw or return a rejected promise to propagate the error
+        throw error;
+    }
+}
+
+export const RegisterPatientRequest = async (patientForm: RegisterPatient): Promise<CommonResponse<null>> => {
+    try {
+        const token = getToken();
+        const response = await axios.post(
+            `${PATIENT_PATH}`, patientForm, {
+                withCredentials: true,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+          );
+
+        const responseData = await response.data;
+        return responseData.data;
+    } catch (error) {
+        console.error("Error fetching response data:", error);
         // Optional: throw or return a rejected promise to propagate the error
         throw error;
     }

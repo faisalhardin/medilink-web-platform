@@ -2,7 +2,7 @@
 import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { useForm } from 'react-hook-form';
 import { ListPatients } from "@requests/patient";
-import { GetPatientParam, Patient as PatientModel, PatientVisit, PatientVisitsComponentProps } from "@models/patient";
+import { GetPatientParam, Patient as PatientModel, PatientVisit, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { ListVisitsByPatient } from "@requests/patient"
 
 
@@ -41,7 +41,7 @@ export const PatientListComponent = () => {
                                 {...register('name')}
                                 className="w-full p-2 border rounded"
                             />
-                            {errors.name && <span className="text-red-500 text-sm">{errors.name.message}</span>}
+                            {errors.name && <span className="text-red-500 ">{errors.name.message}</span>}
                         </div>
                         <div className="max-w-60">
                         <label className="block mb-2">NIK</label>
@@ -156,96 +156,98 @@ interface Patient {
     admissionDate: string;
 }
 
-export function PatientRegistration() {
-    const { register, handleSubmit, formState: { errors } } = useForm<Patient>();
+export function PatientRegistrationComponent() {
+    const { register, handleSubmit, formState: { errors } } = useForm<RegisterPatientModel>();
 
-    const onSubmit = (data: Patient) => {
+    const onSubmit = (data: RegisterPatientModel) => {
         console.log(data);
-        // Handle form submission
     };
 
     return (
         <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-6">Register New Patient</h2>
-
-            <form onSubmit={handleSubmit(onSubmit)} className=" bg-white p-6 rounded-lg shadow">
+            <h3 className="font-semibold mb-6">Register New Patient</h3>
+            <form onSubmit={handleSubmit(onSubmit)} className="p-6 rounded-lg text-sm shadow ml-0">
                 <div className="grid grid-cols-2 gap-6">
-                    <div>
-                        <label className="block mb-2">Name</label>
+                    <div className="col-span-2">
+                        <label className="block mb-2 font-medium ">Name</label>
                         <input
                             {...register('name', { required: 'Name is required' })}
-                            className="w-full p-2 border rounded"
+                            className="w-full p-2 border rounded-lg"
                         />
-                        {errors.name && <span className="text-red-500 text-sm">{errors.name.message}</span>}
                     </div>
-
                     <div>
-                        <label className="block mb-2">Age</label>
+                        <label className="block mb-2 font-medium ">Nomor Induk Kependudukan</label>
                         <input
                             type="number"
-                            {...register('age', { required: 'Age is required', min: 0 })}
+                            {...register('nik')}
                             className="w-full p-2 border rounded"
                         />
                     </div>
-
                     <div>
-                        <label className="block mb-2">Gender</label>
-                        <select {...register('gender')} className="w-full p-2 border rounded">
+                        <label className="block mb-2 font-medium ">Sex</label>
+                        <select {...register('sex')} className="w-full p-2 border rounded">
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                             <option value="other">Other</option>
                         </select>
                     </div>
-
-                    <div>
-                        <label className="block mb-2">Blood Type</label>
-                        <select {...register('bloodType')} className="w-full p-2 border rounded">
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
+                    <div >
+                        <label className="block mb-2 font-medium ">Religion</label>
+                        <select {...register('religion')} className="w-full p-2 border rounded">
+                            <option value="" disabled selected hidden>select</option>
+                            <option value="islam">Islam</option>
+                            <option value="katolik">Katolik</option>
+                            <option value="protestan">Protestan</option>
+                            <option value="budha">Budha</option>
+                            <option value="hindu">Hindu</option>
+                            <option value="other">Lainnya</option>
                         </select>
                     </div>
-
                     <div>
-                        <label className="block mb-2">Contact Number</label>
-                        <input
-                            {...register('contactNumber', { required: 'Contact number is required' })}
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block mb-2">Admission Date</label>
+                        <label className="block mb-2 font-medium ">Date of Birth</label>
                         <input
                             type="date"
-                            {...register('admissionDate')}
+                            {...register('date_of_birth', {required: true})}
                             className="w-full p-2 border rounded"
+                        />
+                       
+                    </div>
+                    <div className="col-span-2">
+                        <label className="block mb-2 font-medium ">Place of Birth</label>
+                        <textarea
+                            {...register('place_of_birth')}
+                            className="w-full p-2 border rounded"
+                            rows={3}
                         />
                     </div>
 
                     <div className="col-span-2">
-                        <label className="block mb-2">Address</label>
+                        <label className="block mb-2 font-medium ">Address</label>
                         <textarea
                             {...register('address')}
                             className="w-full p-2 border rounded"
                             rows={3}
                         />
                     </div>
+                    <div className="col-span-2">
+                        <label className="block mb-2 font-medium ">Address</label>
+                        <textarea
+                            {...register('address')}
+                            className="w-full p-2 border rounded"
+                            rows={3}
+                        />
+                    </div>
+                    
                 </div>
-
                 <div className="mt-6">
                     <button
                         type="submit"
                         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                    >
+                        >
                         Register Patient
                     </button>
                 </div>
+                        {errors.name && <span className="text-red-500 ">{errors.name.message}</span>}
             </form>
         </div>
     );

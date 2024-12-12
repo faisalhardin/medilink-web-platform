@@ -5,6 +5,7 @@ import Home from "@pages/Home";
 import Institution from "@pages/Institution";
 import PatientPage from "@pages/Patient";
 import PatientDetail from "@pages/PatientDetail";
+import PatientRegistrationPage from "@pages/PatientRegistration";
 import { Routes, Route } from "react-router-dom";
 
 
@@ -19,6 +20,7 @@ const DefaultLayout = () => {
                 <Route path="/institution" element={<Institution/>}/>
                 <Route path="/patient" element={<PatientPage/>}/>
                 <Route path="/patient-detail/:uuid" element={<PatientDetail/>}/>
+                <Route path="/patient-registration" element={<PatientRegistrationPage/>} />
               </Routes>
             </div>
 

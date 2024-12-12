@@ -10,8 +10,17 @@ export interface Patient {
     religion: string;
 }
 
+export interface RegisterPatient {
+    name: string;
+    nik: string;
+    sex: string;
+    date_of_birth: string;
+    place_of_birth: string;
+    religion: string;
+    address: string;
+}
+
 export interface GetPatientParam {
-    // patient_ids: number[];
     date_of_birth?: string;
     name?: string;
     institution_id?: number;
