@@ -1,7 +1,7 @@
 
 import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { useForm } from 'react-hook-form';
-import { ListPatients } from "@requests/patient";
+import { ListPatients, RegisterPatientRequest } from "@requests/patient";
 import { GetPatientParam, Patient as PatientModel, PatientVisit, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { ListVisitsByPatient } from "@requests/patient"
 
@@ -159,8 +159,12 @@ interface Patient {
 export function PatientRegistrationComponent() {
     const { register, handleSubmit, formState: { errors } } = useForm<RegisterPatientModel>();
 
-    const onSubmit = (data: RegisterPatientModel) => {
-        console.log(data);
+    const onSubmit = async (data: RegisterPatientModel) => {
+        try {
+            const resp = await RegisterPatientRequest(data);
+        } catch (err) {
+            console.log(err);
+        }
     };
 
     return (
@@ -228,16 +232,7 @@ export function PatientRegistrationComponent() {
                             className="w-full p-2 border rounded"
                             rows={3}
                         />
-                    </div>
-                    <div className="col-span-2">
-                        <label className="block mb-2 font-medium ">Address</label>
-                        <textarea
-                            {...register('address')}
-                            className="w-full p-2 border rounded"
-                            rows={3}
-                        />
-                    </div>
-                    
+                    </div>                    
                 </div>
                 <div className="mt-6">
                     <button
