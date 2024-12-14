@@ -33,9 +33,9 @@ export const PatientListComponent = () => {
             <div className="justify-center w-full">
                 <h2 className="text-2xl font-semibold mb-6">Register New Patient</h2>
 
-                <form onSubmit={handleSubmit(onSubmit)} className=" bg-black p-6 rounded-lg shadow ">
+                <form onSubmit={handleSubmit(onSubmit)} className="p-2 rounded-lg shadow text-sm">
                     <div className="wrap-grid mx-auto my-8">
-                        <div className="max-w-60">
+                        <div className="max-w-96">
                         <label className="block mb-2">Name</label>
                             <input
                                 {...register('name')}
@@ -43,14 +43,14 @@ export const PatientListComponent = () => {
                             />
                             {errors.name && <span className="text-red-500 ">{errors.name.message}</span>}
                         </div>
-                        <div className="max-w-60">
+                        <div className="max-w-96">
                         <label className="block mb-2">NIK</label>
                             <input
                                 {...register('nik')}
                                 className="w-full p-2 border rounded"
                             />
                         </div>
-                        <div className="max-w-60">
+                        <div className="max-w-96">
                         <label className="block mb-2">Birth Date</label>
                             <input
                                 type="date"
@@ -63,7 +63,7 @@ export const PatientListComponent = () => {
                     <div className="mt-6">
                         <button
                             type="submit"
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                            className="bg-primary-8 text-white px-4 py-2 rounded hover:bg-blue-600"
                         >
                             Search
                         </button>
@@ -71,19 +71,19 @@ export const PatientListComponent = () => {
                 </form>
             </div>
             <table className="table-auto w-full  shadow-md rounded-lg overflow-hidden my-6">
-                <thead className="bg-blue-600 text-white">
+                <thead className="bg-primary-6 text-white">
                     <tr>
-                        <th className="text-left px-6 py-3">NIK</th>
-                        <th className="text-left px-6 py-3">Name</th>
-                        <th className="text-left px-6 py-3">Place of Birth</th>
-                        <th className="text-left px-6 py-3">Data of Birth</th>
-                        <th className="text-left px-6 py-3">Extra</th>
+                        <th className="text-left text-xs px-6 py-3">NIK</th>
+                        <th className="text-left text-xs px-6 py-3">Name</th>
+                        <th className="text-left text-xs px-6 py-3">Place of Birth</th>
+                        <th className="text-left text-xs px-6 py-3">Date of Birth</th>
+                        <th className="text-left text-xs px-6 py-3">Extra</th>
                     </tr>
                 </thead>
                 <tbody>
                     {patients.map((patient, index) => (
                         <tr key={patient.uuid} className={`${
-                            index % 2 === 0 ? "bg-gray-600" : "bg-gray-700"
+                            index % 2 === 0 ? "bg-primary-1" : "bg-primary-2"
                           } border-b last:border-none`}>
                             <td className="px-6 py-4">{patient.nik}</td>
                             <td className="px-6 py-4">{patient.name}</td>
