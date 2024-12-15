@@ -70,7 +70,7 @@ export const PatientListComponent = () => {
                     </div>
                 </form>
             </div>
-            <table className="table-auto w-full  shadow-md rounded-lg overflow-hidden my-6">
+            <table className="table-auto w-full  shadow-md rounded-lg overflow-hidden my-6 text-sm">
                 <thead className="bg-primary-6 text-white">
                     <tr>
                         <th className="text-left text-xs px-6 py-3">NIK</th>
@@ -85,11 +85,11 @@ export const PatientListComponent = () => {
                         <tr key={patient.uuid} className={`${
                             index % 2 === 0 ? "bg-primary-1" : "bg-primary-2"
                           } border-b last:border-none`}>
-                            <td className="px-6 py-4">{patient.nik}</td>
-                            <td className="px-6 py-4">{patient.name}</td>
-                            <td className="px-6 py-4">{patient.place_of_birth}</td>
-                            <td className="px-6 py-4">{patient.date_of_birth}</td>
-                            <td className="px-6 py-4"> <a href={`/patient-detail/${patient.uuid}`}><img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6" ></img></a></td>
+                            <td className="p-4">{patient.nik}</td>
+                            <td className="p-4">{patient.name}</td>
+                            <td className="p-4">{patient.place_of_birth}</td>
+                            <td className="p-4">{patient.date_of_birth}</td>
+                            <td className="p-4"> <a href={`/patient-detail/${patient.uuid}`}><img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6" ></img></a></td>
                         </tr>
                     ))}
                     <tr>
@@ -116,8 +116,8 @@ export const PatientVisitsComponent = ({patientUUID}:PatientVisitsComponentProps
 
     return (
         <div className="p-6">
-           <table className="table-auto w-full  shadow-md rounded-lg overflow-hidden my-6">
-                <thead className="bg-blue-600 text-white">
+           <table className="table-fixed w-full  shadow-md rounded-lg overflow-hidden my-6 text-sm">
+                <thead className="bg-primary-6 text-white">
                     <tr>
                         <th className="text-left px-6 py-3">Visit Date</th>
                         <th className="text-left px-6 py-3">Action</th>
@@ -128,7 +128,7 @@ export const PatientVisitsComponent = ({patientUUID}:PatientVisitsComponentProps
                 <tbody>
                     {patientVisits.map((visit, index) => (
                         <tr key={visit.id} className={`${
-                            index % 2 === 0 ? "bg-gray-600" : "bg-gray-700"
+                            index % 2 === 0 ? "bg-primary-1" : "bg-primary-2"
                           } border-b last:border-none`}>
                             <td className="px-6 py-4">{visit.create_time}</td>
                             <td className="px-6 py-4">{visit.action}</td>
@@ -143,17 +143,6 @@ export const PatientVisitsComponent = ({patientUUID}:PatientVisitsComponentProps
             </table>
         </div>
     )
-}
-
-interface Patient {
-    id: string;
-    name: string;
-    age: number;
-    gender: 'male' | 'female' | 'other';
-    bloodType: string;
-    contactNumber: string;
-    address: string;
-    admissionDate: string;
 }
 
 export function PatientRegistrationComponent() {
