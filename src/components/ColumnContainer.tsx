@@ -1,14 +1,13 @@
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
-import { JourneyPoint, Id, Task } from "@models/journey"
 import TrashIcon from "assets/icons/TrashIcon";
-import { useMemo, useState } from "react";
+import { Column, Id, Task } from "../types";
 import { CSS } from "@dnd-kit/utilities";
-import TaskCard from "./TaskCard";
+import { useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
-
+import TaskCard from "./TaskCard";
 
 interface Props {
-  column: JourneyPoint;
+  column: Column;
   deleteColumn: (id: Id) => void;
   updateColumn: (id: Id, title: string) => void;
 
@@ -18,7 +17,7 @@ interface Props {
   tasks: Task[];
 }
 
-export function ColumnContainer({
+function ColumnContainer({
   column,
   deleteColumn,
   updateColumn,
@@ -26,9 +25,9 @@ export function ColumnContainer({
   tasks,
   deleteTask,
   updateTask,
-  }: Props) {
+}: Props) {
   const [editMode, setEditMode] = useState(false);
-  
+
   const tasksIds = useMemo(() => {
     return tasks.map((task) => task.id);
   }, [tasks]);
@@ -60,10 +59,10 @@ export function ColumnContainer({
         ref={setNodeRef}
         style={style}
         className="
-      bg-primary-4
+      bg-primary-1
       opacity-40
       border-2
-      border-primary-8
+      border-pink-500
       w-[350px]
       h-[500px]
       max-h-[500px]
@@ -79,53 +78,58 @@ export function ColumnContainer({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-primary-1
-   w-[350px]
-   h-[500px]
-   max-h-[500px]
-   rounded-md
-   flex
-   flex-col">
-    {/* Column title */}
-    <div 
-     {...attributes}
-     {...listeners}
-     onClick={() => {
-      setEditMode(true);
-    }}
-    className="
-   bg-primary-3
-   text-base
-   text-primary-8
-   h-[60px]
-   cursor-grab
-   rounded-md
-   rounded-b-none
-   p-3
-   font-bold
-   border-primary-3
-   border-4
-   flex
-   items-center
-   justify-between">
-
-      <div className="flex gap-2">
-        <div 
-          className="
-                  flex
-                  justify-center
-                  items-center
-                  bg-primary-3
-                  px-2
-                  py-1
-                  text-sm
-                  rounded-full
-                  ">0</div>
-
-      {!editMode && column.title}
-      {editMode && (
+      className="
+  bg-primary-1
+  w-[350px]
+  h-[500px]
+  max-h-[500px]
+  rounded-md
+  flex
+  flex-col
+  "
+    >
+      {/* Column title */}
+      <div
+        {...attributes}
+        {...listeners}
+        onClick={() => {
+          setEditMode(true);
+        }}
+        className="
+      bg-primary-3
+      text-md
+      h-[60px]
+      cursor-grab
+      rounded-md
+      rounded-b-none
+      p-3
+      font-bold
+      border-primary-1
+      border-4
+      flex
+      items-center
+      justify-between
+      "
+      >
+        <div className="flex gap-2">
+          <div
+            className="
+        flex
+        justify-center
+        items-center
+        bg-primary-1
+        px-2
+        py-1
+        text-sm
+        rounded-full
+        "
+          >
+            0
+          </div>
+          {!editMode && column.title}
+          {editMode && (
             <input
-              className="bg-black focus:border-primary-10 border rounded outline-none px-2"
+              className="bg-black focus:border-rose-500 border rounded outline-none px-2"
               value={column.title}
               onChange={(e) => updateColumn(column.id, e.target.value)}
               autoFocus
@@ -138,25 +142,26 @@ export function ColumnContainer({
               }}
             />
           )}
-          </div>
-      <button
-        onClick={() => {
-          deleteColumn(column.id)
-        }}
-        className="
-        stroke-primary-8
-        hover:stroke-primary-6
-        bg-primary-3
+        </div>
+        <button
+          onClick={() => {
+            deleteColumn(column.id);
+          }}
+          className="
+        stroke-gray-500
+        hover:stroke-white
         hover:bg-primary-1
         rounded
         px-1
         py-2
-        ">
-        <TrashIcon />
-      </button>
-    </div>
-    {/* Column task container */}
-    <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
+        "
+        >
+          <TrashIcon />
+        </button>
+      </div>
+
+      {/* Column task container */}
+      <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
         <SortableContext items={tasksIds}>
           {tasks.map((task) => (
             <TaskCard
@@ -168,9 +173,9 @@ export function ColumnContainer({
           ))}
         </SortableContext>
       </div>
-    {/* Column footer */}
-    <button
-        className="flex gap-2 items-center border-columnBackgroundColor border-2 rounded-md p-4 border-x-columnBackgroundColor hover:bg-mainBackgroundColor hover:text-rose-500 active:bg-black"
+      {/* Column footer */}
+      <button
+        className="flex gap-2 items-center border-primary-1 border-2 rounded-md p-4 border-x-primary-1 hover:bg-primary-3 hover:text-rose-500 active:bg-black"
         onClick={() => {
           createTask(column.id);
         }}
@@ -178,7 +183,8 @@ export function ColumnContainer({
         <PlusIcon />
         Add task
       </button>
-  </div>)
+    </div>
+  );
 }
 
 export default ColumnContainer;

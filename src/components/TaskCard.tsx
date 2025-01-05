@@ -1,6 +1,6 @@
 import { useState } from "react";
 import TrashIcon from "assets/icons/TrashIcon";
-import { Id, Task } from "models/journey";
+import { Id, Task } from "../types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -47,7 +47,7 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         style={style}
         className="
         opacity-30
-      bg-mainBackgroundColor p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl border-2 border-rose-500  cursor-grab relative
+      bg-primary-3 p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl border-2 border-rose-500  cursor-grab relative
       "
       />
     );
@@ -60,7 +60,7 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         style={style}
         {...attributes}
         {...listeners}
-        className="bg-primary-6 p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative"
+        className="bg-primary-3 p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative"
       >
         <textarea
           className="
@@ -106,7 +106,7 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
           onClick={() => {
             deleteTask(task.id);
           }}
-          className="stroke-white absolute right-4 top-1/2 -translate-y-1/2 bg-primary-6 p-2 rounded opacity-60 hover:opacity-100"
+          className="stroke-white absolute right-4 top-1/2 -translate-y-1/2 bg-primary-1 p-2 rounded opacity-60 hover:opacity-100"
         >
           <TrashIcon />
         </button>
