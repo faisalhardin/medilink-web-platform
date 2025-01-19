@@ -1,7 +1,9 @@
 import PlusIcon from "assets/icons/PlusIcon";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Column, Id, Task } from "../types";
+import { JourneyPoint } from "@models/journey";
 import ColumnContainer from "./ColumnContainer";
+import { PatientVisit } from "@models/patient";
 import {
   DndContext,
   DragEndEvent,
@@ -15,98 +17,42 @@ import {
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
+import { GetJourneyPoints } from "@requests/journey";
+import { ListVisitsByParams } from "@requests/patient";
 
-const defaultCols: Column[] = [
-  {
-    id: "todo",
-    title: "Todo",
-  },
-  {
-    id: "doing",
-    title: "Work in progress",
-  },
-  {
-    id: "done",
-    title: "Done",
-  },
-];
+const registrationColumn: JourneyPoint = {
+  id: -1,
+  name: "Registration"
+};
 
-const defaultTasks: Task[] = [
-  {
-    id: "1",
-    columnId: "todo",
-    content: "List admin APIs for dashboard",
-  },
-  {
-    id: "2",
-    columnId: "todo",
-    content:
-      "Develop user registration functionality with OTP delivered on SMS after email confirmation and phone number confirmation",
-  },
-  {
-    id: "3",
-    columnId: "doing",
-    content: "Conduct security testing",
-  },
-  {
-    id: "4",
-    columnId: "doing",
-    content: "Analyze competitors",
-  },
-  {
-    id: "5",
-    columnId: "done",
-    content: "Create UI kit documentation",
-  },
-  {
-    id: "6",
-    columnId: "done",
-    content: "Dev meeting",
-  },
-  {
-    id: "7",
-    columnId: "done",
-    content: "Deliver dashboard prototype",
-  },
-  {
-    id: "8",
-    columnId: "todo",
-    content: "Optimize application performance",
-  },
-  {
-    id: "9",
-    columnId: "todo",
-    content: "Implement data validation",
-  },
-  {
-    id: "10",
-    columnId: "todo",
-    content: "Design database schema",
-  },
-  {
-    id: "11",
-    columnId: "todo",
-    content: "Integrate SSL web certificates into workflow",
-  },
-  {
-    id: "12",
-    columnId: "doing",
-    content: "Implement error logging and monitoring",
-  },
-  {
-    id: "13",
-    columnId: "doing",
-    content: "Design and implement responsive UI",
-  },
-];
+const defaultTasks: Task[] = [];
+
+
 
 function KanbanBoard() {
-  const [columns, setColumns] = useState<Column[]>(defaultCols);
+  const [columns, setColumns] = useState<JourneyPoint[]>([]);
+
+  useEffect(()=> {
+    GetJourneyPoints().then((response)=> {
+      return response
+    }).then((data) => {
+      setColumns(data)
+    });
+  }, [])
+
+  useEffect(() => {
+    ListVisitsByParams({
+      journey_board_id:1,
+    }).then((response) => {
+      // setTasks(response);
+    })
+  })
+
   const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
 
   const [tasks, setTasks] = useState<Task[]>(defaultTasks);
 
-  const [activeColumn, setActiveColumn] = useState<Column | null>(null);
+  const [activeColumn, setActiveColumn] = useState<JourneyPoint | null>(null);
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
@@ -138,8 +84,19 @@ function KanbanBoard() {
         onDragOver={onDragOver}
       >
         <div className="m-auto flex gap-4">
+              <ColumnContainer
+                  key={registrationColumn.id}
+                  column={registrationColumn}
+                  deleteColumn={deleteColumn}
+                  updateColumn={updateColumn}
+                  createTask={createTask}
+                  deleteTask={deleteTask}
+                  updateTask={updateTask}
+                  tasks={[]}
+                  />
           <div className="flex gap-4">
             <SortableContext items={columnsId}>
+              
               {columns.map((col) => (
                 <ColumnContainer
                   key={col.id}
@@ -233,9 +190,9 @@ function KanbanBoard() {
   }
 
   function createNewColumn() {
-    const columnToAdd: Column = {
+    const columnToAdd: JourneyPoint = {
       id: generateId(),
-      title: `Column ${columns.length + 1}`,
+      name: `Column ${columns.length + 1}`,
     };
 
     setColumns([...columns, columnToAdd]);
@@ -252,7 +209,7 @@ function KanbanBoard() {
   function updateColumn(id: Id, title: string) {
     const newColumns = columns.map((col) => {
       if (col.id !== id) return col;
-      return { ...col, title };
+      return { ...col, name: title };
     });
 
     setColumns(newColumns);
@@ -298,6 +255,7 @@ function KanbanBoard() {
 
   function onDragOver(event: DragOverEvent) {
     const { active, over } = event;
+    // console.log("here drag active",active, " | to over : ",over);
     if (!over) return;
 
     const activeId = active.id;

@@ -36,6 +36,11 @@ export interface PatientVisit {
     updateTime: string;
   }
 
+  export interface GetPatientVisitParam {
+    visit_id?: number;
+    journey_board_id?: number;
+}
+
   export interface PatientVisitsComponentProps {
     patientUUID: string;
   }

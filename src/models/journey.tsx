@@ -1,9 +1,9 @@
 
-export type Id = number;
+export type Id = number | string;
 
 export type JourneyPoint = {
     id: Id;
-    title: string;
+    name: string;
 } 
 
 export type Task = {

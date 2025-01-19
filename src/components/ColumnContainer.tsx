@@ -5,11 +5,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
 import TaskCard from "./TaskCard";
+import { JourneyPoint } from "@models/journey";
 
 interface Props {
-  column: Column;
+  column: JourneyPoint;
   deleteColumn: (id: Id) => void;
-  updateColumn: (id: Id, title: string) => void;
+  updateColumn: (id: Id, name: string) => void;
 
   createTask: (columnId: Id) => void;
   updateTask: (id: Id, content: string) => void;
@@ -45,7 +46,7 @@ function ColumnContainer({
       type: "Column",
       column,
     },
-    disabled: editMode,
+    disabled: editMode || (typeof column.id === "number" && column.id < 0),
   });
 
   const style = {
@@ -54,6 +55,10 @@ function ColumnContainer({
   };
 
   if (isDragging) {
+
+    if (typeof column.id === "number" &&  column.id < 0) {
+      return;
+    }
     return (
       <div
         ref={setNodeRef}
@@ -79,14 +84,14 @@ function ColumnContainer({
       ref={setNodeRef}
       style={style}
       className="
-  bg-primary-1
-  w-[350px]
-  h-[500px]
-  max-h-[500px]
-  rounded-md
-  flex
-  flex-col
-  "
+      bg-primary-1
+      w-[350px]
+      h-[500px]
+      max-h-[500px]
+      rounded-md
+      flex
+      flex-col
+      "
     >
       {/* Column title */}
       <div
@@ -96,20 +101,20 @@ function ColumnContainer({
           setEditMode(true);
         }}
         className="
-      bg-primary-3
-      text-md
-      h-[60px]
-      cursor-grab
-      rounded-md
-      rounded-b-none
-      p-3
-      font-bold
-      border-primary-1
-      border-4
-      flex
-      items-center
-      justify-between
-      "
+        bg-primary-3
+        text-md
+        h-[60px]
+        cursor-grab
+        rounded-md
+        rounded-b-none
+        p-3
+        font-bold
+        border-primary-1
+        border-4
+        flex
+        items-center
+        justify-between
+        "
       >
         <div className="flex gap-2">
           <div
@@ -126,11 +131,11 @@ function ColumnContainer({
           >
             0
           </div>
-          {!editMode && column.title}
+          {!editMode && column.name}
           {editMode && (
             <input
               className="bg-black focus:border-rose-500 border rounded outline-none px-2"
-              value={column.title}
+              value={column.name}
               onChange={(e) => updateColumn(column.id, e.target.value)}
               autoFocus
               onBlur={() => {
@@ -186,5 +191,14 @@ function ColumnContainer({
     </div>
   );
 }
+
+// const BackLogColumn = () => {
+//   return (
+  
+//   );
+// }
+
+// export BackLogColumn;
+
 
 export default ColumnContainer;
