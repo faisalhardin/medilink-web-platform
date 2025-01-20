@@ -13,7 +13,7 @@ import { Routes, Route } from "react-router-dom";
 const DefaultLayout = () => {
   return (
     <main className="flex flex-col min-h-screen">
-            {/* <AppHeader/> */}
+            <AppHeader/>
             <div className="flex flex-1">
               <ColumnNav/>
               <Routes>

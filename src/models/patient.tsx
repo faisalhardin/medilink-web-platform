@@ -32,9 +32,17 @@ export interface PatientVisit {
     action: string;
     status: string;
     notes: string;
+    id_mst_institution: number;
+    id_mst_journey_board: number;
+    journey_point_id: number;
     create_time: string;
     updateTime: string;
   }
+
+  export interface GetPatientVisitParam {
+    visit_id?: number;
+    journey_board_id?: number;
+}
 
   export interface PatientVisitsComponentProps {
     patientUUID: string;
