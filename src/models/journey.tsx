@@ -6,9 +6,10 @@ export type JourneyPoint = {
     name: string;
 } 
 
-export type Task = {
+export type PatientVisitTask = {
     id: Id;
     columnId: Id;
-    content: string;
+    notes: string;
+    status: string;
   };
   

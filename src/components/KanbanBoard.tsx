@@ -1,7 +1,7 @@
 import PlusIcon from "assets/icons/PlusIcon";
 import { useEffect, useMemo, useState } from "react";
 import { Column, Id, Task } from "../types";
-import { JourneyPoint } from "@models/journey";
+import { JourneyPoint, PatientVisitTask } from "@models/journey";
 import ColumnContainer from "./ColumnContainer";
 import { PatientVisit } from "@models/patient";
 import {
@@ -21,40 +21,67 @@ import { GetJourneyPoints } from "@requests/journey";
 import { ListVisitsByParams } from "@requests/patient";
 
 const registrationColumn: JourneyPoint = {
-  id: -1,
+  id: 0,
   name: "Registration"
 };
 
-const defaultTasks: Task[] = [];
+const defaultTasks: PatientVisitTask[] = [];
+
+// Function to map PatientVisit to PatientVisitTask
+function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
+  return visits.map((visit) => {
+    const columnId = visit.journey_point_id;
+
+    if (columnId === undefined || columnId === null || columnId <= 0) {
+      return {
+        id: visit.id,
+        columnId: 0, // Assign a default or fallback value
+        notes: visit.notes,
+        status: visit.status,
+      };
+    }
+
+    return {
+      id: visit.id,
+      columnId: visit.journey_point_id,
+      notes: visit.notes,
+      status: visit.status,
+    }
+  });
+}
 
 
 
 function KanbanBoard() {
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
-
-  useEffect(()=> {
-    GetJourneyPoints().then((response)=> {
-      return response
-    }).then((data) => {
-      setColumns(data)
-    });
-  }, [])
+  const [tasks, setTasks] = useState<PatientVisitTask[]>(defaultTasks);
 
   useEffect(() => {
-    ListVisitsByParams({
-      journey_board_id:1,
-    }).then((response) => {
-      // setTasks(response);
-    })
-  })
+    const fetchData = async () => {
+      try {
+        // First API call
+        const journeyPoints = await GetJourneyPoints();
+        setColumns(journeyPoints);
+
+        // Second API call (dependent on the first)
+        const patientVisits = await ListVisitsByParams({
+          journey_board_id: 1,
+        });
+        setTasks(mapPatientVisitsToTasks(patientVisits));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
 
-  const [tasks, setTasks] = useState<Task[]>(defaultTasks);
+
 
   const [activeColumn, setActiveColumn] = useState<JourneyPoint | null>(null);
 
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeTask, setActiveTask] = useState<PatientVisitTask | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -84,31 +111,32 @@ function KanbanBoard() {
         onDragOver={onDragOver}
       >
         <div className="m-auto flex gap-4">
-              <ColumnContainer
-                  key={registrationColumn.id}
-                  column={registrationColumn}
-                  deleteColumn={deleteColumn}
-                  updateColumn={updateColumn}
-                  createTask={createTask}
-                  deleteTask={deleteTask}
-                  updateTask={updateTask}
-                  tasks={[]}
-                  />
+          <ColumnContainer
+            key={registrationColumn.id}
+            column={registrationColumn}
+            deleteColumn={deleteColumn}
+            updateColumn={updateColumn}
+            createTask={createTask}
+            deleteTask={deleteTask}
+            updateTask={updateTask}
+            tasks={tasks.filter((task) => task.columnId === registrationColumn.id)}
+          />
           <div className="flex gap-4">
             <SortableContext items={columnsId}>
-              
-              {columns.map((col) => (
-                <ColumnContainer
-                  key={col.id}
-                  column={col}
-                  deleteColumn={deleteColumn}
-                  updateColumn={updateColumn}
-                  createTask={createTask}
-                  deleteTask={deleteTask}
-                  updateTask={updateTask}
-                  tasks={tasks.filter((task) => task.columnId === col.id)}
-                />
-              ))}
+              {columns.map((col) => {
+                return (
+                  <ColumnContainer
+                    key={col.id}
+                    column={col}
+                    deleteColumn={deleteColumn}
+                    updateColumn={updateColumn}
+                    createTask={createTask}
+                    deleteTask={deleteTask}
+                    updateTask={updateTask}
+                    tasks={tasks.filter((task) => task.columnId === col.id)}
+                  />
+                )
+              })}
             </SortableContext>
           </div>
           <button
@@ -166,10 +194,11 @@ function KanbanBoard() {
   );
 
   function createTask(columnId: Id) {
-    const newTask: Task = {
+    const newTask: PatientVisitTask = {
       id: generateId(),
       columnId,
-      content: `Task ${tasks.length + 1}`,
+      notes: `Task ${tasks.length + 1}`,
+      status: "new",
     };
 
     setTasks([...tasks, newTask]);
@@ -255,7 +284,6 @@ function KanbanBoard() {
 
   function onDragOver(event: DragOverEvent) {
     const { active, over } = event;
-    // console.log("here drag active",active, " | to over : ",over);
     if (!over) return;
 
     const activeId = active.id;

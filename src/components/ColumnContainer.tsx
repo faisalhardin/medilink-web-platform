@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
 import TaskCard from "./TaskCard";
-import { JourneyPoint } from "@models/journey";
+import { JourneyPoint, PatientVisitTask } from "@models/journey";
 
 interface Props {
   column: JourneyPoint;
@@ -15,7 +15,7 @@ interface Props {
   createTask: (columnId: Id) => void;
   updateTask: (id: Id, content: string) => void;
   deleteTask: (id: Id) => void;
-  tasks: Task[];
+  tasks: PatientVisitTask[];
 }
 
 function ColumnContainer({

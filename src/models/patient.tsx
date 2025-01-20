@@ -32,6 +32,9 @@ export interface PatientVisit {
     action: string;
     status: string;
     notes: string;
+    id_mst_institution: number;
+    id_mst_journey_board: number;
+    journey_point_id: number;
     create_time: string;
     updateTime: string;
   }

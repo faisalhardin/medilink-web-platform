@@ -1,11 +1,12 @@
 import { useState } from "react";
 import TrashIcon from "assets/icons/TrashIcon";
-import { Id, Task } from "../types";
+import { Id } from "../types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { PatientVisitTask } from "@models/journey";
 
 interface Props {
-  task: Task;
+  task: PatientVisitTask;
   deleteTask: (id: Id) => void;
   updateTask: (id: Id, content: string) => void;
 }
@@ -67,7 +68,7 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         h-[90%]
         w-full resize-none border-none rounded bg-transparent text-white focus:outline-none
         "
-          value={task.content}
+          value={task.notes}
           autoFocus
           placeholder="Task content here"
           onBlur={toggleEditMode}
@@ -98,7 +99,7 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
       }}
     >
       <p className="my-auto h-[90%] w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap">
-        {task.content}
+        {task.notes}
       </p>
 
       {mouseIsOver && (
