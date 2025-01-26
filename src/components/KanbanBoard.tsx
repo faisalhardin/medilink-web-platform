@@ -270,6 +270,8 @@ function KanbanBoard() {
     const activeId = active.id;
     const overId = over.id;
 
+    if(overId.valueOf() === 0) return; // return if it is a newly register column
+
     if (activeId === overId) return;
 
     const isActiveAColumn = active.data.current?.type === "Column";
