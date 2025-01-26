@@ -17,12 +17,14 @@ import {
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
-import { GetJourneyPoints } from "@requests/journey";
+import { GetJourneyPoints, UpdateJourneyPoint } from "@requests/journey";
 import { ListVisitsByParams } from "@requests/patient";
 
 const registrationColumn: JourneyPoint = {
   id: 0,
-  name: "Registration"
+  name: "Registration",
+  position:0,
+  board_id:1,
 };
 
 const defaultTasks: PatientVisitTask[] = [];
@@ -75,7 +77,7 @@ function KanbanBoard() {
     fetchData();
   }, []);
 
-  const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
+  const columnsId = useMemo(() => columns.map((col) => col.position), [columns]); // TODO: changes cause it to have unresponsive draging effect
 
 
 
@@ -222,6 +224,8 @@ function KanbanBoard() {
     const columnToAdd: JourneyPoint = {
       id: generateId(),
       name: `Column ${columns.length + 1}`,
+      board_id: 1,
+      position: 100,
     };
 
     setColumns([...columns, columnToAdd]);
@@ -278,7 +282,17 @@ function KanbanBoard() {
 
       const overColumnIndex = columns.findIndex((col) => col.id === overId);
 
-      return arrayMove(columns, activeColumnIndex, overColumnIndex);
+      const updatedColumns = arrayMove(columns, activeColumnIndex, overColumnIndex);
+      let beforePosition = overColumnIndex > 0 ? updatedColumns[overColumnIndex-1].position: 0;
+      let afterPosition = overColumnIndex < columns.length-1? updatedColumns[overColumnIndex+1].position: updatedColumns[overColumnIndex].position + 100;
+
+      updatedColumns[overColumnIndex].position = Math.round((beforePosition + afterPosition)/2);
+      try {
+        UpdateJourneyPoint(updatedColumns[overColumnIndex]);  
+      } catch(error) {
+        return columns;
+      }
+      return updatedColumns;
     });
   }
 
@@ -303,7 +317,6 @@ function KanbanBoard() {
         const overIndex = tasks.findIndex((t) => t.id === overId);
 
         if (tasks[activeIndex].columnId != tasks[overIndex].columnId) {
-          // Fix introduced after video recording
           tasks[activeIndex].columnId = tasks[overIndex].columnId;
           return arrayMove(tasks, activeIndex, overIndex - 1);
         }

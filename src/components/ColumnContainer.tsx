@@ -41,12 +41,12 @@ function ColumnContainer({
     transition,
     isDragging,
   } = useSortable({
-    id: column.id,
+    id: column.id, // changing this to position smoothens columns swap transition
     data: {
       type: "Column",
       column,
     },
-    disabled: editMode || (typeof column.id === "number" && column.id < 0),
+    disabled: editMode || (typeof column.id === "number" && column.id <= 0),
   });
 
   const style = {
@@ -191,14 +191,5 @@ function ColumnContainer({
     </div>
   );
 }
-
-// const BackLogColumn = () => {
-//   return (
-  
-//   );
-// }
-
-// export BackLogColumn;
-
 
 export default ColumnContainer;
