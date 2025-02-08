@@ -43,3 +43,23 @@ export async function UpdateJourneyPoint(params:JourneyPoint): Promise<JourneyPo
     }
   }
   
+  export async function UpdateServicePoint(params:JourneyPoint): Promise<JourneyPoint> {
+    try {
+      const token = getToken();
+      const response = await axios.patch(
+          `${JOURNEY_URL_PATH}/point/${params.id}`, 
+          params,
+          {
+              withCredentials: true,
+              headers: {
+                  Authorization: `Bearer ${token}`
+              },
+              
+          }
+      );
+      console.log(response);
+      return await response.data.data.journey_points;
+    } catch (error) {
+      throw error;
+    }
+  }

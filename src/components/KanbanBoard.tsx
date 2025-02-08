@@ -18,7 +18,7 @@ import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
 import { GetJourneyPoints, UpdateJourneyPoint } from "@requests/journey";
-import { ListVisitsByParams } from "@requests/patient";
+import { ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
 
 const registrationColumn: JourneyPoint = {
   id: 0,
@@ -32,23 +32,27 @@ const defaultTasks: PatientVisitTask[] = [];
 // Function to map PatientVisit to PatientVisitTask
 function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
   return visits.map((visit) => {
+
+    
     const columnId = visit.journey_point_id;
-
-    if (columnId === undefined || columnId === null || columnId <= 0) {
-      return {
-        id: visit.id,
-        columnId: 0, // Assign a default or fallback value
-        notes: visit.notes,
-        status: visit.status,
-      };
-    }
-
-    return {
+    const patientVisitTask: PatientVisitTask = {
       id: visit.id,
-      columnId: visit.journey_point_id,
       notes: visit.notes,
       status: visit.status,
+      create_time: visit.create_time,
+      update_time: visit.update_time,
+      patient_name: visit.name,
+      service_point_name: visit.service_point_name,
+      sex: visit.sex,
+      columnId: columnId,
+      mst_journey_point_id_update_unix_time: visit.mst_journey_point_id_update_unix_time,
+    };
+
+    if (columnId === undefined || columnId === null || columnId <= 0) {
+      patientVisitTask.columnId = 0;
     }
+
+    return patientVisitTask;
   });
 }
 
@@ -263,6 +267,7 @@ function KanbanBoard() {
   function onDragEnd(event: DragEndEvent) {
     setActiveColumn(null);
     setActiveTask(null);
+    console.log("drag end");
 
     const { active, over } = event;
     if (!over) return;
@@ -296,6 +301,21 @@ function KanbanBoard() {
       }
       return updatedColumns;
     });
+
+    // const isActiveATask = active.data.current?.type === "Task";
+    // const isOverAColumn = over.data.current?.type === "Column";
+
+    // if (isActiveATask && isOverAColumn) {
+    //   const activeTask = active.data.current?.task;
+    //   const overColumnId = over.data.current?.parentId;
+
+    //   if (activeTask.columnId === overColumnId) {
+    //     return;
+    //   }
+
+    //   return;
+    // }
+  
   }
 
   function onDragOver(event: DragOverEvent) {
@@ -314,16 +334,33 @@ function KanbanBoard() {
 
     // Im dropping a Task over another Task
     if (isActiveATask && isOverATask) {
+      console.log("over task");
       setTasks((tasks) => {
+
         const activeIndex = tasks.findIndex((t) => t.id === activeId);
         const overIndex = tasks.findIndex((t) => t.id === overId);
-
+        let journeyPointID:number = typeof tasks[overIndex].columnId === 'number'? tasks[overIndex].columnId : 0;
+        let taskID:number = typeof tasks[activeIndex].columnId === 'number'? tasks[activeIndex].columnId : 0;
+       
+        
         if (tasks[activeIndex].columnId != tasks[overIndex].columnId) {
-          tasks[activeIndex].columnId = tasks[overIndex].columnId;
-          return arrayMove(tasks, activeIndex, overIndex - 1);
-        }
 
-        return arrayMove(tasks, activeIndex, overIndex);
+          const originalTasks = [...tasks];
+
+          tasks[activeIndex].columnId = tasks[overIndex].columnId;
+          tasks[activeIndex].update_time =new Date().toISOString();
+          // try {
+          //   UpdatePatientVisit({
+          //     id: taskID,
+          //     journey_point_id: journeyPointID,
+          //   });  
+    
+          // } catch(error) {
+          //   return originalTasks;
+          // }
+          return arrayMove(tasks, activeIndex, 0);
+        }
+        return tasks;
       });
     }
 
@@ -331,6 +368,7 @@ function KanbanBoard() {
 
     // Im dropping a Task over a column
     if (isActiveATask && isOverAColumn) {
+      console.log("over column");
       setTasks((tasks) => {
         const activeIndex = tasks.findIndex((t) => t.id === activeId);
 

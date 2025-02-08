@@ -1,7 +1,7 @@
 import axios from "axios";
 import { PATIENT_PATH, PATIENT_VISIT_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
-import { GetPatientParam, GetPatientVisitParam, Patient, PatientVisit, RegisterPatient } from "@models/patient";
+import { GetPatientParam, GetPatientVisitParam, Patient, PatientVisit, RegisterPatient, UpdatePatientVisitPayload } from "@models/patient";
 import { CommonResponse } from "@models/common";
 
 
@@ -55,6 +55,27 @@ export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisi
         throw error;
     }
 }
+
+export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Promise<PatientVisit> {
+    try {
+        console.log(`${PATIENT_VISIT_PATH}/${params.id}`)
+      const token = getToken();
+      const response = await axios.patch(
+          `${PATIENT_VISIT_PATH}/${params.id}`, 
+          params,
+          {
+              withCredentials: true,
+              headers: {
+                  Authorization: `Bearer ${token}`
+              },
+              
+          }
+      );
+      return await response.data.data.journey_points;
+    } catch (error) {
+      throw error;
+    }
+  }
 
 export const ListVisitsByParams = async (params:GetPatientVisitParam): Promise<PatientVisit[]> => {
     try {

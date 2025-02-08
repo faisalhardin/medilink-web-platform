@@ -1,4 +1,4 @@
-import { SortableContext, useSortable } from "@dnd-kit/sortable";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import TrashIcon from "assets/icons/TrashIcon";
 import { Column, Id, Task } from "../types";
 import { CSS } from "@dnd-kit/utilities";
@@ -167,16 +167,25 @@ function ColumnContainer({
 
       {/* Column task container */}
       <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
-        <SortableContext items={tasksIds}>
-          {tasks.map((task) => (
-            <TaskCard
+        {/* <DndContext> */}
+
+        <SortableContext items={tasksIds} strategy={verticalListSortingStrategy} >
+          {tasks
+          // .sort((a:PatientVisitTask, b:PatientVisitTask) => {
+          //   if (a>b) return 1;
+          //   if (a<b) return -1;
+          //   return 0;
+          // })
+          .map((task) => 
+            ( <TaskCard
               key={task.id}
               task={task}
               deleteTask={deleteTask}
               updateTask={updateTask}
-            />
-          ))}
+            />)
+        )}
         </SortableContext>
+        {/* </DndContext> */}
       </div>
       {/* Column footer */}
       <button
