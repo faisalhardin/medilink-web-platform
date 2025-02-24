@@ -32,11 +32,27 @@ export interface PatientVisit {
     action: string;
     status: string;
     notes: string;
+    name: string;
+    sex: string;
     id_mst_institution: number;
     id_mst_journey_board: number;
     journey_point_id: number;
     create_time: string;
-    updateTime: string;
+    update_time: string;
+    service_point_name: string;
+    service_point_id: number;
+    column_update_time: number;
+  }
+
+  export interface UpdatePatientVisitPayload {
+    id: number;
+    action?: string;
+    status?: string;
+    notes?: string;
+    name?: string;
+    sex?: string;
+    id_mst_journey_board?: number;
+    journey_point_id?: number;
   }
 
   export interface GetPatientVisitParam {

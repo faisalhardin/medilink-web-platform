@@ -4,6 +4,7 @@ import { Column, Id, Task } from "../types";
 import { JourneyPoint, PatientVisitTask } from "@models/journey";
 import ColumnContainer from "./ColumnContainer";
 import { PatientVisit } from "@models/patient";
+import lodash from 'lodash';
 import {
   DndContext,
   DragEndEvent,
@@ -17,12 +18,14 @@ import {
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
-import { GetJourneyPoints } from "@requests/journey";
-import { ListVisitsByParams } from "@requests/patient";
+import { GetJourneyPoints, UpdateJourneyPoint } from "@requests/journey";
+import { ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
 
 const registrationColumn: JourneyPoint = {
   id: 0,
-  name: "Registration"
+  name: "Registration",
+  position: 0,
+  board_id: 1,
 };
 
 const defaultTasks: PatientVisitTask[] = [];
@@ -30,23 +33,29 @@ const defaultTasks: PatientVisitTask[] = [];
 // Function to map PatientVisit to PatientVisitTask
 function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
   return visits.map((visit) => {
+
+
     const columnId = visit.journey_point_id;
-
-    if (columnId === undefined || columnId === null || columnId <= 0) {
-      return {
-        id: visit.id,
-        columnId: 0, // Assign a default or fallback value
-        notes: visit.notes,
-        status: visit.status,
-      };
-    }
-
-    return {
+    const patientVisitTask: PatientVisitTask = {
       id: visit.id,
-      columnId: visit.journey_point_id,
       notes: visit.notes,
       status: visit.status,
+      create_time: visit.create_time,
+      update_time: visit.update_time,
+      patient_name: visit.name,
+      service_point_name: visit.service_point_name,
+      sex: visit.sex,
+      columnId: columnId,
+      column_update_time: visit.column_update_time,
+    };
+
+    if (columnId === undefined || columnId === null || columnId <= 0) {
+      patientVisitTask.columnId = 0;
     }
+
+    return patientVisitTask;
+  }).sort((a, b) => {
+    return a.column_update_time - b.column_update_time
   });
 }
 
@@ -54,14 +63,16 @@ function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
 
 function KanbanBoard() {
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
-  const [tasks, setTasks] = useState<PatientVisitTask[]>(defaultTasks);
+  const [tasks, setTasks] = useState<PatientVisitTask[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // First API call
         const journeyPoints = await GetJourneyPoints();
-        setColumns(journeyPoints);
+        setColumns(journeyPoints.sort((a,b) => {
+          return a.position - b.position;
+        }));
 
         // Second API call (dependent on the first)
         const patientVisits = await ListVisitsByParams({
@@ -75,18 +86,18 @@ function KanbanBoard() {
     fetchData();
   }, []);
 
-  const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
-
-
+  const columnsId = useMemo(() => columns.map((col) => col.id), [columns]); // TODO: changes cause it to have unresponsive draging effect
 
   const [activeColumn, setActiveColumn] = useState<JourneyPoint | null>(null);
 
   const [activeTask, setActiveTask] = useState<PatientVisitTask | null>(null);
 
+  const [previousTasks, setPreviousTasks] = useState<PatientVisitTask[] | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 10,
+        distance: 20,
       },
     })
   );
@@ -123,20 +134,24 @@ function KanbanBoard() {
           />
           <div className="flex gap-4">
             <SortableContext items={columnsId}>
-              {columns.map((col) => {
-                return (
-                  <ColumnContainer
-                    key={col.id}
-                    column={col}
-                    deleteColumn={deleteColumn}
-                    updateColumn={updateColumn}
-                    createTask={createTask}
-                    deleteTask={deleteTask}
-                    updateTask={updateTask}
-                    tasks={tasks.filter((task) => task.columnId === col.id)}
-                  />
-                )
-              })}
+              {columns
+                .sort((a,b) => (
+                  a.position - b.position
+                ))
+                .map((col) => {
+                  return (
+                    <ColumnContainer
+                      key={col.id}
+                      column={col}
+                      deleteColumn={deleteColumn}
+                      updateColumn={updateColumn}
+                      createTask={createTask}
+                      deleteTask={deleteTask}
+                      updateTask={updateTask}
+                      tasks={tasks.filter((task) => task.columnId === col.id)}
+                    />
+                  )
+                })}
             </SortableContext>
           </div>
           <button
@@ -199,6 +214,7 @@ function KanbanBoard() {
       columnId,
       notes: `Task ${tasks.length + 1}`,
       status: "new",
+      column_update_time: Math.floor(Date.now() / 1000),
     };
 
     setTasks([...tasks, newTask]);
@@ -222,6 +238,8 @@ function KanbanBoard() {
     const columnToAdd: JourneyPoint = {
       id: generateId(),
       name: `Column ${columns.length + 1}`,
+      board_id: 1,
+      position: 100,
     };
 
     setColumns([...columns, columnToAdd]);
@@ -252,12 +270,17 @@ function KanbanBoard() {
 
     if (event.active.data.current?.type === "Task") {
       setActiveTask(event.active.data.current.task);
+      setPreviousTasks(lodash.cloneDeep(tasks));
       return;
     }
   }
 
   function onDragEnd(event: DragEndEvent) {
     setActiveColumn(null);
+
+
+    const localPrevTask = previousTasks;
+    setPreviousTasks(null);
     setActiveTask(null);
 
     const { active, over } = event;
@@ -266,20 +289,68 @@ function KanbanBoard() {
     const activeId = active.id;
     const overId = over.id;
 
-    if (activeId === overId) return;
+    const isActiveATask = active.data.current?.type === "Task";
+    if (isActiveATask && localPrevTask != null) {
+
+      const handlerTask = () => {
+        const activeIndex = tasks.findIndex((t) => t.id === activeId);
+        const prevIndex = localPrevTask?.findIndex((t) => t.id === activeId);
+
+        if (tasks[activeIndex].columnId === localPrevTask[prevIndex].columnId) {
+          setTasks(localPrevTask);
+          return;
+        };
+
+        try {
+          if (!(typeof tasks[activeIndex].id === 'number' && typeof tasks[activeIndex].columnId === 'number')) return;
+          console.log("update to db", tasks);
+          UpdatePatientVisit({
+            id: tasks[activeIndex].id,
+            journey_point_id: tasks[activeIndex].columnId,
+          });
+
+        } catch (error) {
+          setTasks(localPrevTask);
+          return
+        }
+      }
+
+      handlerTask();
+
+    }
+
+
 
     const isActiveAColumn = active.data.current?.type === "Column";
-    if (!isActiveAColumn) return;
+    if (!isActiveAColumn || activeId === overId) return;
 
-    console.log("DRAG END");
+    if (activeId === overId) {
+      return
+    };
+
+    if (overId.valueOf() === 0) return; // return if it is the registration columns;
+
+
+    // DRAG END
 
     setColumns((columns) => {
       const activeColumnIndex = columns.findIndex((col) => col.id === activeId);
 
       const overColumnIndex = columns.findIndex((col) => col.id === overId);
 
-      return arrayMove(columns, activeColumnIndex, overColumnIndex);
+      const updatedColumns = arrayMove(columns, activeColumnIndex, overColumnIndex);
+      let beforePosition = overColumnIndex > 0 ? updatedColumns[overColumnIndex - 1].position : 0;
+      let afterPosition = overColumnIndex < columns.length - 1 ? updatedColumns[overColumnIndex + 1].position : updatedColumns[overColumnIndex].position + 100;
+
+      updatedColumns[overColumnIndex].position = Math.round((beforePosition + afterPosition) / 2);
+      try {
+        UpdateJourneyPoint(updatedColumns[overColumnIndex]);
+      } catch (error) {
+        return columns;
+      }
+      return updatedColumns;
     });
+
   }
 
   function onDragOver(event: DragOverEvent) {
@@ -299,16 +370,15 @@ function KanbanBoard() {
     // Im dropping a Task over another Task
     if (isActiveATask && isOverATask) {
       setTasks((tasks) => {
+
         const activeIndex = tasks.findIndex((t) => t.id === activeId);
         const overIndex = tasks.findIndex((t) => t.id === overId);
 
         if (tasks[activeIndex].columnId != tasks[overIndex].columnId) {
-          // Fix introduced after video recording
           tasks[activeIndex].columnId = tasks[overIndex].columnId;
-          return arrayMove(tasks, activeIndex, overIndex - 1);
         }
-
-        return arrayMove(tasks, activeIndex, overIndex);
+        tasks[activeIndex].column_update_time = Math.floor(Date.now() / 1000);
+        return arrayMove(tasks, activeIndex, -1);
       });
     }
 
@@ -320,8 +390,8 @@ function KanbanBoard() {
         const activeIndex = tasks.findIndex((t) => t.id === activeId);
 
         tasks[activeIndex].columnId = overId;
-        console.log("DROPPING TASK OVER COLUMN", { activeIndex });
-        return arrayMove(tasks, activeIndex, activeIndex);
+        // "DROPPING TASK OVER COLUMN"
+        return arrayMove(tasks, activeIndex, -1);
       });
     }
   }

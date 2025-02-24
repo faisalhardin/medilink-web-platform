@@ -1,6 +1,6 @@
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import TrashIcon from "assets/icons/TrashIcon";
-import { Column, Id, Task } from "../types";
+import { Id } from "../types";
 import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
@@ -41,12 +41,12 @@ function ColumnContainer({
     transition,
     isDragging,
   } = useSortable({
-    id: column.id,
+    id: column.id, // changing this to position smoothens columns swap transition
     data: {
       type: "Column",
       column,
     },
-    disabled: editMode || (typeof column.id === "number" && column.id < 0),
+    disabled: editMode || (typeof column.id === "number" && column.id <= 0),
   });
 
   const style = {
@@ -167,16 +167,23 @@ function ColumnContainer({
 
       {/* Column task container */}
       <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
-        <SortableContext items={tasksIds}>
-          {tasks.map((task) => (
-            <TaskCard
+        {/* <DndContext> */}
+
+        <SortableContext items={tasksIds} >
+          {tasks
+          .sort((a:PatientVisitTask, b:PatientVisitTask) => {
+            return a.column_update_time - b.column_update_time
+          })
+          .map((task) => 
+            ( <TaskCard
               key={task.id}
               task={task}
               deleteTask={deleteTask}
               updateTask={updateTask}
-            />
-          ))}
+            />)
+        )}
         </SortableContext>
+        {/* </DndContext> */}
       </div>
       {/* Column footer */}
       <button
@@ -191,14 +198,5 @@ function ColumnContainer({
     </div>
   );
 }
-
-// const BackLogColumn = () => {
-//   return (
-  
-//   );
-// }
-
-// export BackLogColumn;
-
 
 export default ColumnContainer;
