@@ -1,6 +1,6 @@
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import TrashIcon from "assets/icons/TrashIcon";
-import { Column, Id, Task } from "../types";
+import { Id } from "../types";
 import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
@@ -169,13 +169,11 @@ function ColumnContainer({
       <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
         {/* <DndContext> */}
 
-        <SortableContext items={tasksIds} strategy={verticalListSortingStrategy} >
+        <SortableContext items={tasksIds} >
           {tasks
-          // .sort((a:PatientVisitTask, b:PatientVisitTask) => {
-          //   if (a>b) return 1;
-          //   if (a<b) return -1;
-          //   return 0;
-          // })
+          .sort((a:PatientVisitTask, b:PatientVisitTask) => {
+            return a.column_update_time - b.column_update_time
+          })
           .map((task) => 
             ( <TaskCard
               key={task.id}

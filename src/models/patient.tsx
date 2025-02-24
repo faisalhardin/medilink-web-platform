@@ -41,7 +41,7 @@ export interface PatientVisit {
     update_time: string;
     service_point_name: string;
     service_point_id: number;
-    mst_journey_point_id_update_unix_time: number;
+    column_update_time: number;
   }
 
   export interface UpdatePatientVisitPayload {

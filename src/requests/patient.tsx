@@ -71,6 +71,10 @@ export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Prom
               
           }
       );
+
+      if (response.status >= 400) {
+        throw new Error;
+      }
       return await response.data.data.journey_points;
     } catch (error) {
       throw error;

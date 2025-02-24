@@ -29,7 +29,6 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
     data: {
       type: "Task",
       task,
-      parentId: task.columnId,
     },
     disabled: false,
   });
@@ -114,6 +113,7 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         {getTitle(task.sex)}
         {" "}
         {task.patient_name}
+        {"\n"}
       </p>
       {/* <div className="-mr-1">
       </div> */}
@@ -132,7 +132,6 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
       )}
       
     </div>
-    // </>
   );
 }
 

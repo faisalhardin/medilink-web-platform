@@ -18,6 +18,6 @@ export type PatientVisitTask = {
     update_time?: string;
     service_point_name?: string;
     sex?: string;
-    mst_journey_point_id_update_unix_time?: number;
+    column_update_time: number;
   };
   
