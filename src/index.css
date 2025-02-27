@@ -39,6 +39,8 @@
   --light-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   --dark-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 
+  --clr-white-1:#F7F7F7;
+
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -51,12 +53,12 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  /* color: #646cff; */
   text-decoration: inherit;
 }
-a:hover {
-  color: #535bf2;
-}
+/* a:hover {
+  background-color: #ececec;
+} */
 
 body {
   margin: 0;
@@ -109,9 +111,16 @@ button:focus-visible {
   grid-gap: 1rem;
 }
 
-/* .detail-icon {
-  background-image: url("/assets/icons/wmd-detail.png");
-  background-repeat: no-repeat;
-  background-position: left center;
-  background-size: 20px;
-} */
+.expanded-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.expanded-item {
+  cursor: pointer;
+}
+
+.expanded-item:hover {
+  background-color: #f0f0f0;
+}

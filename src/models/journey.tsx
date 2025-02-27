@@ -1,3 +1,7 @@
+export type JourneyBoard = {
+    id: number;
+    name: string;
+}
 
 export type Id = number | string;
 
