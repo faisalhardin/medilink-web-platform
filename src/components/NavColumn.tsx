@@ -46,7 +46,6 @@ const requestJourneyBoard = async (): Promise<NavListItem[]> => {
       }
     })
   } catch (error) {
-    console.error('Error fetching journey boards:', error);
-    throw error;
+    return [];
   }
 };
