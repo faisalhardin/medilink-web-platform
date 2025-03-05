@@ -43,6 +43,7 @@ const requestJourneyBoard = async (): Promise<NavListItem[]> => {
       return {
         id: board.id,
         name: board.name,
+        pageURL: `/journey-board/${board.id}`
       }
     })
   } catch (error) {

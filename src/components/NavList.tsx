@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { NavLink } from 'react-router-dom';
 
 
 interface NavListProps {
@@ -52,9 +53,7 @@ export const NavList = (paramProps:NavListProps) => {
                         <li>{error}</li>
                     ) : (
                         items.map((item) => (
-                            <li key={item.id} className=" rounded button-style-1 pl-7">
-                                {item.name}
-                            </li>
+                            <GetNavLink id={item.id} name={item.name} pageURL={item.pageURL}></GetNavLink>
                         ))
                     )}
                 </ul>
@@ -67,4 +66,16 @@ export const NavList = (paramProps:NavListProps) => {
 export interface NavListItem {
     id: number;
     name: string;
+    pageURL: string;
+}
+
+
+const GetNavLink = (props:{pageURL:string, id:number, name:string}) => {
+    return (
+        <NavLink to={props.pageURL}>
+            <li key={props.id} className=" rounded button-style-1 pl-7">
+                {props.name}
+            </li>
+        </NavLink>
+    )
 }

@@ -20,6 +20,7 @@ import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
 import { GetJourneyPoints, UpdateJourneyPoint } from "@requests/journey";
 import { ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
+import { useParams } from "react-router-dom";
 
 const registrationColumn: JourneyPoint = {
   id: 0,
@@ -27,8 +28,6 @@ const registrationColumn: JourneyPoint = {
   position: 0,
   board_id: 1,
 };
-
-const defaultTasks: PatientVisitTask[] = [];
 
 // Function to map PatientVisit to PatientVisitTask
 function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
@@ -62,21 +61,34 @@ function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
 
 
 function KanbanBoard() {
+  const { boardID } = useParams<{ boardID: string }>();
+ 
+
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
-  const [tasks, setTasks] = useState<PatientVisitTask[]>([]);
+  const [tasks, setTasks] = useState<PatientVisitTask[]>([]);  
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+
+        if (typeof boardID !== 'string') {
+          throw new Error('Invalid board ID');
+        }
+
+        const boardIDNumber = Number(boardID);
+        if (isNaN(boardIDNumber)) {
+          throw new Error('Invalid board ID');
+        }
+
         // First API call
-        const journeyPoints = await GetJourneyPoints();
-        setColumns(journeyPoints.sort((a,b) => {
+        const journeyPoints = await GetJourneyPoints(boardIDNumber);
+        setColumns((journeyPoints || []).sort((a, b) => {
           return a.position - b.position;
         }));
 
         // Second API call (dependent on the first)
         const patientVisits = await ListVisitsByParams({
-          journey_board_id: 1,
+          journey_board_id: boardIDNumber,
         });
         setTasks(mapPatientVisitsToTasks(patientVisits));
       } catch (error) {
@@ -84,7 +96,7 @@ function KanbanBoard() {
       }
     };
     fetchData();
-  }, []);
+  }, [boardID]);
 
   const columnsId = useMemo(() => columns.map((col) => col.id), [columns]); // TODO: changes cause it to have unresponsive draging effect
 
@@ -135,7 +147,7 @@ function KanbanBoard() {
           <div className="flex gap-4">
             <SortableContext items={columnsId}>
               {columns
-                .sort((a,b) => (
+                .sort((a, b) => (
                   a.position - b.position
                 ))
                 .map((col) => {

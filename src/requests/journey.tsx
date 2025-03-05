@@ -4,11 +4,11 @@ import axios from "axios";
 import { JOURNEY_URL_PATH } from "constants/constants";
 
 
-export async function GetJourneyPoints(): Promise<JourneyPoint[]> {
+export async function GetJourneyPoints(boardID:number): Promise<JourneyPoint[]> {
   try {
     const token = getToken();
     const response = await axios.get(
-        `${JOURNEY_URL_PATH}/board/1`, {
+        `${JOURNEY_URL_PATH}/board/${boardID}`, {
             withCredentials: true,
             headers: {
                 Authorization: `Bearer ${token}`
