@@ -1,7 +1,7 @@
 import axios from "axios";
-import { PATIENT_PATH, PATIENT_VISIT_PATH } from "constants/constants";
+import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
-import { GetPatientParam, GetPatientVisitParam, Patient, PatientVisit, RegisterPatient, UpdatePatientVisitPayload } from "@models/patient";
+import { GetPatientParam, GetPatientVisitParam, InsertPatientVisitDetailParam, Patient, PatientVisit, RegisterPatient, UpdatePatientVisitPayload } from "@models/patient";
 import { CommonResponse } from "@models/common";
 
 
@@ -111,6 +111,27 @@ export const RegisterPatientRequest = async (patientForm: RegisterPatient): Prom
         const token = getToken();
         const response = await axios.post(
             `${PATIENT_PATH}`, patientForm, {
+                withCredentials: true,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+          );
+
+        const responseData = await response.data;
+        return responseData.data;
+    } catch (error) {
+        console.error("Error fetching response data:", error);
+        // Optional: throw or return a rejected promise to propagate the error
+        throw error;
+    }
+}
+
+export const UpsertPatientVisitDetailRequest = async (patientVisitDetail: InsertPatientVisitDetailParam): Promise<CommonResponse<null>> => {
+    try {
+        const token = getToken();
+        const response = await axios.post(
+            `${PATIENT_VISIT_DETAIL_PATH}`, patientVisitDetail, {
                 withCredentials: true,
                 headers: {
                   Authorization: `Bearer ${token}`,
