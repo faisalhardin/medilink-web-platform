@@ -22,7 +22,6 @@ export const NavList = (paramProps:NavListProps) => {
         setIsLoading(true);
         setError(null);
         try {
-            console.log("before request")
             const response = await paramProps.request();
             setItems(response);
         } catch (error) {

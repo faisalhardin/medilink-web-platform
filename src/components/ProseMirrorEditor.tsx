@@ -72,7 +72,6 @@ const handleSubmit = async (): Promise<void> => {
   if (!viewRef.current) return;
 
   const contentJSON = viewRef.current.state.doc.toJSON(); // Convert content to JSON
-console.log(contentJSON);
 return;
   try {
     const response = await fetch("/api/saveContent", {

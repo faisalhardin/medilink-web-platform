@@ -58,7 +58,6 @@ export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisi
 
 export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Promise<PatientVisit> {
     try {
-        console.log(`${PATIENT_VISIT_PATH}/${params.id}`)
       const token = getToken();
       const response = await axios.patch(
           `${PATIENT_VISIT_PATH}/${params.id}`, 
