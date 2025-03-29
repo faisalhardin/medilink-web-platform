@@ -2,22 +2,33 @@ import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import EditorjsList from '@editorjs/list';
 import { UpsertPatientVisitDetailRequest } from '@requests/patient';
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
-export const EditorComponent: React.FC = () => {
+interface EditorComponentProps {
+  id: string; // Unique ID for the editor instance
+  data?: any; // Optional: Preloaded data
+  placeHolder?: string; // Placeholder text for the editor
+  readOnly?: boolean
+  onSave?: (data: any) => void; // Custom save function
+  fetchData?: (id: string) => Promise<any>; // Custom fetch function
+}
+
+export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave, fetchData }: EditorComponentProps) => {
   const editorInstance = useRef<EditorJS | null>(null);
-
+  
   useEffect(() => {
-    const initEditor = async () => {
+    const initEditor = async (editorData: any) => {
       if (!editorInstance.current) {
         editorInstance.current = new EditorJS({
-          holder: "editorjs",
+          holder: id,
           tools: {
             header: Header,
             list: EditorjsList,
           },
-          placeholder: "Jot here...",
+          placeholder: placeHolder,
           minHeight : 14,
+          readOnly,
+          data: editorData || { blocks: []},
           onReady: () => {
             console.log("Editor.js is ready!");
           },
@@ -25,7 +36,21 @@ export const EditorComponent: React.FC = () => {
       }
     };
 
-    initEditor();
+    const initialize = async () => {
+      let initialData = data;
+      if (fetchData) {
+        try {
+          const fetchedData = await fetchData(id);
+          initialData = fetchedData;
+        } catch (error) {
+          console.error('Fetching data failed:', error);
+        }
+      }
+      initEditor(initialData);
+    };
+
+
+    initialize();
 
     return () => {
       if (editorInstance.current && typeof editorInstance.current.destroy === "function") {
@@ -33,34 +58,34 @@ export const EditorComponent: React.FC = () => {
         editorInstance.current = null;
       }
     };
-  }, []);
+  }, [id, readOnly, data, fetchData]);
 
   const saveEditorContent = async () => {
-    editorInstance.current?.save().then((outputData) => {
-      console.log('Article data: ', outputData)
+    console.log("here 3");
+    if (!editorInstance.current) return;
+    try {
+      const outputData = await editorInstance.current.save();
       
-      try {
-        const resp = UpsertPatientVisitDetailRequest({
-          id_mst_journey_point: 66,
-          name_mst_journey_point: "Doctor's Room",
-          notes: outputData,
-          id_trx_patient_visit: 1,
-          touchpoint_name: "",
-        });
-        return resp;
-      } catch(error) {
-        return
+      console.log(outputData);
+      if (onSave) {
+        onSave(outputData); // Call the custom save function if provided
       }
-    }).catch((error) => {
-      console.log('Saving failed: ', error)
-    })
-  }
-
+    } catch (error) {
+      console.error("Saving failed:", error);
+    }
+  };
       
   return (
     <div >
-      <div id='editorjs'/>
-      <button onClick={saveEditorContent} className='text-white bg-primary-7 hover:bg-primary-5 m-auto'>Save</button>
+      <div id={id}/>
+      {!readOnly && (
+        <button
+          onClick={saveEditorContent}
+          className="text-white bg-primary-7 hover:bg-primary-5 px-4 py-2 mt-2 rounded"
+        >
+          Save
+        </button>
+      )}
     </div>
   )
 }

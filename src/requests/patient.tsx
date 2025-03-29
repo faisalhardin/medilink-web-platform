@@ -1,7 +1,7 @@
 import axios from "axios";
 import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
-import { GetPatientParam, GetPatientVisitParam, InsertPatientVisitDetailParam, Patient, PatientVisit, RegisterPatient, UpdatePatientVisitPayload } from "@models/patient";
+import { GetPatientParam, GetPatientVisitParam, InsertPatientVisitDetailParam, Patient, PatientVisit, PatientVisitDetail, RegisterPatient, UpdatePatientVisitPayload } from "@models/patient";
 import { CommonResponse } from "@models/common";
 
 
@@ -147,3 +147,26 @@ export const UpsertPatientVisitDetailRequest = async (patientVisitDetail: Insert
         throw error;
     }
 }
+
+export const GetPatientVisitDetailRequest = async (id: number): Promise<CommonResponse<PatientVisitDetail[]>> => {
+    try {
+        const token = getToken();
+        const response = await axios.get(
+            `${PATIENT_VISIT_PATH}/${id}/detail`, {
+                withCredentials: true,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+          );
+          const responseData = await response.data;
+          return responseData;
+      } catch (error) {
+          console.error("Error fetching response data:", error);
+          // Optional: throw or return a rejected promise to propagate the error
+          return {
+            data: [],
+            message: "Error fetching data",
+          };
+      }
+  }

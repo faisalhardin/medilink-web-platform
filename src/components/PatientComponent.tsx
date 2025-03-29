@@ -29,7 +29,7 @@ export const PatientListComponent = () => {
     };
 
     return (
-        <div className="p-6 flex flex-col h-screen items-center w-full">
+        <div className="p-6 flex flex-col h-screen items-center">
             <div className="justify-center w-full">
                 <h2 className="text-2xl font-semibold mb-6">Register New Patient</h2>
 
