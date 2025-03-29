@@ -46,7 +46,7 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave,
           console.error('Fetching data failed:', error);
         }
       }
-      initEditor(initialData);
+      await initEditor(initialData);
     };
 
 
@@ -61,12 +61,10 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave,
   }, [id, readOnly, data, fetchData]);
 
   const saveEditorContent = async () => {
-    console.log("here 3");
     if (!editorInstance.current) return;
     try {
       const outputData = await editorInstance.current.save();
       
-      console.log(outputData);
       if (onSave) {
         onSave(outputData); // Call the custom save function if provided
       }
