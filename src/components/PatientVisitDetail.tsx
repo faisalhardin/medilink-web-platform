@@ -4,11 +4,13 @@ import { EditorComponent } from './EditorComponent';
 import { GetPatientVisitDetailRequest, UpsertPatientVisitDetailRequest } from '@requests/patient';
 import { PatientVisitDetail as VisitDetail} from "@models/patient";
 import { OutputData } from '@editorjs/editorjs';
+import { getStorageJourneyPoints, getStorageUserJourneyPointsIDAsSet } from '@utils/storage';
 
 export const PatientVisitDetail = () => {
 
     const [activeTab, setActiveTab] = useState<number>(0);
     const [visitDetails, setVisitDetails] = useState<VisitDetail[]>([]);
+    const [myVisitDetails, setMyVisitDetails] = useState<VisitDetail[]>([]);
 
     const UpsertPatientVisitDetail = (outputData:OutputData) => {
         return UpsertPatientVisitDetailRequest({
@@ -51,10 +53,24 @@ export const PatientVisitDetail = () => {
         const fetchData = async () => {
             try {
                 const response = await GetPatientVisitDetailRequest(1);
-                setVisitDetails(response.data || []);
+                if (response.data === undefined) {
+                    setVisitDetails([]);
+                    setMyVisitDetails([]);
+                    return
+                }
+                const userJourneyPoint = getStorageUserJourneyPointsIDAsSet();
+                const userOwnedVisitDetails = response.data.filter((visitDetail) => (
+                    userJourneyPoint.has(visitDetail.journey_point_id
+                    )))
+                const otherOwnedVisitDetails = response.data.filter((visitDetail) => (
+                    !userJourneyPoint.has(visitDetail.journey_point_id)
+                ))
+                setMyVisitDetails(userOwnedVisitDetails);
+                setVisitDetails(otherOwnedVisitDetails);
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setVisitDetails([]);
+                setMyVisitDetails([]);
             }
         }
 
@@ -93,12 +109,16 @@ export const PatientVisitDetail = () => {
                         <EditorComponent 
                         id='editorjs' 
                         readOnly={false}
+                        data={myVisitDetails}
                         placeHolder="Jot here..."
                         onSave={UpsertPatientVisitDetail}/>
                     </div>
                     <div className='w-5/12 border-l-2 p-6'>
                         {visitDetails.map((content:VisitDetail) => (
-                            <EditorComponent id={`content-${content.id}`} readOnly={true} data={content.notes} key={content.id}/>
+                            <EditorComponent 
+                            id={`content-${content.id}`} 
+                            readOnly={true} 
+                            data={content.notes} key={content.id}/>
                         ))}
                     </div>
                 </div>
