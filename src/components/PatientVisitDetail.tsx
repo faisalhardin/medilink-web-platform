@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import ProseMirrorEditor from './ProseMirrorEditor';
-import { EditorComponent } from './EditorComponent';
 import { GetPatientVisitDetailRequest, UpsertPatientVisitDetailRequest } from '@requests/patient';
 import { PatientVisitDetail as VisitDetail} from "@models/patient";
 import { OutputData } from '@editorjs/editorjs';
-import { getStorageJourneyPoints, getStorageUserJourneyPointsIDAsSet } from '@utils/storage';
+import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
+import { Id } from 'types';
 
 export const PatientVisitDetail = () => {
 
-    const [activeTab, setActiveTab] = useState<number>(0);
+    const [activeTab, setActiveTab] = useState<Id>(0);
     const [visitDetails, setVisitDetails] = useState<VisitDetail[]>([]);
-    const [myVisitDetails, setMyVisitDetails] = useState<VisitDetail[]>([]);
 
     const UpsertPatientVisitDetail = (outputData:OutputData) => {
         return UpsertPatientVisitDetailRequest({
@@ -22,9 +20,10 @@ export const PatientVisitDetail = () => {
           })
     }
 
-    const handleTabClick = (index: number) => {
-        setActiveTab(index);
-    };
+    const updateActiveTab = (id:Id) => {
+        console.log("update ", id);
+        setActiveTab(id);
+    }
 
     const patientVisit = {
         id: 48,
@@ -35,15 +34,15 @@ export const PatientVisitDetail = () => {
     const patientVisitDetails = [
         {
             id: 1,
-            name_mst_journey_point: "Registration",
-            journey_point_id: 0,
+            name_mst_journey_point: "Doctor's Room",
+            journey_point_id: 66,
             id_patient_visit: 1,
             notes: "keluhan sakit kepala"
         },
         {
             id: 2,
             name_mst_journey_point: "Nurse station",
-            journey_point_id: 64,
+            journey_point_id: 65,
             id_patient_visit: 1,
             notes: "keluhan sakit kepala"
         },
@@ -51,27 +50,22 @@ export const PatientVisitDetail = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            
             try {
                 const response = await GetPatientVisitDetailRequest(1);
                 if (response.data === undefined) {
                     setVisitDetails([]);
-                    setMyVisitDetails([]);
                     return
                 }
-                const userJourneyPoint = getStorageUserJourneyPointsIDAsSet();
-                const userOwnedVisitDetails = response.data.filter((visitDetail) => (
-                    userJourneyPoint.has(visitDetail.journey_point_id
-                    )))
-                const otherOwnedVisitDetails = response.data.filter((visitDetail) => (
-                    !userJourneyPoint.has(visitDetail.journey_point_id)
-                ))
-                setMyVisitDetails(userOwnedVisitDetails);
-                setVisitDetails(otherOwnedVisitDetails);
+                const userOwnedVisitDetails = response.data;
+
+                setVisitDetails(userOwnedVisitDetails);
+                setActiveTab(patientVisitDetails[0].journey_point_id);
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setVisitDetails([]);
-                setMyVisitDetails([]);
             }
+           
         }
 
         fetchData();
@@ -94,7 +88,9 @@ export const PatientVisitDetail = () => {
                     <ul className='flex'>
                         {patientVisitDetails.map((item, idx) => {
                             return (
-                                <li className='mr-6' key={idx}>
+                                <li onClick={()=> {
+                                    updateActiveTab(item.journey_point_id)  
+                                }} className='mr-6' key={idx}>
                                     <a className="text-gray-600 pb-2 border-b-2 border-transparent hover:border-blue-600" href="#">
                                         {item.name_mst_journey_point}
                                     </a>
@@ -104,24 +100,12 @@ export const PatientVisitDetail = () => {
                         })}
                     </ul>
                 </div>
-                <div className='flex'>
-                    <div className='w-7/12 pl-8 pr-3'>
-                        <EditorComponent 
-                        id='editorjs' 
-                        readOnly={false}
-                        data={myVisitDetails}
-                        placeHolder="Jot here..."
-                        onSave={UpsertPatientVisitDetail}/>
-                    </div>
-                    <div className='w-5/12 border-l-2 p-6'>
-                        {visitDetails.map((content:VisitDetail) => (
-                            <EditorComponent 
-                            id={`content-${content.id}`} 
-                            readOnly={true} 
-                            data={content.notes} key={content.id}/>
-                        ))}
-                    </div>
-                </div>
+
+                    <PatientVisitlDetailNotes 
+                    myVisitDetails={visitDetails}
+                    activeTab={activeTab}
+                    />
+
             </div>
         </div>
     )
