@@ -102,7 +102,7 @@ export const PatientVisitDetail = () => {
                 </div>
 
                     <PatientVisitlDetailNotes 
-                    myVisitDetails={visitDetails}
+                    visitDetails={visitDetails}
                     activeTab={activeTab}
                     />
 

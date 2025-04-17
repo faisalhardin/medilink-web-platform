@@ -12,6 +12,13 @@ export type JourneyPoint = {
     board_id: number;
 } 
 
+export type ServicePoints = {
+    id: Id;
+    name: string;
+    id_mst_journey_board: number;
+    id_mst_institution: number;
+}
+
 export type PatientVisitTask = {
     id: Id;
     columnId: Id;

@@ -158,7 +158,7 @@ export const GetPatientVisitDetailRequest = async (id: number): Promise<CommonRe
                 },
               }
           );
-          const responseData = await response.data;
+          const responseData = response.data;
           return responseData;
       } catch (error) {
           console.error("Error fetching response data:", error);

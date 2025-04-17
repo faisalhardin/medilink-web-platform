@@ -1,6 +1,6 @@
 import {jwtDecode} from "jwt-decode";
 import { JWT_TOKEN_KEY, MEDILINK_USER } from "constants/constants";
-import { JourneyPoint } from "@models/journey";
+import { JourneyPoint, ServicePoints } from "@models/journey";
 import { Id } from "types";
 
 // Function to save a JWT token to localStorage
@@ -26,6 +26,19 @@ export const getStorageJourneyPoints = (): JourneyPoint[] => {
     return [];
 }
 
+export const getStorageServicePoints = (): ServicePoints[] => {
+    const userPayload = sessionStorage.getItem(MEDILINK_USER) || "";
+    if (userPayload) {
+        try {
+            const user: JwtClaims = JSON.parse(userPayload);
+            return user.service_points;
+        } catch (error) {
+            return []
+        }
+    }
+    return [];
+};
+
 export const getStorageUserJourneyPointsIDAsSet = (): Set<Id> => {
     const userJourneyPointsArray = getStorageJourneyPoints();
     const userJourneyPointsSet = new Set(userJourneyPointsArray.map((journeyPoint) => {
@@ -34,6 +47,16 @@ export const getStorageUserJourneyPointsIDAsSet = (): Set<Id> => {
     return userJourneyPointsSet;
 
 }
+
+export const getStorageUserServicePointsIDAsSet = (): Set<Id> => {
+    const userServicePointsArray = getStorageServicePoints();
+   if (userServicePointsArray === null || userServicePointsArray === undefined) return new Set();
+
+    const userServicePointsSet = new Set(userServicePointsArray.map((servicePoint) => {
+        return servicePoint.id;
+    } ));
+    return userServicePointsSet;
+};
 
 // Function to remove the JWT token from localStorage
 export const removeToken = (): void => {

@@ -50,6 +50,8 @@ export interface PatientVisitDetail {
   journey_point_id: number;
   id_patient_visit: number;
   notes: string;
+  service_point_id?: number;
+  contributors: string;
 }
 
 export interface UpdatePatientVisitPayload {
