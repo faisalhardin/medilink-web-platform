@@ -1,7 +1,7 @@
 import axios from "axios";
 import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
-import { GetPatientParam, GetPatientVisitParam, InsertPatientVisitDetailParam, Patient, PatientVisit, PatientVisitDetail, RegisterPatient, UpdatePatientVisitPayload } from "@models/patient";
+import { GetPatientParam, GetPatientVisitParam, UpsertPatientVisitDetailParam, Patient, PatientVisit, PatientVisitDetail, RegisterPatient, UpdatePatientVisitPayload, GetPatientVisitDetailedResponse } from "@models/patient";
 import { CommonResponse } from "@models/common";
 
 
@@ -80,6 +80,28 @@ export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Prom
     }
   }
 
+  export async function GetPatientVisitDetailedByID(patientVisitID:number): Promise<GetPatientVisitDetailedResponse> {
+    try {
+      const token = getToken();
+      const response = await axios.get(
+          `${PATIENT_VISIT_PATH}/${patientVisitID}`, 
+          {
+              withCredentials: true,
+              headers: {
+                  Authorization: `Bearer ${token}`
+              },
+              
+          }
+      );
+      if (response.status >= 400) {
+        throw new Error;
+      }
+      return await response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
 export const ListVisitsByParams = async (params:GetPatientVisitParam): Promise<PatientVisit[]> => {
     try {
         const token = getToken();
@@ -126,7 +148,7 @@ export const RegisterPatientRequest = async (patientForm: RegisterPatient): Prom
     }
 }
 
-export const UpsertPatientVisitDetailRequest = async (patientVisitDetail: InsertPatientVisitDetailParam): Promise<CommonResponse<null>> => {
+export const UpsertPatientVisitDetailRequest = async (patientVisitDetail: UpsertPatientVisitDetailParam): Promise<CommonResponse<PatientVisitDetail>> => {
     try {
         const token = getToken();
         const response = await axios.post(

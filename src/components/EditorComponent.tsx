@@ -1,7 +1,6 @@
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import EditorjsList from '@editorjs/list';
-import { UpsertPatientVisitDetailRequest } from '@requests/patient';
 import React, { useEffect, useRef, useState } from 'react'
 
 interface EditorComponentProps {
@@ -10,14 +9,13 @@ interface EditorComponentProps {
   placeHolder?: string; // Placeholder text for the editor
   readOnly?: boolean
   onSave?: (data: any) => void; // Custom save function
-  fetchData?: (id: string) => Promise<any>; // Custom fetch function
 }
 
-export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave, fetchData }: EditorComponentProps) => {
+export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave }: EditorComponentProps) => {
   const editorInstance = useRef<EditorJS | null>(null);
   
   useEffect(() => {
-    const initEditor = async (editorData: any) => {
+    const initEditor = async (editorData?: any) => {
       if (!editorInstance.current) {
         editorInstance.current = new EditorJS({
           holder: id,
@@ -37,16 +35,11 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave,
     };
 
     const initialize = async () => {
-      let initialData = data;
-      if (fetchData) {
-        try {
-          const fetchedData = await fetchData(id);
-          initialData = fetchedData;
-        } catch (error) {
-          console.error('Fetching data failed:', error);
-        }
+      if (data && data.notes) {
+        await initEditor(data.notes);
+      } else {
+        await initEditor();
       }
-      await initEditor(initialData);
     };
 
 
@@ -58,7 +51,7 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave,
         editorInstance.current = null;
       }
     };
-  }, [id, readOnly, data, fetchData]);
+  }, [id, readOnly, data]);
 
   const saveEditorContent = async () => {
     if (!editorInstance.current) return;
