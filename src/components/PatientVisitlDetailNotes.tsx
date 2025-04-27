@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { EditorComponent } from './EditorComponent';
 import { UpsertPatientVisitDetailRequest } from '@requests/patient';
-import { PatientVisit, UpsertPatientVisitDetailParam, PatientVisitDetail as VisitDetail } from "@models/patient";
+import { PatientVisit, PatientVisitDetail, UpsertPatientVisitDetailParam, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { OutputData } from '@editorjs/editorjs';
 import { Id } from 'types';
 import { getStorageUserJourneyPointsIDAsSet, getStorageUserServicePointsIDAsSet } from '@utils/storage';
@@ -10,9 +10,10 @@ interface patientVisitProps {
     patientVisit: PatientVisit,
     visitDetails: VisitDetail[],
     activeTab: Id,
+    upsertVisitDetailFunc: (param: PatientVisitDetail) => void;
 }
 
-export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab }: patientVisitProps) => {
+export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc }: patientVisitProps) => {
     const [myVisitDetails, setMyVisitDetails] = useState<VisitDetail[]>([]);
     const [otherVisitDetails, setOtherVisitDetails] = useState<VisitDetail[]>([]);
     const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set()); // [1
@@ -77,7 +78,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                         placeHolder="Jot here..."
                         onSave={(notes:Record<string, any>) =>{
                             detail.notes = notes;
-                            UpsertPatientVisitDetail(detail);
+                            upsertVisitDetailFunc(detail);
                         }} />
                 ))
                 }
@@ -94,7 +95,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                                 journey_point_id: journeyPointID,
                                 id_patient_visit: patientVisit.id,
                             }
-                            UpsertPatientVisitDetail(detail);
+                            upsertVisitDetailFunc(detail);
                             
                         }}  />
                         }

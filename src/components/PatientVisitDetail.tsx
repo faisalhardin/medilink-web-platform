@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import { GetPatientVisitDetailedByID, GetPatientVisitDetailRequest, UpsertPatientVisitDetailRequest } from '@requests/patient';
-import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetailComponentProps, UpsertPatientVisitDetailParam, PatientVisitDetail as VisitDetail} from "@models/patient";
+import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpsertPatientVisitDetailParam, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { Id } from 'types';
 import { JourneyPoint } from '@models/journey';
 
-export const PatientVisitComponent = ({patientVisitId}:PatientVisitDetailComponentProps) => {
+export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComponentProps) => {
     const [journeyPointTab, setJourneyPointTab] = useState<JourneyPoint[]>([]);
     const [activeTab, setActiveTab] = useState<Id>(0);
     const [visitDetails, setVisitDetails] = useState<VisitDetail[]>([]);
     const [patientVisit, setPatientVisit] = useState<PatientVisit>({} as PatientVisit);
     const [patient, setPatient] = useState<Patient>({} as Patient);
 
-    const updateActiveTab = (id:Id) => {
+    const updateActiveTab = (id: Id) => {
         setActiveTab(id);
     }
 
     const GenerateVisitTab = (_patientVisit: GetPatientVisitDetailedResponse) => {
         var setOfJourneyPointID = new Set();
-        var journeyPointTab:JourneyPoint[] = []; 
+        var journeyPointTab: JourneyPoint[] = [];
         for (const patientVisitJourneyPoint of _patientVisit.patient_checkpoints) {
             if (!setOfJourneyPointID.has(patientVisitJourneyPoint.journey_point_id)) {
                 setOfJourneyPointID.add(patientVisitJourneyPoint.journey_point_id);
@@ -36,7 +36,7 @@ export const PatientVisitComponent = ({patientVisitId}:PatientVisitDetailCompone
 
     useEffect(() => {
         const fetchData = async () => {
-            
+
             try {
                 const patientVisitDetail = await GetPatientVisitDetailedByID(patientVisitId);
                 if (patientVisitDetail !== undefined) {
@@ -50,7 +50,7 @@ export const PatientVisitComponent = ({patientVisitId}:PatientVisitDetailCompone
                 console.error("Error fetching data:", error);
                 setVisitDetails([]);
             }
-           
+
         }
 
         fetchData();
@@ -73,8 +73,8 @@ export const PatientVisitComponent = ({patientVisitId}:PatientVisitDetailCompone
                     <ul className='flex'>
                         {journeyPointTab.map((item, idx) => {
                             return (
-                                <li onClick={()=> {
-                                    updateActiveTab(item.id)  
+                                <li onClick={() => {
+                                    updateActiveTab(item.id)
                                 }} className='mr-6' key={idx}>
                                     <a className="text-gray-600 pb-2 border-b-2 border-transparent hover:border-blue-600" href="#">
                                         {item.name}
@@ -86,13 +86,56 @@ export const PatientVisitComponent = ({patientVisitId}:PatientVisitDetailCompone
                     </ul>
                 </div>
 
-                    <PatientVisitlDetailNotes 
+                <PatientVisitlDetailNotes
                     visitDetails={visitDetails}
                     activeTab={activeTab}
                     patientVisit={patientVisit}
-                    />
+                    upsertVisitDetailFunc={upsertVisitDetail}
+                />
 
             </div>
         </div>
     )
+
+    async function upsertVisitDetail(visitDetail: PatientVisitDetail) {
+        try {
+            // First add to the backend and get the response
+            // (which might include an ID or other server-generated fields)
+            const resp = await UpsertPatientVisitDetailRequest({
+                id: visitDetail.id,
+                id_trx_patient_visit: visitDetail.id_patient_visit,
+                id_mst_journey_point: visitDetail.journey_point_id,
+                notes: visitDetail.notes,
+            });
+
+            const createdVisitDetail = resp.data as PatientVisitDetail;
+            // Then update the local state with the response from the server
+            setVisitDetails((currentVisitDetails) => {
+                // If the visit detail has an ID, it might be an update
+                if (visitDetail.id) {
+                    const existingIndex = currentVisitDetails.findIndex(
+                        (detail) => detail.id === visitDetail.id
+                    );
+
+                    if (existingIndex >= 0) {
+                        // Update existing item
+                        return currentVisitDetails.map((detail) =>
+                            detail.id === visitDetail.id ? { ...detail, ...createdVisitDetail } : detail
+                        );
+                    }
+                }
+
+                // If no ID or item not found, it's a new item
+                return [...currentVisitDetails, createdVisitDetail];
+            });
+
+            // Optionally return the created detail if needed elsewhere
+            return createdVisitDetail;
+        } catch (error) {
+            console.error("Failed to create visit detail:", error);
+            // Handle error (show notification, etc.)
+            throw error; // Re-throw if you want calling code to handle it
+        }
+    }
+
 }

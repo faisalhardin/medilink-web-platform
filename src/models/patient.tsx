@@ -103,7 +103,7 @@ export interface UpsertPatientVisitDetailParam {
   id?: number;
   id_trx_patient_visit: number;
   touchpoint_name?: string;
-  name_mst_journey_point: string;
+  name_mst_journey_point?: string;
   id_mst_journey_point: number;
   notes: Record<string, any>;
 }
