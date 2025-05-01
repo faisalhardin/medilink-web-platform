@@ -80,7 +80,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                 }
                 { shouldShowEditor && <EditorComponent
                         id='editorjs'
-                        readOnly={true}
+                        readOnly={false}
                         placeHolder="Jot here..."
                         onSave={(notes:Record<string, any>) =>{
                             var journeyPointID:number = activeTab.id;
