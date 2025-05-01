@@ -7,7 +7,7 @@ import { JourneyBoard } from "@models/journey";
 
 function ColumnNav() {
   return (
-    <div className="w-[300px] h-screen shadow-md">
+    <div className="w-[200px] h-screen shadow-md relative">
       <div className="p-4 text-lg font-bold text-center">
         Dashboard
       </div>

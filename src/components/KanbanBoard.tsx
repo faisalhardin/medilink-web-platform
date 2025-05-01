@@ -315,7 +315,6 @@ function KanbanBoard() {
 
         try {
           if (!(typeof tasks[activeIndex].id === 'number' && typeof tasks[activeIndex].columnId === 'number')) return;
-          console.log("update to db", tasks);
           UpdatePatientVisit({
             id: tasks[activeIndex].id,
             journey_point_id: tasks[activeIndex].columnId,

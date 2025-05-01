@@ -15,5 +15,8 @@ export const PATIENT_PATH = `${MEDILINK_API_BASE_URL}/v1/patient`
 // path to visits
 export const PATIENT_VISIT_PATH = `${MEDILINK_API_BASE_URL}/v1/visit`
 
+// path to visit detail
+export const PATIENT_VISIT_DETAIL_PATH = `${MEDILINK_API_BASE_URL}/v1/visit-detail`
+
 // path to journey
 export const JOURNEY_URL_PATH = `${MEDILINK_API_BASE_URL}/v1/journey`

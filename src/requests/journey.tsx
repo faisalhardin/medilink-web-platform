@@ -35,7 +35,6 @@ export async function UpdateJourneyPoint(params:JourneyPoint): Promise<JourneyPo
               
           }
       );
-      console.log(response);
       return await response.data.data.journey_points;
     } catch (error) {
       throw error;
@@ -56,7 +55,6 @@ export async function UpdateJourneyPoint(params:JourneyPoint): Promise<JourneyPo
               
           }
       );
-      console.log(response);
       return await response.data.data.journey_points;
     } catch (error) {
       throw error;

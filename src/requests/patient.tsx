@@ -1,7 +1,7 @@
 import axios from "axios";
-import { PATIENT_PATH, PATIENT_VISIT_PATH } from "constants/constants";
+import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
-import { GetPatientParam, GetPatientVisitParam, Patient, PatientVisit, RegisterPatient, UpdatePatientVisitPayload } from "@models/patient";
+import { GetPatientParam, GetPatientVisitParam, UpsertPatientVisitDetailParam, Patient, PatientVisit, PatientVisitDetail, RegisterPatient, UpdatePatientVisitPayload, GetPatientVisitDetailedResponse } from "@models/patient";
 import { CommonResponse } from "@models/common";
 
 
@@ -58,7 +58,6 @@ export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisi
 
 export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Promise<PatientVisit> {
     try {
-        console.log(`${PATIENT_VISIT_PATH}/${params.id}`)
       const token = getToken();
       const response = await axios.patch(
           `${PATIENT_VISIT_PATH}/${params.id}`, 
@@ -76,6 +75,28 @@ export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Prom
         throw new Error;
       }
       return await response.data.data.journey_points;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  export async function GetPatientVisitDetailedByID(patientVisitID:number): Promise<GetPatientVisitDetailedResponse> {
+    try {
+      const token = getToken();
+      const response = await axios.get(
+          `${PATIENT_VISIT_PATH}/${patientVisitID}`, 
+          {
+              withCredentials: true,
+              headers: {
+                  Authorization: `Bearer ${token}`
+              },
+              
+          }
+      );
+      if (response.status >= 400) {
+        throw new Error;
+      }
+      return await response.data.data;
     } catch (error) {
       throw error;
     }
@@ -126,3 +147,47 @@ export const RegisterPatientRequest = async (patientForm: RegisterPatient): Prom
         throw error;
     }
 }
+
+export const UpsertPatientVisitDetailRequest = async (patientVisitDetail: UpsertPatientVisitDetailParam): Promise<CommonResponse<PatientVisitDetail>> => {
+    try {
+        const token = getToken();
+        const response = await axios.post(
+            `${PATIENT_VISIT_DETAIL_PATH}`, patientVisitDetail, {
+                withCredentials: true,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+          );
+        console.log("UpsertPatientVisitDetailRequest ",response);
+        const responseData = await response.data;
+        return responseData.data;
+    } catch (error) {
+        console.error("Error fetching response data:", error);
+        // Optional: throw or return a rejected promise to propagate the error
+        throw error;
+    }
+}
+
+export const GetPatientVisitDetailRequest = async (id: number): Promise<CommonResponse<PatientVisitDetail[]>> => {
+    try {
+        const token = getToken();
+        const response = await axios.get(
+            `${PATIENT_VISIT_PATH}/${id}/detail`, {
+                withCredentials: true,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+          );
+          const responseData = response.data;
+          return responseData;
+      } catch (error) {
+          console.error("Error fetching response data:", error);
+          // Optional: throw or return a rejected promise to propagate the error
+          return {
+            data: [],
+            message: "Error fetching data",
+          };
+      }
+  }
