@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { EditorComponent } from './EditorComponent';
-import { UpsertPatientVisitDetailRequest } from '@requests/patient';
-import { PatientVisit, PatientVisitDetail, UpsertPatientVisitDetailParam, PatientVisitDetail as VisitDetail } from "@models/patient";
-import { OutputData } from '@editorjs/editorjs';
+import { PatientVisit, PatientVisitDetail, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { Id } from 'types';
 import { getStorageUserJourneyPointsIDAsSet, getStorageUserServicePointsIDAsSet } from '@utils/storage';
+import { journeyTab } from './PatientVisitDetail';
 
 interface patientVisitProps {
     patientVisit: PatientVisit,
-    visitDetails: VisitDetail[],
-    activeTab: Id,
+    visitDetails?: VisitDetail[],
+    activeTab: journeyTab,
     upsertVisitDetailFunc: (param: PatientVisitDetail) => void;
 }
 
@@ -25,21 +24,27 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
         const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
         setUserJourneyPoints(_userJourneyPoints);
+        
+        const details = visitDetails == undefined? [] as VisitDetail[] : visitDetails;
+        if (details.length === 0) {
+            setMyVisitDetails([]);
+            setOtherVisitDetails([]);
+            return;
+        }
 
         // Filter details that belong to the user's service points
-        const userDetails = visitDetails.filter(detail => {
-
-            const detailHaveJourneyPoint = detail.journey_point_id;
+        const userDetails = details.filter(detail => {
+            const detailHaveJourneyPoint = Boolean(detail.journey_point_id);
             const hasSameJourneyPoint = detailHaveJourneyPoint && userJourneyPoints.has(detail.journey_point_id);
             const detailHasServicePoint = detail.service_point_id && detail.service_point_id > 0;
             const userHasSameServicePoint = detailHasServicePoint && userServicePoints.has(detail.service_point_id as number);
 
-            return detailHaveJourneyPoint && hasSameJourneyPoint && (userHasSameServicePoint || !detailHasServicePoint)
+            return detailHaveJourneyPoint && hasSameJourneyPoint && (userHasSameServicePoint || !detailHasServicePoint);
         }
         );
 
         // Filter details that don't belong to the user's service points
-        const otherDetails = visitDetails.filter(detail =>
+        const otherDetails = details.filter(detail =>
             !userDetails.includes(detail)
         );
 
@@ -48,31 +53,22 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
     }, [visitDetails, activeTab]);
 
-    const UpsertPatientVisitDetail = (visitDetail: VisitDetail) => {
-        var payload: UpsertPatientVisitDetailParam = {
-            id: visitDetail.id,
-            id_mst_journey_point: visitDetail.journey_point_id,
-            name_mst_journey_point: visitDetail.name_mst_journey_point || "",
-            notes: visitDetail.notes,
-            id_trx_patient_visit: visitDetail.id_patient_visit,
-          }
-        
-          if(visitDetail.id) {
-            payload.id = visitDetail.id;
-          }
-          
-        return UpsertPatientVisitDetailRequest(payload)
-    }
+    const shouldShowEditor = useMemo(() => {
+        return userJourneyPoints.has(activeTab.id) &&                                       // does user has journey point that is the same with active tab
+            !myVisitDetails.some(detail => detail.journey_point_id === activeTab.id);       //  but does not have any notes currently
+    }, [activeTab, myVisitDetails]);
+
+
 
     return (
         <div className='flex w-full'>
             <div className='w-7/12 pl-8 pr-3'>
                 {myVisitDetails.length > 0 && myVisitDetails.filter((detail: VisitDetail) => {
-                    return detail.journey_point_id === activeTab
+                    return detail.journey_point_id === activeTab.id
                 }).map((detail: VisitDetail) => (
                     <EditorComponent
                         key={detail.id}
-                        id='editorjs'
+                        id={`editor-${detail.id}`}
                         readOnly={false}
                         data={detail || null}
                         placeHolder="Jot here..."
@@ -82,18 +78,18 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                         }} />
                 ))
                 }
-                { ( myVisitDetails.length === 0 || !myVisitDetails.some(detail => detail.journey_point_id === activeTab) && userJourneyPoints.has(activeTab))
-                && <EditorComponent
+                { shouldShowEditor && <EditorComponent
                         id='editorjs'
-                        readOnly={false}
+                        readOnly={true}
                         placeHolder="Jot here..."
                         onSave={(notes:Record<string, any>) =>{
-                            var journeyPointID:number = Number(activeTab);
+                            var journeyPointID:number = activeTab.id;
 
                             var detail:VisitDetail = {
                                 notes: notes,
                                 journey_point_id: journeyPointID,
                                 id_patient_visit: patientVisit.id,
+                                service_point_id: patientVisit.service_point_id,
                             }
                             upsertVisitDetailFunc(detail);
                             
@@ -103,7 +99,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
             <div className='w-5/12 border-l-2 p-6'>
                 {otherVisitDetails
                     .filter((detail) => {
-                        return detail.journey_point_id === activeTab;
+                        return detail.journey_point_id === activeTab.id;
                     })
                     .map((detail: VisitDetail) => (
                         <EditorComponent

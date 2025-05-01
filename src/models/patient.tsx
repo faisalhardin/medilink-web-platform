@@ -1,3 +1,4 @@
+import { JourneyPoint } from "./journey";
 
 
 export interface Patient {
@@ -45,6 +46,7 @@ export interface GetPatientVisitDetailedResponse {
   column_update_time: number;
   patient_checkpoints: PatientVisitDetail[];
   patient: Patient;
+  journey_point: JourneyPoint;
 }
 
 export interface PatientVisit {
@@ -60,7 +62,7 @@ export interface PatientVisit {
   create_time: string;
   update_time: string;
   service_point_name: string;
-  service_point_id: number;
+  service_point_id?: number;
   column_update_time: number;
   patient: Patient;
 }
@@ -106,4 +108,5 @@ export interface UpsertPatientVisitDetailParam {
   name_mst_journey_point?: string;
   id_mst_journey_point: number;
   notes: Record<string, any>;
+  service_point_id?: number
 }
