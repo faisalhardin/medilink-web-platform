@@ -3,6 +3,7 @@ import React, { Suspense } from 'react';
 import { useModal } from '../context/ModalContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { findComponentForPath } from '../modalRegistry';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 interface ModalLinkProps {
     to: string;
@@ -23,7 +24,6 @@ export function ModalLink({ to, children, className = '' }: ModalLinkProps) {
         
         if (!Component) {
             console.warn(`No modal component found for path: ${to}`);
-            // Fall back to regular navigation
             navigate(to);
             return;
         }
@@ -31,13 +31,18 @@ export function ModalLink({ to, children, className = '' }: ModalLinkProps) {
         // Store current location
         const currentLocation = location.pathname;
         
-        // Update URL without navigation
-        window.history.pushState(null, '', to);
+        // Ensure the path is absolute
+        const absolutePath = to.startsWith('/') ? to : `/${to}`;
+        const pathParts = absolutePath.split('/');
+        const id = pathParts[pathParts.length - 1];
         
-        // Open modal with the component
+        // Update URL without navigation
+        window.history.pushState(null, '', absolutePath);
+        
+        // Open modal with the wrapper component
         openModal(
             <Suspense fallback={<div>Loading...</div>}>
-                <Component />
+                 {React.createElement(Component as React.ComponentType<{id?: string}>, { id })}
             </Suspense>,
             () => {
                 // Restore previous URL when modal closes
@@ -47,7 +52,7 @@ export function ModalLink({ to, children, className = '' }: ModalLinkProps) {
     };
 
     return (
-        <a href={to} onClick={handleClick} className={className}>
+        <a href={to} onClick={handleClick} className={`${className} cursor-pointer`}>
             {children}
         </a>
     );
