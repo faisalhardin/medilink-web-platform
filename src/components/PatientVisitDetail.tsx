@@ -48,6 +48,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     }
 
     useEffect(() => {
+        console.log("here")
         const fetchData = async () => {
 
             try {
@@ -88,7 +89,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                                 <li onClick={() => {
                                     updateActiveTab(item)
                                 }} className='mr-6' key={idx}>
-                                    <a className="text-gray-600 pb-2 border-b-2 border-transparent hover:border-blue-600" href="#">
+                                    <a className="text-gray-600 pb-2 border-b-2 border-transparent hover:border-blue-600 cursor-pointer">
                                         {item.name}
                                     </a>
                                 </li>
