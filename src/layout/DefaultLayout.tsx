@@ -1,14 +1,11 @@
-import AppHeader from "@components/Header"
-
 import ColumnNav from "@components/NavColumn";
-import ProseMirrorEditor from "@components/ProseMirrorEditor";
 import Home from "@pages/Home";
 import Institution from "@pages/Institution";
 import JourneyBoard from "@pages/JourneyBoard";
 import PatientPage from "@pages/Patient";
 import PatientDetail from "@pages/PatientDetail";
 import PatientRegistrationPage from "@pages/PatientRegistration";
-import { PatientVisitDetailPage } from "@pages/PatientVisitDetail";
+import PatientVisitDetailPage from "@pages/PatientVisitDetail";
 import { Routes, Route } from "react-router-dom";
 
 

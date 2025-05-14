@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { PatientVisitTask } from "@models/journey";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
+import { ModalLink } from "./ModalLink";
 
 interface Props {
   task: PatientVisitTask;
@@ -56,45 +57,14 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
     );
   }
 
-  // if (editMode) {
-  //   return (
-  //     <div
-  //       ref={setNodeRef}
-  //       style={style}
-  //       {...attributes}
-  //       {...listeners}
-  //       className="bg-primary-3 p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative"
-  //     >
-  //       <textarea
-  //         className="
-  //       h-[90%]
-  //       w-full resize-none border-none rounded bg-transparent text-white focus:outline-none
-  //       "
-  //         value={task.notes}
-  //         autoFocus
-  //         placeholder="Task content here"
-  //         onBlur={toggleEditMode}
-  //         onKeyDown={(e) => {
-  //           if (e.key === "Enter" && e.shiftKey) {
-  //             toggleEditMode();
-  //           }
-  //         }}
-  //         onChange={(e) => updateTask(task.id, e.target.value)}
-  //       />
-  //     </div>
-  //   );
-  // }
-
   return (
-    // <>
-    
- 
-    <div
+    <ModalLink to={`/patient-visit/${task.id}`}>
+       <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      onClick={toggleEditMode}
+      // onClick={toggleEditMode}
       className="bg-primary-3 p-2.5 h-[100px] min-h-[120px] items-center flex-row text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task"
       onMouseEnter={() => {
         setMouseIsOver(true);
@@ -103,8 +73,6 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         setMouseIsOver(false);
       }}
     >
-            {/* <p className="my-auto h-[90%] w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap">
-        {task.notes} */}
 
       <p className="my-auto w-full text-[min(100%,_calc(1rem_*_N))] overflow-hidden whitespace-pre-wrap">
         {task.id}
@@ -115,8 +83,6 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         {task.patient_name}
         {"\n"}
       </p>
-      {/* <div className="-mr-1">
-      </div> */}
         <ServicePointDropDown/>
       
 
@@ -132,6 +98,9 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
       )}
       
     </div>
+    </ModalLink>
+ 
+    
   );
 }
 

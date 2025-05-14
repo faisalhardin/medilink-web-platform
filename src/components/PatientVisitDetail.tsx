@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { GetPatientVisitDetailedByID, GetPatientVisitDetailRequest, UpsertPatientVisitDetailRequest } from '@requests/patient';
-import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpsertPatientVisitDetailParam, PatientVisitDetail as VisitDetail } from "@models/patient";
+import { useEffect, useState } from 'react'
+import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
+import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
-import { Id } from 'types';
-import { JourneyPoint } from '@models/journey';
 
 export interface journeyTab {
     id: number,
@@ -48,6 +46,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     }
 
     useEffect(() => {
+        console.log("here")
         const fetchData = async () => {
 
             try {
@@ -88,7 +87,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                                 <li onClick={() => {
                                     updateActiveTab(item)
                                 }} className='mr-6' key={idx}>
-                                    <a className="text-gray-600 pb-2 border-b-2 border-transparent hover:border-blue-600" href="#">
+                                    <a className="text-gray-600 pb-2 border-b-2 border-transparent hover:border-blue-600 cursor-pointer">
                                         {item.name}
                                     </a>
                                 </li>

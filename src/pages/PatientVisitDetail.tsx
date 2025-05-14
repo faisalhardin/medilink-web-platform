@@ -1,8 +1,12 @@
 import { PatientVisitComponent } from '@components/PatientVisitDetail'
-import { useParams } from 'react-router-dom';
+import { useRouteParams } from '../hooks/useRouteParams';
 
-export const PatientVisitDetailPage = () => {
-    const { id } = useParams();
+interface PatientVisitDetailPageProps {
+  id?: string; // Optional because it might come from useParams() instead
+}
+
+ export default function PatientVisitDetailPage (props: PatientVisitDetailPageProps) {
+    const { id } = useRouteParams(props);
     const numericId = id ? parseInt(id, 10) : 0;
 
     return (
