@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { GetPatientVisitDetailedByID, GetPatientVisitDetailRequest, UpsertPatientVisitDetailRequest } from '@requests/patient';
-import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpsertPatientVisitDetailParam, PatientVisitDetail as VisitDetail } from "@models/patient";
+import { useEffect, useState } from 'react'
+import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
+import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
-import { Id } from 'types';
-import { JourneyPoint } from '@models/journey';
 
 export interface journeyTab {
     id: number,

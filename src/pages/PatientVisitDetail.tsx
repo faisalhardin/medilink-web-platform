@@ -7,7 +7,6 @@ interface PatientVisitDetailPageProps {
 
  export default function PatientVisitDetailPage (props: PatientVisitDetailPageProps) {
     const { id } = useRouteParams(props);
-    console.log("id", id);
     const numericId = id ? parseInt(id, 10) : 0;
 
     return (

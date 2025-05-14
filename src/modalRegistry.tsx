@@ -1,9 +1,15 @@
 // src/modalComponentRegistry.ts
-import { lazy } from 'react';
+import { ComponentType, lazy } from 'react';
+
+// Define the interface for components that can be rendered in a modal
+export interface ModalComponentProps {
+    id?: string;
+    [key: string]: any; // Allow for other props
+  }
 
 // Map route patterns to component imports
 // The keys should match the patterns in your route definitions
-export const modalComponents: Record<string, React.LazyExoticComponent<any>> = {
+export const modalComponents: Record<string, React.LazyExoticComponent<ComponentType<ModalComponentProps>>> = {
   '/patient-visit/:id': lazy(() => import('./pages/PatientVisitDetail')),
   // Add more mappings as needed
 };

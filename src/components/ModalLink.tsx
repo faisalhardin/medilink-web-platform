@@ -2,7 +2,7 @@
 import React, { Suspense } from 'react';
 import { useModal } from '../context/ModalContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { findComponentForPath } from '../modalRegistry';
+import { findComponentForPath, ModalComponentProps } from '../modalRegistry';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 interface ModalLinkProps {
@@ -42,7 +42,7 @@ export function ModalLink({ to, children, className = '' }: ModalLinkProps) {
         // Open modal with the wrapper component
         openModal(
             <Suspense fallback={<div>Loading...</div>}>
-                 {React.createElement(Component as React.ComponentType<{id?: string}>, { id })}
+                 {React.createElement(Component as React.ComponentType<ModalComponentProps>, { id })}
             </Suspense>,
             () => {
                 // Restore previous URL when modal closes
