@@ -221,6 +221,7 @@ function KanbanBoard() {
   );
 
   function createTask(columnId: Id) {
+    return
     const newTask: PatientVisitTask = {
       id: generateId(),
       columnId,
