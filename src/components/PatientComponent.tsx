@@ -1,15 +1,18 @@
 
 import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { useForm } from 'react-hook-form';
-import { ListPatients, RegisterPatientRequest } from "@requests/patient";
-import { GetPatientParam, Patient as PatientModel, PatientVisit, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
+import { InsertPatientVisit, ListPatients, RegisterPatientRequest } from "@requests/patient";
+import { GetPatientParam, InsertPatientVisitPayload, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { ListVisitsByPatient } from "@requests/patient"
+import AdmitIcon from "assets/icons/AdmitIcon";
+import { useNavigate } from "react-router-dom";
+import { useModal } from "context/ModalContext";
 
-
-export const PatientListComponent = () => {
+export function PatientListComponent({journey_board_id}: {journey_board_id?:number}):JSX.Element {
 
     const { register, handleSubmit, formState: { errors } } = useForm<GetPatientParam>();
     const [patients, setPatients] = useState<PatientModel[]>([]);
+    const { closeModal } = useModal();
 
     const onSubmit = async (params: GetPatientParam) => {
         try {
@@ -28,10 +31,20 @@ export const PatientListComponent = () => {
 
     };
 
+    const handleAdmitClick = async (payload: InsertPatientVisitPayload) => {
+        try {
+            await InsertPatientVisit(payload);
+            closeModal();
+        } catch (e) {
+            console.error(e);
+            alert('Failed to admit patient.');
+        }
+    }
+
     return (
         <div className="p-6 flex flex-col h-screen items-center">
             <div className="justify-center w-full">
-                <h2 className="text-2xl font-semibold mb-6">Register New Patient</h2>
+                <h2 className="text-2xl font-semibold mb-6">Register New Patient Visit</h2>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="p-2 rounded-lg shadow text-sm">
                     <div className="wrap-grid mx-auto my-8">
@@ -89,7 +102,13 @@ export const PatientListComponent = () => {
                             <td className="p-4">{patient.name}</td>
                             <td className="p-4">{patient.place_of_birth}</td>
                             <td className="p-4">{patient.date_of_birth}</td>
-                            <td className="p-4"> <a href={`/patient-detail/${patient.uuid}`}><img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6" ></img></a></td>
+                            <td className="p-4"> 
+                                <a href={`/patient-detail/${patient.uuid}`}><img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6" ></img></a>
+                                {journey_board_id && <a onClick={() => handleAdmitClick({
+                                    patient_uuid: patient.uuid,
+                                    board_id: journey_board_id,
+                                })} > <div className="h-[30px] w-[30px]"> <AdmitIcon/></div></a>}
+                            </td>
                         </tr>
                     ))}
                     <tr>

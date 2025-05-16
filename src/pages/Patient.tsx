@@ -1,11 +1,15 @@
 import {  PatientListComponent } from "@components/PatientComponent";
-const PatientPage = () => {
+import { useModalState } from "hooks/useModalState";
+import { ModalComponentProps } from "modalRegistry";
 
+
+export default function PatientPage (props: ModalComponentProps) { 
+    const state = useModalState<ModalComponentProps>({state:props});
+    // const  journeyBoardID = state?.state?.journey_board_id?
+    const numericId = state?.state?.journey_board_id ? parseInt(state?.state?.journey_board_id, 10) : 0;
+   console.log(state, state?.state?.journey_board_id, numericId);
     return (
-        <>
-            <PatientListComponent/>
-        </>
+        <PatientListComponent journey_board_id={numericId}/>
     )
 }
 
-export default PatientPage

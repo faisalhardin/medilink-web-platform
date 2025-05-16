@@ -77,6 +77,11 @@ export interface PatientVisitDetail {
   contributors?: string;
 }
 
+export interface InsertPatientVisitPayload {
+  patient_uuid: string;
+  board_id: number;
+}
+
 export interface UpdatePatientVisitPayload {
   id: number;
   action?: string;
@@ -109,4 +114,9 @@ export interface UpsertPatientVisitDetailParam {
   id_mst_journey_point: number;
   notes: Record<string, any>;
   service_point_id?: number
+}
+
+export interface PatientPageProps {
+  journey_board_id?: number;
+  
 }

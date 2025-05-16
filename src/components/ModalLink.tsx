@@ -9,13 +9,14 @@ interface ModalLinkProps {
     to: string;
     children: React.ReactNode;
     className?: string;
+    state?: Record<string, any>;
 }
 
-export function ModalLink({ to, children, className = '' }: ModalLinkProps) {
+export function ModalLink({ to, children, className = '', state }: ModalLinkProps) {
     const { openModal } = useModal();
     const navigate = useNavigate();
     const location = useLocation();
-
+    
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         
@@ -37,12 +38,15 @@ export function ModalLink({ to, children, className = '' }: ModalLinkProps) {
         const id = pathParts[pathParts.length - 1];
         
         // Update URL without navigation
-        window.history.pushState(null, '', absolutePath);
+        window.history.pushState({...state}, '', absolutePath);
         
         // Open modal with the wrapper component
         openModal(
             <Suspense fallback={<div>Loading...</div>}>
-                 {React.createElement(Component as React.ComponentType<ModalComponentProps>, { id })}
+                 {React.createElement(Component as React.ComponentType<ModalComponentProps>, { 
+                    id ,
+                    state,
+                    })}
             </Suspense>,
             () => {
                 // Restore previous URL when modal closes

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
 import TaskCard from "./TaskCard";
 import { JourneyPoint, PatientVisitTask } from "@models/journey";
+import { ModalLink } from "./ModalLink";
 
 interface Props {
   column: JourneyPoint;
@@ -183,18 +184,18 @@ function ColumnContainer({
             />)
         )}
         </SortableContext>
-        {/* </DndContext> */}
       </div>
       {/* Column footer */}
-      <button
+      <ModalLink to={`/patient`} state={{journey_board_id: column.board_id}}>
+      <div
         className="flex gap-2 items-center border-primary-1 border-2 rounded-md p-4 border-x-primary-1 hover:bg-primary-3 hover:text-rose-500 active:bg-black"
-        onClick={() => {
-          createTask(column.id);
-        }}
       >
-        <PlusIcon />
-        Add task
-      </button>
+       
+          <PlusIcon />
+          Add task
+        
+      </div>
+      </ModalLink>
     </div>
   );
 }
