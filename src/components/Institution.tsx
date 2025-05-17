@@ -21,6 +21,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Button,
 } from "@mui/material";
 import {
   Business,
@@ -38,6 +39,9 @@ import {
   TrendingUp,
   Security,
   IntegrationInstructions,
+  Inventory,
+  ShoppingCart,
+  Edit,
 } from "@mui/icons-material";
 
 interface InstitutionStats {
@@ -107,11 +111,26 @@ const InstitutionProfileComponent = () => {
     // Additional API calls would go here
   }, []);
 
+  const handleManageProducts = () => {
+    console.log("Navigate to products management");
+    // Add navigation logic here
+  };
+
+  const handleManageStock = () => {
+    console.log("Navigate to stock management");
+    // Add navigation logic here
+  };
+
+  const handleEditInstitution = () => {
+    console.log("Edit institution profile");
+    // Add edit logic here
+  };
+
   return (
     <div className="p-6">
-      {/* Header Section */}
+      {/* Header Section with Action Buttons */}
       <Card className="mb-6 p-6 shadow-md">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <Typography variant="h4" className="text-2xl font-bold">
               {institution?.name}
@@ -133,6 +152,34 @@ const InstitutionProfileComponent = () => {
               </Typography>
             </div>
           </div>
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3 mt-6">
+          <Button 
+            variant="contained" 
+            startIcon={<Edit />}
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={handleEditInstitution}
+          >
+            Edit Institution
+          </Button>
+          <Button 
+            variant="outlined" 
+            startIcon={<ShoppingCart />}
+            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+            onClick={handleManageProducts}
+          >
+            Manage Products
+          </Button>
+          <Button 
+            variant="outlined" 
+            startIcon={<Inventory />}
+            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+            onClick={handleManageStock}
+          >
+            Manage Stock
+          </Button>
         </div>
       </Card>
 
@@ -186,6 +233,79 @@ const InstitutionProfileComponent = () => {
           </div>
         </Paper>
       </div>
+
+      {/* Product & Stock Management Section */}
+      <Card className="p-6 shadow-md mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <Typography variant="h6" className="text-xl font-semibold">
+            Inventory Overview
+          </Typography>
+          <div className="flex gap-3">
+            <Button 
+              variant="contained" 
+              size="small"
+              startIcon={<ShoppingCart />}
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleManageProducts}
+            >
+              Products
+            </Button>
+            <Button 
+              variant="contained" 
+              size="small"
+              startIcon={<Inventory />}
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleManageStock}
+            >
+              Stock
+            </Button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <Paper className="p-4 flex items-center gap-3 shadow-sm">
+            <div className="bg-blue-100 p-3 rounded-full">
+              <ShoppingCart className="text-blue-600" />
+            </div>
+            <div>
+              <Typography variant="body1" className="font-medium">
+                Total Products
+              </Typography>
+              <Typography variant="h6" className="text-xl font-bold">
+                1,245
+              </Typography>
+            </div>
+          </Paper>
+          
+          <Paper className="p-4 flex items-center gap-3 shadow-sm">
+            <div className="bg-green-100 p-3 rounded-full">
+              <Inventory className="text-green-600" />
+            </div>
+            <div>
+              <Typography variant="body1" className="font-medium">
+                In Stock Items
+              </Typography>
+              <Typography variant="h6" className="text-xl font-bold">
+                8,392
+              </Typography>
+            </div>
+          </Paper>
+          
+          <Paper className="p-4 flex items-center gap-3 shadow-sm">
+            <div className="bg-yellow-100 p-3 rounded-full">
+              <AttachMoney className="text-yellow-600" />
+            </div>
+            <div>
+              <Typography variant="body1" className="font-medium">
+                Inventory Value
+              </Typography>
+              <Typography variant="h6" className="text-xl font-bold">
+                $1.2M
+              </Typography>
+            </div>
+          </Paper>
+        </div>
+      </Card>
 
       {/* Department Statistics & Certifications */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
