@@ -1,6 +1,7 @@
 import ColumnNav from "@components/NavColumn";
 import Home from "@pages/Home";
 import Institution from "@pages/Institution";
+import InventoryPage from "@pages/Inventory";
 import JourneyBoard from "@pages/JourneyBoard";
 import PatientPage from "@pages/Patient";
 import PatientDetail from "@pages/PatientDetail";
@@ -22,6 +23,7 @@ const DefaultLayout = () => {
                 <Route path="/patient-registration" element={<PatientRegistrationPage/>} />
                 <Route path="/patient-visit/:id" element={<PatientVisitDetailPage/>} />
                 <Route path="/journey-board/:boardID" element={<JourneyBoard/>} />
+                <Route path="/inventory" element={<InventoryPage/>} />
 
               </Routes>
             </div>
