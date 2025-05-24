@@ -27,6 +27,7 @@
     "dotenv": "^16.4.5",
     "jwt-decode": "^4.0.0",
     "lodash": "^4.17.21",
+    "lodash.debounce": "^4.0.8",
     "prosemirror-autocomplete": "^0.4.3",
     "prosemirror-commands": "^1.7.0",
     "prosemirror-dev-tools": "^4.2.0",
@@ -49,6 +50,7 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.15",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/react": "^18.2.66",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^18.2.22",

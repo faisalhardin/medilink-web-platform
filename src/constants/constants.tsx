@@ -8,6 +8,7 @@ export const MEDILINK_USER = "medilink_user"
 
 // path to institution
 export const INSTITUTION_PATH = `${MEDILINK_API_BASE_URL}/v1/institution`
+export const PRODUCT_URL_PATH = `${INSTITUTION_PATH}/product`
 
 // path to patients
 export const PATIENT_PATH = `${MEDILINK_API_BASE_URL}/v1/patient`

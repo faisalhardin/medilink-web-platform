@@ -15,8 +15,7 @@ import InventoryForm from "../components/InventoryForm";
 import { ListProductParams, Product } from "@models/product";
 import { InsertProduct, ListProducts } from "@requests/products";
 import { useLocation, useNavigate } from "react-router-dom";
-import { List } from "lodash";
-
+import { List, debounce } from "lodash";
 
 
 const InventoryComponent = () => {
@@ -27,20 +26,38 @@ const InventoryComponent = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const queryParams = new URLSearchParams(location.search);
-
-  console.log(queryParams.get("name"))
-
-  // Initialize state from URL parameters
-  const [searchQuery, setSearchQuery] = useState(queryParams.get("name") || "");
-  const [filterOptions, setFilterOptions] = useState({
-    showLowStock: false,
-    type: "item", // "all", "item", "treatment"
-    page: 1,
-    limit: 20,
+  
+  const [searchQuery, setSearchQuery] = useState(() => {
+    const queryParams = new URLSearchParams(location.search);
+    return queryParams.get("name") || "";
   });
 
-   // Update URL when filters change
+  // Initialize state from URL parameters
+  const [filterOptions, setFilterOptions] = useState(() => {
+    const queryParams = new URLSearchParams(location.search);
+    return {
+      showLowStock: queryParams.get("lowStock") === "true",
+      type: queryParams.get("type") || "item", // "all", "item", "treatment"
+      page: parseInt(queryParams.get("page") || "1", 10),
+      limit: parseInt(queryParams.get("limit") || "9", 10), // Default to 9 if not in URL
+    };
+  });
+
+  // Create a debounced version of the search handler
+  const debouncedUpdateSearchQuery = useCallback(
+    debounce((value: string) => {
+      // Update URL with search parameter
+      const params = new URLSearchParams(location.search);
+      if (value) {
+        params.set('name', value);
+      } else {
+        params.delete('name');
+      }
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    }, 300), // 300ms delay
+    [location.search, navigate]
+  );
+
  // Helper function to update URL parameters
 const updateUrlParams = (search: string, params: Record<string, any>) => {
   const urlParams = new URLSearchParams();
@@ -64,31 +81,70 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
     { replace: true });
 };
   
-  // Fetch products from API
+  // Effect to sync state to URL and fetch data whenever state changes
   useEffect(() => {
-    // If URL has parameters, use them
-    if (location.search) {
-      setSearchQuery(queryParams.get("name") || "");
-      setFilterOptions({
-        showLowStock: queryParams.get("lowStock") === "true",
-        type: queryParams.get("type") || "item",
-        // Include page and limit properties with defaults if not in URL
-        page: parseInt(queryParams.get("page") || "1", 10),
-        limit: parseInt(queryParams.get("limit") || "20", 10),
-      });
-      fetchProducts();
-    } else {
-      // Otherwise set defaults
-      setDefaultFilters();
-    }
-  }, []);
+    const fetchAndSync = async () => {
+      setLoading(true);
+      setError(null); // Clear previous errors
+
+      // Sync state to URL
+      const urlParams = new URLSearchParams();
+      if (searchQuery) urlParams.set("name", searchQuery);
+      if (filterOptions.showLowStock) urlParams.set("lowStock", "true");
+      // Only add type, page, and limit to URL if they are not the default values
+      if (filterOptions.type !== "item") urlParams.set("type", filterOptions.type);
+      if (filterOptions.page !== 1) urlParams.set("page", filterOptions.page.toString());
+      if (filterOptions.limit !== 9) urlParams.set("limit", filterOptions.limit.toString());
+
+
+      // Use replace to avoid adding to history stack for filter changes
+      navigate(
+        {
+          pathname: location.pathname,
+          search: urlParams.toString()
+        },
+        { replace: true }
+      );
+
+      // Fetch products
+      try {
+        const params: Record<string, any> = {};
+        if (searchQuery) params.name = searchQuery;
+        if (filterOptions.showLowStock) params.lowStock = "true";
+        if (filterOptions.type === "item") {
+          params.is_item = true;
+          params.is_treatment = false;
+        } else if (filterOptions.type === "treatment") {
+          params.is_item = false;
+          params.is_treatment = true;
+        }
+        // Note: "all" type means neither is_item nor is_treatment is set
+
+        params.page = filterOptions.page;
+        params.limit = filterOptions.limit;
+
+        console.log("Fetching with params:", params); // Debug log
+
+        const productResponse = await ListProducts(params);
+        setProducts(productResponse.data as Product[]);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        setError("Failed to load products");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAndSync();
+
+  }, [searchQuery, filterOptions, navigate, location.pathname]);
 
   const setDefaultFilters = () => {
     const newOptions = {
       ...filterOptions,
       type: "item" // Default to item type
     };
-    
+    console.log("setDefaultFilters", newOptions);
     setFilterOptions(newOptions);
     updateUrlParams(searchQuery, newOptions);
     fetchProducts(); // Actually fetch with the new filters
@@ -96,6 +152,7 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
   
   const fetchProducts = useCallback(async () => {
     setLoading(true);
+    console.log("fetchProducts xx", filterOptions);
     try {
       const params: Record<string, any> = {};
       if (searchQuery) params.name = searchQuery;
@@ -108,7 +165,9 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
         params.is_item = false;
         params.is_treatment = true;
       }
-      console.log("fetchProducts", params);
+      if (filterOptions.page) params.page = filterOptions.page;
+      if (filterOptions.limit) params.limit = filterOptions.limit;
+      console.log("fetchProducts", filterOptions, "p ", params);
       const productResponse = await ListProducts(params);
       setProducts(productResponse.data as Product[]);
     } catch (error) {
@@ -125,7 +184,33 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
   // Handle adding a new product
   const handleAddProduct = async (newProduct: Omit<Product, "id">) => {
     await InsertProduct(newProduct);
-    await fetchProducts();
+    // After adding, refetch products based on current filters
+    // The useEffect will handle the fetch when state changes, but we need to trigger a state change or refetch manually
+    // A simple way is to refetch directly after adding
+    // Alternatively, if the API returns the new product, you could add it to the state
+    // For simplicity, let's refetch all based on current filters
+    const params: Record<string, any> = {};
+    if (searchQuery) params.name = searchQuery;
+    if (filterOptions.showLowStock) params.lowStock = "true";
+    if (filterOptions.type === "item") {
+      params.is_item = true;
+      params.is_treatment = false;
+    } else if (filterOptions.type === "treatment") {
+      params.is_item = false;
+      params.is_treatment = true;
+    }
+    params.page = filterOptions.page;
+    params.limit = filterOptions.limit;
+    setLoading(true);
+    try {
+      const productResponse = await ListProducts(params);
+      setProducts(productResponse.data as Product[]);
+    } catch (error) {
+      console.error("Error refetching products after add:", error);
+      setError("Failed to refresh products after adding");
+    } finally {
+      setLoading(false);
+    }
   };
   
   // Open the add product modal
@@ -142,9 +227,8 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
 
    // Handle search change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Search query:", e.target.value);
-    setSearchQuery(e.target.value);
-    applyFilters();
+    const value = e.target.value;
+    setSearchQuery(value);
   };
 
   // Handle filter changes
@@ -284,6 +368,11 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
       </Box>
       
       {/* Products Table */}
+      {error && (
+        <Alert severity="error" className="mb-4" onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
       <TableContainer component={Paper} className="shadow-md">
         <Table>
           <TableHead className="bg-gray-50">
@@ -350,11 +439,6 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
           </TableBody>
         </Table>
       </TableContainer>
-      {error && (
-  <Alert severity="error" className="mb-4" onClose={() => setError(null)}>
-    {error}
-  </Alert>
-)}
     </div>
   );
 };

@@ -93,14 +93,13 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
     e.preventDefault();
     
     if (validateForm()) {
-      // Convert string values to appropriate types
       const product = {
         ...formData,
         price: formData.price ? parseFloat(formData.price) : 0,
         quantity: parseInt(formData.quantity, 10),
       };
-      
       onSubmit(product);
+
       closeModal();
     }
   };
