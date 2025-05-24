@@ -1,9 +1,10 @@
 // src/pages/Inventory.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Button, TextField, IconButton, Typography, Box, FormControl, InputLabel,
-  Select, MenuItem, Chip, Grid, Card, CardContent, SelectChangeEvent
+  Select, MenuItem, Chip, Grid, Card, CardContent, SelectChangeEvent,
+  Alert
 } from "@mui/material";
 import {
   Add, Edit, Delete, Refresh, FilterList, Search,
@@ -11,65 +12,120 @@ import {
 } from "@mui/icons-material";
 import { useModal } from "../context/ModalContext";
 import InventoryForm from "../components/InventoryForm";
+import { ListProductParams, Product } from "@models/product";
+import { InsertProduct, ListProducts } from "@requests/products";
+import { useLocation, useNavigate } from "react-router-dom";
+import { List } from "lodash";
 
-// Define the Product type based on your backend structure
-interface Product {
-  id: number;
-  name: string;
-  id_mst_product?: number;
-  price?: number;
-  is_item?: boolean;
-  is_treatment: boolean;
-  quantity: number;
-  unit_type?: string;
-}
+
 
 const InventoryComponent = () => {
   const { openModal } = useModal();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+
+  console.log(queryParams.get("name"))
+
+  // Initialize state from URL parameters
+  const [searchQuery, setSearchQuery] = useState(queryParams.get("name") || "");
   const [filterOptions, setFilterOptions] = useState({
     showLowStock: false,
-    type: "all", // "all", "item", "treatment"
+    type: "item", // "all", "item", "treatment"
+    page: 1,
+    limit: 20,
   });
+
+   // Update URL when filters change
+ // Helper function to update URL parameters
+const updateUrlParams = (search: string, params: Record<string, any>) => {
+  const urlParams = new URLSearchParams();
+  
+  // Add search parameter if it exists
+  if (search) urlParams.set("name", search);
+  
+  // Add all other parameters
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      urlParams.set(key, value.toString());
+    }
+  });
+  
+  // Update the URL without reloading the page
+  navigate(
+    {
+    pathname: location.pathname,
+    search: urlParams.toString()
+    }, 
+    { replace: true });
+};
   
   // Fetch products from API
   useEffect(() => {
-    // Replace with your actual API call
-    fetchProducts();
-  }, []);
-  
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      // Mock data for now - replace with actual API call
-      setTimeout(() => {
-        const mockProducts: Product[] = [
-          { id: 1, name: "Paracetamol", price: 5.99, is_item: true, is_treatment: false, quantity: 150, unit_type: "box" },
-          { id: 2, name: "Bandages", price: 3.50, is_item: true, is_treatment: false, quantity: 75, unit_type: "pack" },
-          { id: 3, name: "Blood Test", price: 25.00, is_item: false, is_treatment: true, quantity: 0, unit_type: "" },
-          { id: 4, name: "Syringes", price: 1.25, is_item: true, is_treatment: false, quantity: 8, unit_type: "piece" },
-          { id: 5, name: "Consultation", price: 50.00, is_item: false, is_treatment: true, quantity: 0, unit_type: "" },
-        ];
-        setProducts(mockProducts);
-        setLoading(false);
-      }, 500);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setLoading(false);
+    // If URL has parameters, use them
+    if (location.search) {
+      setSearchQuery(queryParams.get("name") || "");
+      setFilterOptions({
+        showLowStock: queryParams.get("lowStock") === "true",
+        type: queryParams.get("type") || "item",
+        // Include page and limit properties with defaults if not in URL
+        page: parseInt(queryParams.get("page") || "1", 10),
+        limit: parseInt(queryParams.get("limit") || "20", 10),
+      });
+      fetchProducts();
+    } else {
+      // Otherwise set defaults
+      setDefaultFilters();
     }
-  };
-  
-  // Handle adding a new product
-  const handleAddProduct = (newProduct: Omit<Product, "id">) => {
-    // In a real app, you would make an API call here
-    const productWithId = {
-      ...newProduct,
-      id: Math.max(0, ...products.map(p => p.id)) + 1 // Generate a temporary ID
+  }, []);
+
+  const setDefaultFilters = () => {
+    const newOptions = {
+      ...filterOptions,
+      type: "item" // Default to item type
     };
     
-    setProducts([...products, productWithId as Product]);
+    setFilterOptions(newOptions);
+    updateUrlParams(searchQuery, newOptions);
+    fetchProducts(); // Actually fetch with the new filters
+  };
+  
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, any> = {};
+      if (searchQuery) params.name = searchQuery;
+      if (filterOptions.showLowStock) params.lowStock = "true";
+      if (filterOptions.type === "item") {
+        params.is_item = true;
+        params.is_treatment = false;
+      }
+      if (filterOptions.type === "treatment") {
+        params.is_item = false;
+        params.is_treatment = true;
+      }
+      console.log("fetchProducts", params);
+      const productResponse = await ListProducts(params);
+      setProducts(productResponse.data as Product[]);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setError("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, filterOptions]);
+  
+
+  
+  
+  // Handle adding a new product
+  const handleAddProduct = async (newProduct: Omit<Product, "id">) => {
+    await InsertProduct(newProduct);
+    await fetchProducts();
   };
   
   // Open the add product modal
@@ -83,32 +139,34 @@ const InventoryComponent = () => {
       />
     );
   };
+
+   // Handle search change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Search query:", e.target.value);
+    setSearchQuery(e.target.value);
+    applyFilters();
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (newOptions: typeof filterOptions) => {
+    setFilterOptions(newOptions);
+  };
+
+  // Apply filters when filter button is clicked
+  const applyFilters = () => {
+    updateUrlParams(searchQuery, filterOptions);
+    fetchProducts();
+  };
   
   // Filter products based on search and filters
-  const filteredProducts = products.filter(product => {
-    // Search filter
-    if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    
-    // Type filter
-    if (filterOptions.type === "item" && !product.is_item) return false;
-    if (filterOptions.type === "treatment" && !product.is_treatment) return false;
-    
-    // Low stock filter (assuming less than 10 is low stock)
-    if (filterOptions.showLowStock && product.quantity > 10) {
-      return false;
-    }
-    
-    return true;
-  });
+  const filteredProducts = products;
   
   // Calculate inventory statistics
-  const totalProducts = products.length;
-  const lowStockCount = products.filter(p => p.quantity <= 10).length;
-  const totalItems = products.filter(p => p.is_item).length;
-  const totalTreatments = products.filter(p => p.is_treatment).length;
-  const inventoryValue = products.reduce((sum, p) => sum + (p.price || 0) * p.quantity, 0);
+  const totalProducts = products?.length || 0;
+  const lowStockCount = products?.filter(p => p.quantity <= 10).length || 0;
+  const totalItems = products?.filter(p => p.is_item).length || 0;
+  const totalTreatments = products?.filter(p => p.is_treatment).length || 0;
+  const inventoryValue = products?.reduce((sum, p) => sum + (p.price || 0) * p.quantity, 0) || 0;
   
   return (
     <div className="p-6 w-full">
@@ -175,13 +233,21 @@ const InventoryComponent = () => {
             variant="outlined"
             size="small"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             InputProps={{
               startAdornment: <Search className="text-gray-400 mr-2" />,
             }}
             className="min-w-[250px]"
           />
-          <IconButton onClick={() => setFilterOptions(prev => ({ ...prev, showLowStock: !prev.showLowStock }))}>
+          <IconButton 
+            onClick={() => {
+              const newOptions = {
+                ...filterOptions,
+                showLowStock: !filterOptions.showLowStock
+              };
+              handleFilterChange(newOptions);
+            }}
+          >
             <FilterList color={filterOptions.showLowStock ? "primary" : "inherit"} />
           </IconButton>
         </Box>
@@ -194,7 +260,11 @@ const InventoryComponent = () => {
   value={filterOptions.type}
   label="Type"
   onChange={(event: SelectChangeEvent<string>) => {
-    setFilterOptions(prev => ({ ...prev, type: event.target.value }));
+    const newOptions = {
+      ...filterOptions,
+      type: event.target.value
+    };
+    handleFilterChange(newOptions);
   }}
 >
               <MenuItem value="all">All Types</MenuItem>
@@ -204,11 +274,11 @@ const InventoryComponent = () => {
           </FormControl>
           <Button 
             startIcon={<Refresh />} 
-            onClick={fetchProducts}
+            onClick={applyFilters}
             variant="outlined"
             size="small"
           >
-            Refresh
+            Apply Filters
           </Button>
         </Box>
       </Box>
@@ -235,14 +305,14 @@ const InventoryComponent = () => {
                   Loading products...
                 </TableCell>
               </TableRow>
-            ) : filteredProducts.length === 0 ? (
+            ) : filteredProducts?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} align="center" className="py-8">
                   No products found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredProducts.map((product) => (
+              filteredProducts?.map((product) => (
                 <TableRow key={product.id} className="hover:bg-gray-50">
                   <TableCell>{product.id}</TableCell>
                   <TableCell>{product.name}</TableCell>
@@ -280,6 +350,11 @@ const InventoryComponent = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      {error && (
+  <Alert severity="error" className="mb-4" onClose={() => setError(null)}>
+    {error}
+  </Alert>
+)}
     </div>
   );
 };
