@@ -57,29 +57,6 @@ const InventoryComponent = () => {
     }, 300), // 300ms delay
     [location.search, navigate]
   );
-
- // Helper function to update URL parameters
-const updateUrlParams = (search: string, params: Record<string, any>) => {
-  const urlParams = new URLSearchParams();
-  
-  // Add search parameter if it exists
-  if (search) urlParams.set("name", search);
-  
-  // Add all other parameters
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      urlParams.set(key, value.toString());
-    }
-  });
-  
-  // Update the URL without reloading the page
-  navigate(
-    {
-    pathname: location.pathname,
-    search: urlParams.toString()
-    }, 
-    { replace: true });
-};
   
   // Effect to sync state to URL and fetch data whenever state changes
   useEffect(() => {
@@ -139,48 +116,6 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
 
   }, [searchQuery, filterOptions, navigate, location.pathname]);
 
-  const setDefaultFilters = () => {
-    const newOptions = {
-      ...filterOptions,
-      type: "item" // Default to item type
-    };
-    console.log("setDefaultFilters", newOptions);
-    setFilterOptions(newOptions);
-    updateUrlParams(searchQuery, newOptions);
-    fetchProducts(); // Actually fetch with the new filters
-  };
-  
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    console.log("fetchProducts xx", filterOptions);
-    try {
-      const params: Record<string, any> = {};
-      if (searchQuery) params.name = searchQuery;
-      if (filterOptions.showLowStock) params.lowStock = "true";
-      if (filterOptions.type === "item") {
-        params.is_item = true;
-        params.is_treatment = false;
-      }
-      if (filterOptions.type === "treatment") {
-        params.is_item = false;
-        params.is_treatment = true;
-      }
-      if (filterOptions.page) params.page = filterOptions.page;
-      if (filterOptions.limit) params.limit = filterOptions.limit;
-      console.log("fetchProducts", filterOptions, "p ", params);
-      const productResponse = await ListProducts(params);
-      setProducts(productResponse.data as Product[]);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setError("Failed to load products");
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery, filterOptions]);
-  
-
-  
-  
   // Handle adding a new product
   const handleAddProduct = async (newProduct: Omit<Product, "id">) => {
     await InsertProduct(newProduct);
@@ -235,15 +170,6 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
   const handleFilterChange = (newOptions: typeof filterOptions) => {
     setFilterOptions(newOptions);
   };
-
-  // Apply filters when filter button is clicked
-  const applyFilters = () => {
-    updateUrlParams(searchQuery, filterOptions);
-    fetchProducts();
-  };
-  
-  // Filter products based on search and filters
-  const filteredProducts = products;
   
   // Calculate inventory statistics
   const totalProducts = products?.length || 0;
@@ -302,7 +228,7 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
         <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <AttachMoney className="text-emerald-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">${inventoryValue.toLocaleString()}</Typography>
+              <Typography variant="h5" className="font-bold">Rp {inventoryValue.toLocaleString()}</Typography>
               <Typography variant="body2" className="text-gray-600">Total Value</Typography>
             </CardContent>
           </Card>
@@ -356,14 +282,6 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
               <MenuItem value="treatment">Treatments Only</MenuItem>
             </Select>
           </FormControl>
-          <Button 
-            startIcon={<Refresh />} 
-            onClick={applyFilters}
-            variant="outlined"
-            size="small"
-          >
-            Apply Filters
-          </Button>
         </Box>
       </Box>
       
@@ -394,14 +312,14 @@ const updateUrlParams = (search: string, params: Record<string, any>) => {
                   Loading products...
                 </TableCell>
               </TableRow>
-            ) : filteredProducts?.length === 0 ? (
+            ): products?.length === 0 ?  (
               <TableRow>
                 <TableCell colSpan={8} align="center" className="py-8">
                   No products found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredProducts?.map((product) => (
+              products?.map((product) => (
                 <TableRow key={product.id} className="hover:bg-gray-50">
                   <TableCell>{product.id}</TableCell>
                   <TableCell>{product.name}</TableCell>
