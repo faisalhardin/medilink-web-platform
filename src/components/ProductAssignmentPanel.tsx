@@ -1,19 +1,9 @@
-// Modified ProductAssignmentPanel.tsx with plus/minus quantity controls
-import { useEffect, useState } from 'react';
+// Modified ProductAssignmentPanel.tsx with improved search panel functionality
+import { useEffect, useState, useRef } from 'react';
 import { PatientVisit, PatientVisitDetail } from '@models/patient';
 import { ListProducts } from '@requests/products';
 import { Product, AssignedProduct } from '@models/product';
 import { set } from 'lodash';
-
-// interface AssignedProduct {
-//   id?: number;
-//   product_id: number;
-//   patient_visit_id: number;
-//   journey_point_id: number;
-//   quantity: number;
-//   notes?: string;
-//   product?: Product;
-// }
 
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
@@ -32,34 +22,73 @@ export const ProductAssignmentPanel = ({
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Filter assigned products for current journey point
   const currentAssignedProducts = assignedProducts.filter(
     p => p.journey_point_id === journeyPointId
   );
 
-  const handleSearch = async () => {
-    if (searchTerm.length < 3 || isSearching) return;
+  const handleSearch = async (term: string) => {
+    setSearchTerm(term);
+    
+    if (term.length < 3) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
     
     setIsSearching(true);
     try {
       const response = await ListProducts({
-        name: searchTerm,
+        name: term,
         limit: 5 
       });
-      setSearchResults(response ? response as Product[] : []);
+      const results = response ? response as Product[] : [];
+      setSearchResults(results);
+      setShowResults(results.length > 0);
     } catch (error) {
       console.error("Error searching products:", error);
       setSearchResults([]);
+      setShowResults(false);
     } finally {
       setIsSearching(false);
     }
   };
+
+  const handleResultClick = (product: Product) => {
+    setSelectedProduct(product);
+    setSearchTerm(product.name);
+    setShowResults(false);
+  };
+
+  // Handle clicks outside of the search container
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current && 
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowResults(false);
+      }
+    };
+
+    // Add event listener when the dropdown is shown
+    if (showResults) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Clean up the event listener
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showResults]);
 
   const addProduct = (product: Product) => {
     setSelectedProducts([...selectedProducts, product]);
@@ -120,59 +149,52 @@ export const ProductAssignmentPanel = ({
     <div className="bg-white rounded-lg shadow p-4">
       <h3 className="text-lg font-medium mb-4">Assign Products</h3>
       
-      {/* Search and assign section */}
+      {/* Search and assign section with improved search panel */}
       <div className="mb-4">
-        <div className="flex gap-2 mb-2">
+        <div ref={searchContainerRef} className="relative mb-2">
           <input
             type="text"
-            className="flex-1 border rounded px-2 py-1"
+            className="w-full border rounded px-2 py-1"
             placeholder="Search products..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onChange={(e) => handleSearch(e.target.value)}
+            onFocus={() => setShowResults(searchResults.length > 0)}
           />
-          <button 
-            className="bg-blue-500 text-white px-3 py-1 rounded"
-            onClick={handleSearch}
-            disabled={isSearching}
-          >
-            {isSearching ? 'Searching...' : 'Search'}
-          </button>
+          
+          {isSearching && (
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+              Searching...
+            </div>
+          )}
+          
+          {showResults && (
+            <ul className="absolute w-full max-h-40 overflow-y-auto mt-0 p-0 list-none border border-gray-300 rounded-b-md bg-white z-10 shadow-md">
+              {searchResults.map(product => (
+                 <li 
+                 key={product.id}
+                 className={`p-2 ${product.quantity > 0 ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-50'}`}
+                 onClick={() => product.quantity > 0 ? handleResultClick(product) : null}
+               >
+                  <div className="font-medium">{product.name}</div>
+                  <div className="text-sm text-gray-600">
+                    Stock: {product.quantity} {product.unit_type}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        
-        {/* Search results */}
-        {searchResults.length > 0 && (
-          <div className="border rounded max-h-40 overflow-y-auto mb-2">
-            {searchResults.map(product => (
-              <div 
-                key={product.id}
-                className={`p-2 cursor-pointer hover:bg-gray-100 ${selectedProduct?.id === product.id ? 'bg-blue-100' : ''}`}
-                onClick={() => setSelectedProduct(product)}
-              >
-                <div className="font-medium">{product.name}</div>
-                {/* <div className="text-sm text-gray-600">
-                  Price: ${product.price} | Stock: {product.quantity} {product.unit_type}
-                </div> */}
-              </div>
-            ))}
-          </div>
-        )}
         
         {/* Selected product form */}
         {selectedProduct && (
           <div className="border rounded p-3 mb-2">
             <div className="font-medium">{selectedProduct.name}</div>
-            <div className="text-sm text-gray-600 mb-2">
-              Available: {selectedProduct.quantity} {selectedProduct.unit_type}
-            </div>
-            
             <div className="flex items-center gap-2 mb-2">
-              <label className="text-sm">Quantity:</label>
               <div className="flex items-center border rounded">
                 <button 
                   className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
                   onClick={decrementQuantity}
-                  disabled={quantity <= 1}
+                  // disabled={quantity <= 1}
                 >
                   -
                 </button>
@@ -186,17 +208,6 @@ export const ProductAssignmentPanel = ({
                 </button>
               </div>
             </div>
-            
-            <div className="mb-2">
-              <label className="text-sm block mb-1">Notes:</label>
-              <textarea
-                className="border rounded w-full px-2 py-1"
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-            
             <div className="flex justify-end">
               <button
                 className="bg-green-500 text-white px-3 py-1 rounded"
