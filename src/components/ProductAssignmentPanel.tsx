@@ -1,33 +1,33 @@
-// New component: ProductAssignmentPanel.tsx
+// Modified ProductAssignmentPanel.tsx with plus/minus quantity controls
 import { useEffect, useState } from 'react';
 import { PatientVisit, PatientVisitDetail } from '@models/patient';
 import { ListProducts } from '@requests/products';
-import { Product } from '@models/product';
+import { Product, AssignedProduct } from '@models/product';
+import { set } from 'lodash';
 
-interface AssignedProduct {
-  id?: number;
-  product_id: number;
-  patient_visit_id: number;
-  journey_point_id: number;
-  quantity: number;
-  notes?: string;
-  product?: Product;
-}
+// interface AssignedProduct {
+//   id?: number;
+//   product_id: number;
+//   patient_visit_id: number;
+//   journey_point_id: number;
+//   quantity: number;
+//   notes?: string;
+//   product?: Product;
+// }
 
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
   journeyPointId: number;
-  // assignedProducts: AssignedProduct[];
-  // onAssignProduct: (product: AssignedProduct) => Promise<void>;
+  assignedProducts: AssignedProduct[];
+  onAssignProduct: (product: AssignedProduct) => Promise<void>;
   onRemoveProduct: (productId: number) => Promise<void>;
 }
 
-export const ProductAssignmentPanel = (
-  {
-  // patientVisit,
-  // journeyPointId,
-  // assignedProducts,
-  // onAssignProduct,
+export const ProductAssignmentPanel = ({
+  patientVisit,
+  journeyPointId,
+  assignedProducts,
+  onAssignProduct,
   onRemoveProduct
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,25 +36,23 @@ export const ProductAssignmentPanel = (
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
 
   // Filter assigned products for current journey point
-  // const currentAssignedProducts = assignedProducts.filter(
-  //   p => p.journey_point_id === journeyPointId
-  // );
+  const currentAssignedProducts = assignedProducts.filter(
+    p => p.journey_point_id === journeyPointId
+  );
 
   const handleSearch = async () => {
     if (searchTerm.length < 3 || isSearching) return;
     
     setIsSearching(true);
     try {
-      // Replace with your actual API call
       const response = await ListProducts({
         name: searchTerm,
-        limit:5 
+        limit: 5 
       });
-      const data = response;
-      setSearchResults(data? data as Product[]: [] );
-      console.log("searchResults", searchResults, response);
+      setSearchResults(response ? response as Product[] : []);
     } catch (error) {
       console.error("Error searching products:", error);
       setSearchResults([]);
@@ -63,26 +61,59 @@ export const ProductAssignmentPanel = (
     }
   };
 
+  const addProduct = (product: Product) => {
+    setSelectedProducts([...selectedProducts, product]);
+  };
+
+  const increaseProductQuantity = (product: Product) => {
+    setSelectedProducts(selectedProducts.map(p =>
+      p.id === product.id ? { ...p, quantity: (p.quantity || 1) + 1 } : p
+    ));
+  };
+
+  const decreaseProductQuantity = (id: number ) => {
+    setSelectedProducts(selectedProducts.map(p =>
+      p.id === id && (p.quantity || 1) > 1 ? { ...p, quantity: (p.quantity || 1) - 1 } : p
+    ).filter(p => p.quantity !== 0));
+  };
+
+  const deleteProduct = (id: number) => {
+    const newProductList = selectedProducts.filter(product => product.id !== id);
+    setSelectedProducts(newProductList);
+  };
+
   const handleAssign = async () => {
-    // if (!selectedProduct) return;
+    if (!selectedProduct) return;
     
-    // const newAssignment: AssignedProduct = {
-    //   product_id: selectedProduct.id,
-    //   patient_visit_id: patientVisit.id,
-    //   journey_point_id: journeyPointId,
-    //   quantity,
-    //   notes,
-    //   product: selectedProduct
-    // };
+    const newAssignment: AssignedProduct = {
+      product_id: selectedProduct.id || 0,
+      patient_visit_id: patientVisit.id,
+      journey_point_id: journeyPointId,
+      quantity,
+      notes,
+      product: selectedProduct
+    };
     
-    // await onAssignProduct(newAssignment);
+    await onAssignProduct(newAssignment);
     
-    // // Reset form
-    // setSelectedProduct(null);
-    // setQuantity(1);
-    // setNotes('');
-    // setSearchTerm('');
-    // setSearchResults([]);
+    // Reset form
+    setSelectedProduct(null);
+    setQuantity(1);
+    setNotes('');
+    setSearchTerm('');
+    setSearchResults([]);
+  };
+
+  const incrementQuantity = () => {
+    if (selectedProduct && quantity < selectedProduct.quantity) {
+      setQuantity(prev => prev + 1);
+    }
+  };
+
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
   };
 
   return (
@@ -98,6 +129,7 @@ export const ProductAssignmentPanel = (
             placeholder="Search products..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
           <button 
             className="bg-blue-500 text-white px-3 py-1 rounded"
@@ -118,9 +150,9 @@ export const ProductAssignmentPanel = (
                 onClick={() => setSelectedProduct(product)}
               >
                 <div className="font-medium">{product.name}</div>
-                <div className="text-sm text-gray-600">
-                  Code: {product.price} | Stock: {product.quantity} {product.unit_type}
-                </div>
+                {/* <div className="text-sm text-gray-600">
+                  Price: ${product.price} | Stock: {product.quantity} {product.unit_type}
+                </div> */}
               </div>
             ))}
           </div>
@@ -136,15 +168,35 @@ export const ProductAssignmentPanel = (
             
             <div className="flex items-center gap-2 mb-2">
               <label className="text-sm">Quantity:</label>
-              <input
-                type="number"
-                min="1"
-                max={selectedProduct.quantity}
-                className="border rounded w-20 px-2 py-1"
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+              <div className="flex items-center border rounded">
+                <button 
+                  className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={decrementQuantity}
+                  disabled={quantity <= 1}
+                >
+                  -
+                </button>
+                <span className="px-3 py-1 border-l border-r">{quantity}</span>
+                <button 
+                  className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={incrementQuantity}
+                  disabled={selectedProduct && quantity >= selectedProduct.quantity}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            
+            <div className="mb-2">
+              <label className="text-sm block mb-1">Notes:</label>
+              <textarea
+                className="border rounded w-full px-2 py-1"
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
               />
-            </div>            
+            </div>
+            
             <div className="flex justify-end">
               <button
                 className="bg-green-500 text-white px-3 py-1 rounded"
@@ -157,17 +209,16 @@ export const ProductAssignmentPanel = (
         )}
       </div>
       
-      
-      {/* Assigned products list */}
+      {/* Assigned products list with quantity adjustment */}
       <div>
         <h4 className="font-medium mb-2">Assigned Products</h4>
-        {/* {currentAssignedProducts.length === 0 ? (
+        {currentAssignedProducts.length === 0 ? (
           <p className="text-gray-500 text-sm">No products assigned yet</p>
         ) : (
           <div className="border rounded">
             {currentAssignedProducts.map((item) => (
               <div key={item.id} className="border-b last:border-b-0 p-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <div className="font-medium">{item.product?.name}</div>
                   <button
                     className="text-red-500 text-sm"
@@ -176,8 +227,31 @@ export const ProductAssignmentPanel = (
                     Remove
                   </button>
                 </div>
-                <div className="text-sm">
-                  Quantity: {item.quantity} {item.product?.unit}
+                <div className="flex items-center mt-1">
+                  <div className="flex items-center border rounded mr-2">
+                    <button 
+                      className="px-2 py-0.5 text-gray-600 hover:bg-gray-100 focus:outline-none"
+                      onClick={() => {
+                        // Handle decrement logic - would need to update the assigned product
+                        // This would require an additional API call to update quantity
+                      }}
+                      disabled={item.quantity <= 1}
+                    >
+                      -
+                    </button>
+                    <span className="px-2 py-0.5 border-l border-r">{item.quantity}</span>
+                    <button 
+                      className="px-2 py-0.5 text-gray-600 hover:bg-gray-100 focus:outline-none"
+                      onClick={() => {
+                        // Handle increment logic - would need to update the assigned product
+                        // This would require an additional API call to update quantity
+                      }}
+                      disabled={item.product && item.quantity >= item.product.quantity}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <span className="text-sm text-gray-600">{item.product?.unit_type}</span>
                 </div>
                 {item.notes && (
                   <div className="text-sm text-gray-600 mt-1">{item.notes}</div>
@@ -185,7 +259,7 @@ export const ProductAssignmentPanel = (
               </div>
             ))}
           </div>
-        )} */}
+        )}
       </div>
     </div>
   );
