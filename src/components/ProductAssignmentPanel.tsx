@@ -13,6 +13,47 @@ interface ProductAssignmentPanelProps {
   onRemoveProduct: (productId: number) => Promise<void>;
 }
 
+interface ProductListProps {
+  product: Product;
+  // order: Product;
+  decrementQuantity: () => void;
+  incrementQuantity: () => void;
+  setQuantity: (quantity: number) => void;
+}
+
+const ProductList = ({ product, decrementQuantity, incrementQuantity, setQuantity}: ProductListProps) => {
+  return (
+     (
+      <div className="border rounded p-3 mb-2">
+        <div className="font-medium">{product.name}</div>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center border rounded">
+            <button 
+              className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
+              onClick={decrementQuantity}
+              // disabled={quantity <= 1}
+            >
+              -
+            </button>
+            <input 
+            className="px-3 py-1 border-l border-r w-1" 
+            value={product.quantity}
+            onChange={(e) => setQuantity(parseInt(e.target.value))}
+            />
+            <button 
+              className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
+              onClick={incrementQuantity}
+              // disabled={order.quantity >= product.quantity}
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  )
+}
+
 export const ProductAssignmentPanel = ({
   patientVisit,
   journeyPointId,
@@ -24,8 +65,8 @@ export const ProductAssignmentPanel = ({
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  // const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  // const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -63,7 +104,8 @@ export const ProductAssignmentPanel = ({
   };
 
   const handleResultClick = (product: Product) => {
-    setSelectedProduct(product);
+    // setSelectedProduct(product);
+    addProduct({...product, quantity: 1});
     setSearchTerm(product.name);
     setShowResults(false);
   };
@@ -94,15 +136,21 @@ export const ProductAssignmentPanel = ({
     setSelectedProducts([...selectedProducts, product]);
   };
 
-  const increaseProductQuantity = (product: Product) => {
+  const incrementQuantity = (id: number) => {
     setSelectedProducts(selectedProducts.map(p =>
-      p.id === product.id ? { ...p, quantity: (p.quantity || 1) + 1 } : p
+      p.id === id ? { ...p, quantity: (p.quantity || 1) + 1 } : p
     ));
   };
 
-  const decreaseProductQuantity = (id: number ) => {
+  const decrementQuantity = (id: number ) => {
     setSelectedProducts(selectedProducts.map(p =>
       p.id === id && (p.quantity || 1) > 1 ? { ...p, quantity: (p.quantity || 1) - 1 } : p
+    ).filter(p => p.quantity !== 0));
+  };
+
+  const setQuantity = (id: number, quantity: number ) => {
+    setSelectedProducts(selectedProducts.map(p =>
+      p.id === id && (p.quantity || 1) > 1 ? { ...p, quantity: quantity } : p
     ).filter(p => p.quantity !== 0));
   };
 
@@ -111,39 +159,39 @@ export const ProductAssignmentPanel = ({
     setSelectedProducts(newProductList);
   };
 
-  const handleAssign = async () => {
-    if (!selectedProduct) return;
+  // const handleAssignx = async () => {
+  //   if (!selectedProduct) return;
     
-    const newAssignment: AssignedProduct = {
-      product_id: selectedProduct.id || 0,
-      patient_visit_id: patientVisit.id,
-      journey_point_id: journeyPointId,
-      quantity,
-      notes,
-      product: selectedProduct
-    };
+  //   const newAssignment: AssignedProduct = {
+  //     product_id: selectedProduct.id || 0,
+  //     patient_visit_id: patientVisit.id,
+  //     journey_point_id: journeyPointId,
+  //     quantity,
+  //     notes,
+  //     product: selectedProduct
+  //   };
     
-    await onAssignProduct(newAssignment);
+  //   await onAssignProduct(newAssignment);
     
-    // Reset form
-    setSelectedProduct(null);
-    setQuantity(1);
-    setNotes('');
-    setSearchTerm('');
-    setSearchResults([]);
-  };
+  //   // Reset form
+  //   setSelectedProduct(null);
+  //   setQuantity(1);
+  //   setNotes('');
+  //   setSearchTerm('');
+  //   setSearchResults([]);
+  // };
 
-  const incrementQuantity = () => {
-    if (selectedProduct && quantity < selectedProduct.quantity) {
-      setQuantity(prev => prev + 1);
-    }
-  };
+  // const incrementQuantity = (id) => {
+  //   if (selectedProduct && quantity < selectedProduct.quantity) {
+  //     setQuantity(prev => prev + 1);
+  //   }
+  // };
 
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
-  };
+  // const decrementQuantity = () => {
+  //   if (quantity > 1) {
+  //     setQuantity(prev => prev - 1);
+  //   }
+  // };
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -186,38 +234,17 @@ export const ProductAssignmentPanel = ({
         </div>
         
         {/* Selected product form */}
-        {selectedProduct && (
-          <div className="border rounded p-3 mb-2">
-            <div className="font-medium">{selectedProduct.name}</div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center border rounded">
-                <button 
-                  className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
-                  onClick={decrementQuantity}
-                  // disabled={quantity <= 1}
-                >
-                  -
-                </button>
-                <span className="px-3 py-1 border-l border-r">{quantity}</span>
-                <button 
-                  className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
-                  onClick={incrementQuantity}
-                  disabled={selectedProduct && quantity >= selectedProduct.quantity}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <button
-                className="bg-green-500 text-white px-3 py-1 rounded"
-                onClick={handleAssign}
-              >
-                Assign
-              </button>
-            </div>
-          </div>
-        )}
+
+        {selectedProducts.map((product) => (
+          <ProductList
+            key={product.id}
+            product={product}
+            decrementQuantity={() =>{decrementQuantity(product.id ?? product.id ?? 0)}}
+            incrementQuantity={() => {incrementQuantity(product.id ?? product.id ?? 0)}}
+            setQuantity={(quantity: number)=> {setQuantity(product.id ?? product.id ?? 0, quantity);}}
+            
+          />
+        ))}
       </div>
       
       {/* Assigned products list with quantity adjustment */}
