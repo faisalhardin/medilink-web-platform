@@ -2,15 +2,15 @@
 import { useEffect, useState, useRef } from 'react';
 import { PatientVisit, PatientVisitDetail } from '@models/patient';
 import { ListProducts } from '@requests/products';
-import { Product, AssignedProduct } from '@models/product';
+import { Product, AssignedProductRequest, CheckoutProduct, TrxVisitProduct } from '@models/product';
 import { set } from 'lodash';
 
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
   journeyPointId: number;
-  assignedProducts: AssignedProduct[];
-  onAssignProduct: (product: AssignedProduct) => Promise<void>;
-  onRemoveProduct: (productId: number) => Promise<void>;
+  assignedProducts: AssignedProductRequest[];
+  orderedProducts: TrxVisitProduct[];
+  onAssignProduct: ( product: AssignedProductRequest, visitID: number) => Promise<void>;
 }
 
 interface ProductListProps {
@@ -18,32 +18,35 @@ interface ProductListProps {
   // order: Product;
   decrementQuantity: () => void;
   incrementQuantity: () => void;
-  setQuantity: (quantity: number) => void;
+  setQuantity: (id: number) => void;
 }
 
-const ProductList = ({ product, decrementQuantity, incrementQuantity, setQuantity}: ProductListProps) => {
+const ProductList = ({ product, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
   return (
-     (
+    (
       <div className="border rounded p-3 mb-2">
         <div className="font-medium">{product.name}</div>
         <div className="flex items-center gap-2 mb-2">
           <div className="flex items-center border rounded">
-            <button 
+            <button
               className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
               onClick={decrementQuantity}
-              // disabled={quantity <= 1}
+            // disabled={quantity <= 1}
             >
               -
             </button>
-            <input 
-            className="px-3 py-1 border-l border-r w-1" 
-            value={product.quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value))}
+            <input
+              className="px-3 py-1 border-l border-r w-12 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              value={product.quantity || 1}
+              type="number"
+              // min="0"
+              onChange={(e) => {
+                setQuantity(parseInt(e.target.value) || 1);
+              }}
             />
-            <button 
+            <button
               className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
               onClick={incrementQuantity}
-              // disabled={order.quantity >= product.quantity}
             >
               +
             </button>
@@ -58,8 +61,8 @@ export const ProductAssignmentPanel = ({
   patientVisit,
   journeyPointId,
   assignedProducts,
+  orderedProducts: requestedProducts, //TODO: add later
   onAssignProduct,
-  onRemoveProduct
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -69,12 +72,13 @@ export const ProductAssignmentPanel = ({
   // const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  // const [requestedProducts, setRequestedProducts] = useState<Product[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Filter assigned products for current journey point
-  const currentAssignedProducts = assignedProducts.filter(
-    p => p.journey_point_id === journeyPointId
-  );
+  // const currentAssignedProducts = assignedProducts.filter(
+  //   p => p.journey_point_id === journeyPointId
+  // );
 
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
@@ -133,7 +137,22 @@ export const ProductAssignmentPanel = ({
   }, [showResults]);
 
   const addProduct = (product: Product) => {
-    setSelectedProducts([...selectedProducts, product]);
+    // Check if product already exists in the list
+    const existingProductIndex = selectedProducts.findIndex(p => p.id === product.id);
+    
+    if (existingProductIndex >= 0) {
+      // Product exists, update its quantity
+      const updatedProducts = [...selectedProducts];
+      const existingProduct = updatedProducts[existingProductIndex];
+      updatedProducts[existingProductIndex] = {
+        ...existingProduct,
+        quantity: (existingProduct.quantity || 1) + (product.quantity || 1)
+      };
+      setSelectedProducts(updatedProducts);
+    } else {
+      // Product doesn't exist, add it to the list
+      setSelectedProducts([...selectedProducts, product]);
+    }
   };
 
   const incrementQuantity = (id: number) => {
@@ -144,14 +163,16 @@ export const ProductAssignmentPanel = ({
 
   const decrementQuantity = (id: number ) => {
     setSelectedProducts(selectedProducts.map(p =>
-      p.id === id && (p.quantity || 1) > 1 ? { ...p, quantity: (p.quantity || 1) - 1 } : p
+      p.id === id ? { ...p, quantity: (p.quantity) - 1 } : p
     ).filter(p => p.quantity !== 0));
   };
 
   const setQuantity = (id: number, quantity: number ) => {
+    console.log("setQuantity", id, quantity);
     setSelectedProducts(selectedProducts.map(p =>
-      p.id === id && (p.quantity || 1) > 1 ? { ...p, quantity: quantity } : p
+      p.id === id ? { ...p, quantity: quantity } : p
     ).filter(p => p.quantity !== 0));
+    console.log("selectedProducts", selectedProducts);
   };
 
   const deleteProduct = (id: number) => {
@@ -234,70 +255,31 @@ export const ProductAssignmentPanel = ({
         </div>
         
         {/* Selected product form */}
-
         {selectedProducts.map((product) => (
           <ProductList
             key={product.id}
             product={product}
             decrementQuantity={() =>{decrementQuantity(product.id ?? product.id ?? 0)}}
             incrementQuantity={() => {incrementQuantity(product.id ?? product.id ?? 0)}}
-            setQuantity={(quantity: number)=> {setQuantity(product.id ?? product.id ?? 0, quantity);}}
+            setQuantity={(quantity: number)=> {
+              setQuantity(product.id ?? product.id ?? 0, quantity);
+            }}
             
           />
+          
         ))}
-      </div>
-      
-      {/* Assigned products list with quantity adjustment */}
-      <div>
-        <h4 className="font-medium mb-2">Assigned Products</h4>
-        {currentAssignedProducts.length === 0 ? (
-          <p className="text-gray-500 text-sm">No products assigned yet</p>
-        ) : (
-          <div className="border rounded">
-            {currentAssignedProducts.map((item) => (
-              <div key={item.id} className="border-b last:border-b-0 p-2">
-                <div className="flex justify-between items-center">
-                  <div className="font-medium">{item.product?.name}</div>
-                  <button
-                    className="text-red-500 text-sm"
-                    onClick={() => item.id && onRemoveProduct(item.id)}
-                  >
-                    Remove
-                  </button>
-                </div>
-                <div className="flex items-center mt-1">
-                  <div className="flex items-center border rounded mr-2">
-                    <button 
-                      className="px-2 py-0.5 text-gray-600 hover:bg-gray-100 focus:outline-none"
-                      onClick={() => {
-                        // Handle decrement logic - would need to update the assigned product
-                        // This would require an additional API call to update quantity
-                      }}
-                      disabled={item.quantity <= 1}
-                    >
-                      -
-                    </button>
-                    <span className="px-2 py-0.5 border-l border-r">{item.quantity}</span>
-                    <button 
-                      className="px-2 py-0.5 text-gray-600 hover:bg-gray-100 focus:outline-none"
-                      onClick={() => {
-                        // Handle increment logic - would need to update the assigned product
-                        // This would require an additional API call to update quantity
-                      }}
-                      disabled={item.product && item.quantity >= item.product.quantity}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="text-sm text-gray-600">{item.product?.unit_type}</span>
-                </div>
-                {item.notes && (
-                  <div className="text-sm text-gray-600 mt-1">{item.notes}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        <button onClick={()=>{
+          const checkedProducts: CheckoutProduct[] = selectedProducts.map(product => ({
+            product_id: product.id,
+            quantity: product.quantity || 1,
+            // adjustable price
+          }));
+          const productRequest: AssignedProductRequest = {
+            products: checkedProducts,
+          };
+          
+          onAssignProduct( productRequest, patientVisit.id);
+        }}> Order</button>
       </div>
     </div>
   );

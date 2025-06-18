@@ -4,6 +4,12 @@ import { PatientVisit, PatientVisitDetail, PatientVisitDetail as VisitDetail } f
 import { Id } from 'types';
 import { getStorageUserJourneyPointsIDAsSet, getStorageUserServicePointsIDAsSet } from '@utils/storage';
 import { journeyTab } from './PatientVisitDetail';
+import { ProductAssignmentPanel } from './ProductAssignmentPanel';
+import { Product, AssignedProductRequest, CheckoutProduct } from '@models/product';
+
+// Add these new imports for product assignment
+import { AssignProductToVisit, RemoveAssignedProduct, GetAssignedProducts } from '@requests/products';
+import SearchPanel from './SearchPanel';
 
 interface patientVisitProps {
     patientVisit: PatientVisit,
@@ -18,13 +24,39 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
     const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set()); // [1
     const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
 
+    const [assignedProducts, setAssignedProducts] = useState<CheckoutProduct[]>([]);
+
+    async function assignProduct(product: AssignedProductRequest, id_trx_patient_visit: number): Promise<void> {
+        try {
+            const result = await AssignProductToVisit(product, id_trx_patient_visit);
+            // setAssignedProducts(prev => [...prev, result]);
+            return result;
+        } catch (error) {
+            console.error("Failed to assign product:", error);
+            throw error;
+        }
+    }
+    
+    // // Add function to remove assigned product
+    // async function removeAssignedProduct(productAssignmentId: number) {
+    //     try {
+    //         await RemoveAssignedProduct(productAssignmentId);
+    //         setAssignedProducts(prev => 
+    //             prev.filter(p => p.id !== productAssignmentId)
+    //         );
+    //     } catch (error) {
+    //         console.error("Failed to remove product assignment:", error);
+    //         throw error;
+    //     }
+    // }
+
     useEffect(() => {
         const _userServicePoints = getStorageUserServicePointsIDAsSet() || new Set();
         setUserServicePoints(_userServicePoints);
 
         const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
         setUserJourneyPoints(_userJourneyPoints);
-        
+        console.log("crs ", visitDetails);
         const details = visitDetails == undefined? [] as VisitDetail[] : visitDetails;
         if (details.length === 0) {
             setMyVisitDetails([]);
@@ -50,6 +82,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
         setMyVisitDetails(userDetails);
         setOtherVisitDetails(otherDetails);
+        console.log("kol ",patientVisit, myVisitDetails, )
 
     }, [visitDetails, activeTab]);
 
@@ -62,7 +95,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
     return (
         <div className='flex w-full'>
-            <div className='w-7/12 pl-8 pr-3'>
+            <div className='w-9/12 pl-8 pr-3'>
                 {myVisitDetails.length > 0 && myVisitDetails.filter((detail: VisitDetail) => {
                     return detail.journey_point_id === activeTab.id
                 }).map((detail: VisitDetail) => (
@@ -96,17 +129,15 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                         }}  />
                         }
             </div>
-            <div className='w-5/12 border-l-2 p-6'>
-                {otherVisitDetails
-                    .filter((detail) => {
-                        return detail.journey_point_id === activeTab.id;
-                    })
-                    .map((detail: VisitDetail) => (
-                        <EditorComponent
-                            id={`content-${detail.id}`}
-                            readOnly={true}
-                            data={detail} key={detail.id} />
-                    ))}
+            <div className="w-3/12">
+            <ProductAssignmentPanel
+                    patientVisit={patientVisit}
+                    journeyPointId={activeTab.id}
+                    assignedProducts={[]}
+                    orderedProducts={[]}
+                    onAssignProduct={(productRequest: AssignedProductRequest) =>(assignProduct(productRequest, activeTab.id))}
+                />
+                
             </div>
         </div>
     )

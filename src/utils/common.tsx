@@ -1,0 +1,56 @@
+/**
+ * Generically merges two arrays of objects based on a common ID field
+ * @param array1 First array of objects
+ * @param array2 Second array of objects
+ * @param idField The field to use as unique identifier
+ * @param mergeFields Object mapping field names to merge functions
+ * @returns A new array with merged objects
+ */
+export function mergeArrays<T extends Record<string, any>, K extends keyof T>(
+    array1: T[],
+    array2: T[],
+    idField: K,
+    mergeFields: Partial<Record<keyof T, (value1: any, value2: any) => any>> = {}
+  ): T[] {
+    // Create a map to store objects by id for faster lookup
+    const objectMap = new Map<T[K], T>();
+    
+    // Process the first array
+    array1.forEach(item => {
+      objectMap.set(item[idField], { ...item });
+    });
+    
+    // Process the second array
+    array2.forEach(item => {
+      const id = item[idField];
+      
+      if (objectMap.has(id)) {
+        // If object with same id exists, merge specified fields
+        const existingItem = objectMap.get(id)!;
+        
+        // Create a new object with merged fields
+        const mergedItem = { ...existingItem };
+        
+        // Apply custom merge functions for specified fields
+        Object.keys(item).forEach(key => {
+          const fieldKey = key as keyof T;
+          if (mergeFields[fieldKey]) {
+            // Use custom merge function if provided
+            mergedItem[fieldKey] = mergeFields[fieldKey]!(existingItem[fieldKey], item[fieldKey]);
+          } else if (fieldKey !== idField) {
+            // Default behavior: take value from second array
+            mergedItem[fieldKey] = item[fieldKey];
+          }
+        });
+        
+        objectMap.set(id, mergedItem);
+      } else {
+        // If object doesn't exist in the map, add it
+        objectMap.set(id, { ...item });
+      }
+    });
+    
+    // Convert the map values back to an array
+    return Array.from(objectMap.values());
+  }
+  
