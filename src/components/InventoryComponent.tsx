@@ -103,7 +103,7 @@ const InventoryComponent = () => {
         console.log("Fetching with params:", params); // Debug log
 
         const productResponse = await ListProducts(params);
-        setProducts(productResponse.data as Product[]);
+        setProducts(productResponse as Product[]);
       } catch (error) {
         console.error("Error fetching products:", error);
         setError("Failed to load products");
