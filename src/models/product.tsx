@@ -2,12 +2,20 @@
 export interface Product {
     id: number;
     name: string;
-    id_mst_product?: number;
-    price?: number;
-    is_item?: boolean;
-    is_treatment?: boolean;
+    price: number;
+    is_item: boolean;
+    is_treatment: boolean;
     quantity: number;
-    unit_type?: string;
+    unit_type: string;
+  }
+
+  export interface InsertProductRequest {
+    name: string;
+    price: number;
+    is_item: boolean;
+    is_treatment: boolean;
+    quantity: number;
+    unit_type: string;
   }
 
 export interface ListProductParams {
@@ -31,8 +39,12 @@ export interface AssignedProductRequest {
 }
 
 export interface CheckoutProduct {
-  product_id: number;
+  id: number;
   quantity: number;
+  name: string
+  unit_type: string;
+  price: number;
+  total_price: number;
   discount_rate?: number;
   discount_price?: number;
   adjusted_price?: number;
@@ -51,4 +63,16 @@ export interface TrxVisitProduct {
   discount_price: number;
   total_price: number;
   adjusted_price: number;
+}
+
+// src/components/Checkout/types.ts
+export interface CheckoutProductX {
+  id: number;
+  name: string;
+  price: number;
+  image?: string;
+}
+
+export interface CartItem extends CheckoutProductX {
+  quantity: number;
 }

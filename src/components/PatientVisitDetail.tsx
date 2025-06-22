@@ -1,10 +1,10 @@
 // Modified PatientVisitDetail.tsx
 import { useEffect, useState } from 'react'
-import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
-import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, PatientVisitDetail as VisitDetail } from "@models/patient";
+import { GetPatientVisitDetailedByID, UpdatePatientVisit, UpsertPatientVisitDetailRequest } from '@requests/patient';
+import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
-import { Product, AssignedProductRequest } from '@models/product';
+import { Product, AssignedProductRequest, CheckoutProduct } from '@models/product';
 
 // Add these new imports for product assignment
 import { AssignProductToVisit, RemoveAssignedProduct, GetAssignedProducts } from '@requests/products';
@@ -59,35 +59,33 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const patientVisitDetail = await GetPatientVisitDetailedByID(patientVisitId);
-                if (patientVisitDetail !== undefined) {
-                    setPatientVisit(patientVisitDetail);
-                    GenerateVisitTab(patientVisitDetail);
-                    setVisitDetails(patientVisitDetail.patient_checkpoints)
-                    setPatient(patientVisitDetail.patient);
-                    console.log("here ",visitDetails, patientVisitDetail.patient_checkpoints);
+                const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
+                if (patientVisit !== undefined) {
+                    setPatientVisit(patientVisit);
+                    GenerateVisitTab(patientVisit);
+                    setVisitDetails(patientVisit.patient_checkpoints)
+                    setPatient(patientVisit.patient);
                   
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setVisitDetails([]);
             }
-
-            try {
-                  // Fetch assigned products
-                    const products = await GetAssignedProducts(patientVisitId);
-                    setAssignedProducts(products || []);
-            } catch (error) {
-                console.error("Error fetching assigned products:", error);
-                setAssignedProducts([]);
-            }
         }
 
         fetchData();
     }, [patientVisitId])
-
-    // Add function to assign product
    
+    async function fetchVisit() {
+        try {
+            const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
+            if (patientVisit !== undefined) {
+                setPatientVisit(patientVisit);           
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }
 
     async function upsertVisitDetail(visitDetail: PatientVisitDetail) {
         try {
@@ -131,6 +129,23 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
     }
 
+    async function updateVisit(visit: UpdatePatientVisitRequest) {
+        console.log("updateVisit", visit);
+        try {
+            // First add to the backend and get the response
+            // (which might include an ID or other server-generated fields)
+            await UpdatePatientVisit({
+                id: visit.id,
+                product_cart: visit.product_cart
+            });
+            fetchVisit();
+        } catch (error) {
+            console.error("Failed to create visit:", error);
+            // Handle error (show notification, etc.)
+            throw error; // Re-throw if you want calling code to handle it
+        }
+    }
+
     return (
         <div className='flex-1 p-6 h-screen'>
             <div className='bg-white p-6'>
@@ -161,12 +176,27 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 </div>
 
                 <div className="flex">
-                    <div className="w-full pr-4">
+                    <div className="w-9/12 pr-4">
                         <PatientVisitlDetailNotes
                             visitDetails={visitDetails}
                             activeTab={activeTab}
                             patientVisit={patientVisit}
                             upsertVisitDetailFunc={upsertVisitDetail}
+                            updateVisitFunc={updateVisit}
+                        />
+                    </div>
+                    <div className='w-3/12'>
+                        <ProductAssignmentPanel
+                            patientVisit={patientVisit}
+                            journeyPointId={activeTab.id}
+                            assignedProducts={[]}
+                            orderedProducts={[]}
+                            onAssignProduct={(productRequest: CheckoutProduct[]) => {
+                                updateVisit({
+                                    id: patientVisit.id,
+                                    product_cart: productRequest,
+                                })
+                            }}
                         />
                     </div>
                 </div>

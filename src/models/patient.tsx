@@ -1,4 +1,5 @@
 import { JourneyPoint } from "./journey";
+import { CheckoutProduct, Product } from "./product";
 
 
 export interface Patient {
@@ -47,6 +48,7 @@ export interface GetPatientVisitDetailedResponse {
   patient_checkpoints: PatientVisitDetail[];
   patient: Patient;
   journey_point: JourneyPoint;
+  product_cart: Product[];
 }
 
 export interface PatientVisit {
@@ -65,6 +67,23 @@ export interface PatientVisit {
   service_point_id?: number;
   column_update_time: number;
   patient: Patient;
+  product_cart: Product[];
+}
+
+export interface UpdatePatientVisitRequest {
+  id: number;
+  action?: string;
+  status?: string;
+  notes?: string;
+  name?: string;
+  sex?: string;
+  id_mst_journey_board?: number;
+  journey_point_id?: number;
+  service_point_name?: string;
+  service_point_id?: number;
+  column_update_time?: number;
+  patient?: Patient;
+  product_cart?: CheckoutProduct[];
 }
 
 export interface PatientVisitDetail {
@@ -91,6 +110,7 @@ export interface UpdatePatientVisitPayload {
   sex?: string;
   id_mst_journey_board?: number;
   journey_point_id?: number;
+  product_cart?: CheckoutProduct[];
 }
 
 export interface GetPatientVisitParam {
@@ -112,8 +132,8 @@ export interface UpsertPatientVisitDetailParam {
   touchpoint_name?: string;
   name_mst_journey_point?: string;
   id_mst_journey_point: number;
-  notes: Record<string, any>;
-  service_point_id?: number
+  notes?: Record<string, any>;
+  service_point_id?: number;
 }
 
 export interface PatientPageProps {

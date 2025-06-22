@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { EditorComponent } from './EditorComponent';
-import { PatientVisit, PatientVisitDetail, PatientVisitDetail as VisitDetail } from "@models/patient";
+import { PatientVisit, PatientVisitDetail, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { Id } from 'types';
 import { getStorageUserJourneyPointsIDAsSet, getStorageUserServicePointsIDAsSet } from '@utils/storage';
 import { journeyTab } from './PatientVisitDetail';
@@ -16,9 +16,10 @@ interface patientVisitProps {
     visitDetails?: VisitDetail[],
     activeTab: journeyTab,
     upsertVisitDetailFunc: (param: PatientVisitDetail) => void;
+    updateVisitFunc: (params: UpdatePatientVisitRequest) => void;
 }
 
-export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc }: patientVisitProps) => {
+export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc, updateVisitFunc }: patientVisitProps) => {
     const [myVisitDetails, setMyVisitDetails] = useState<VisitDetail[]>([]);
     const [otherVisitDetails, setOtherVisitDetails] = useState<VisitDetail[]>([]);
     const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set()); // [1
@@ -36,19 +37,6 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
             throw error;
         }
     }
-    
-    // // Add function to remove assigned product
-    // async function removeAssignedProduct(productAssignmentId: number) {
-    //     try {
-    //         await RemoveAssignedProduct(productAssignmentId);
-    //         setAssignedProducts(prev => 
-    //             prev.filter(p => p.id !== productAssignmentId)
-    //         );
-    //     } catch (error) {
-    //         console.error("Failed to remove product assignment:", error);
-    //         throw error;
-    //     }
-    // }
 
     useEffect(() => {
         const _userServicePoints = getStorageUserServicePointsIDAsSet() || new Set();
@@ -56,7 +44,6 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
         const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
         setUserJourneyPoints(_userJourneyPoints);
-        console.log("crs ", visitDetails);
         const details = visitDetails == undefined? [] as VisitDetail[] : visitDetails;
         if (details.length === 0) {
             setMyVisitDetails([]);
@@ -82,7 +69,6 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
         setMyVisitDetails(userDetails);
         setOtherVisitDetails(otherDetails);
-        console.log("kol ",patientVisit, myVisitDetails, )
 
     }, [visitDetails, activeTab]);
 
@@ -95,7 +81,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
     return (
         <div className='flex w-full'>
-            <div className='w-9/12 pl-8 pr-3'>
+            <div className=' pl-8 pr-3'>
                 {myVisitDetails.length > 0 && myVisitDetails.filter((detail: VisitDetail) => {
                     return detail.journey_point_id === activeTab.id
                 }).map((detail: VisitDetail) => (
@@ -128,16 +114,6 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                             
                         }}  />
                         }
-            </div>
-            <div className="w-3/12">
-            <ProductAssignmentPanel
-                    patientVisit={patientVisit}
-                    journeyPointId={activeTab.id}
-                    assignedProducts={[]}
-                    orderedProducts={[]}
-                    onAssignProduct={(productRequest: AssignedProductRequest) =>(assignProduct(productRequest, activeTab.id))}
-                />
-                
             </div>
         </div>
     )

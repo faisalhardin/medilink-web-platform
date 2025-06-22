@@ -10,12 +10,11 @@ interface ProductAssignmentPanelProps {
   journeyPointId: number;
   assignedProducts: AssignedProductRequest[];
   orderedProducts: TrxVisitProduct[];
-  onAssignProduct: ( product: AssignedProductRequest, visitID: number) => Promise<void>;
+  onAssignProduct: (product: CheckoutProduct[], visitID: number) => void;
 }
 
 interface ProductListProps {
   product: Product;
-  // order: Product;
   decrementQuantity: () => void;
   incrementQuantity: () => void;
   setQuantity: (id: number) => void;
@@ -31,7 +30,6 @@ const ProductList = ({ product, decrementQuantity, incrementQuantity, setQuantit
             <button
               className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
               onClick={decrementQuantity}
-            // disabled={quantity <= 1}
             >
               -
             </button>
@@ -59,41 +57,29 @@ const ProductList = ({ product, decrementQuantity, incrementQuantity, setQuantit
 
 export const ProductAssignmentPanel = ({
   patientVisit,
-  journeyPointId,
-  assignedProducts,
-  orderedProducts: requestedProducts, //TODO: add later
   onAssignProduct,
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  // const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  // const [quantity, setQuantity] = useState(1);
-  const [notes, setNotes] = useState('');
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
-  // const [requestedProducts, setRequestedProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-
-  // Filter assigned products for current journey point
-  // const currentAssignedProducts = assignedProducts.filter(
-  //   p => p.journey_point_id === journeyPointId
-  // );
 
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
-    
+
     if (term.length < 3) {
       setSearchResults([]);
       setShowResults(false);
       return;
     }
-    
+
     setIsSearching(true);
     try {
       const response = await ListProducts({
         name: term,
-        limit: 5 
+        limit: 5
       });
       const results = response ? response as Product[] : [];
       setSearchResults(results);
@@ -109,16 +95,24 @@ export const ProductAssignmentPanel = ({
 
   const handleResultClick = (product: Product) => {
     // setSelectedProduct(product);
-    addProduct({...product, quantity: 1});
+    addProduct({ ...product, quantity: 1 });
     setSearchTerm(product.name);
     setShowResults(false);
   };
 
+  useEffect(() => {
+    const products = patientVisit.product_cart == undefined ? [] : patientVisit.product_cart;
+    if (products.length > 0 ) {
+      setSelectedProducts(products);
+    } 
+  }, [patientVisit.product_cart]);
+
   // Handle clicks outside of the search container
   useEffect(() => {
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        searchContainerRef.current && 
+        searchContainerRef.current &&
         !searchContainerRef.current.contains(event.target as Node)
       ) {
         setShowResults(false);
@@ -139,7 +133,7 @@ export const ProductAssignmentPanel = ({
   const addProduct = (product: Product) => {
     // Check if product already exists in the list
     const existingProductIndex = selectedProducts.findIndex(p => p.id === product.id);
-    
+    console.log("add", product);
     if (existingProductIndex >= 0) {
       // Product exists, update its quantity
       const updatedProducts = [...selectedProducts];
@@ -151,6 +145,7 @@ export const ProductAssignmentPanel = ({
       setSelectedProducts(updatedProducts);
     } else {
       // Product doesn't exist, add it to the list
+      console.log("add new", product);
       setSelectedProducts([...selectedProducts, product]);
     }
   };
@@ -161,13 +156,13 @@ export const ProductAssignmentPanel = ({
     ));
   };
 
-  const decrementQuantity = (id: number ) => {
+  const decrementQuantity = (id: number) => {
     setSelectedProducts(selectedProducts.map(p =>
-      p.id === id ? { ...p, quantity: (p.quantity) - 1 } : p
+      p.id === id && p.quantity ? { ...p, quantity: (p.quantity) - 1 || 0 } : p
     ).filter(p => p.quantity !== 0));
   };
 
-  const setQuantity = (id: number, quantity: number ) => {
+  const setQuantity = (id: number, quantity: number) => {
     console.log("setQuantity", id, quantity);
     setSelectedProducts(selectedProducts.map(p =>
       p.id === id ? { ...p, quantity: quantity } : p
@@ -182,18 +177,18 @@ export const ProductAssignmentPanel = ({
 
   // const handleAssignx = async () => {
   //   if (!selectedProduct) return;
-    
+
   //   const newAssignment: AssignedProduct = {
-  //     product_id: selectedProduct.id || 0,
+  //     id: selectedProduct.id || 0,
   //     patient_visit_id: patientVisit.id,
   //     journey_point_id: journeyPointId,
   //     quantity,
   //     notes,
   //     product: selectedProduct
   //   };
-    
+
   //   await onAssignProduct(newAssignment);
-    
+
   //   // Reset form
   //   setSelectedProduct(null);
   //   setQuantity(1);
@@ -217,7 +212,7 @@ export const ProductAssignmentPanel = ({
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <h3 className="text-lg font-medium mb-4">Assign Products</h3>
-      
+
       {/* Search and assign section with improved search panel */}
       <div className="mb-4">
         <div ref={searchContainerRef} className="relative mb-2">
@@ -229,21 +224,21 @@ export const ProductAssignmentPanel = ({
             onChange={(e) => handleSearch(e.target.value)}
             onFocus={() => setShowResults(searchResults.length > 0)}
           />
-          
+
           {isSearching && (
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
               Searching...
             </div>
           )}
-          
+
           {showResults && (
             <ul className="absolute w-full max-h-40 overflow-y-auto mt-0 p-0 list-none border border-gray-300 rounded-b-md bg-white z-10 shadow-md">
               {searchResults.map(product => (
-                 <li 
-                 key={product.id}
-                 className={`p-2 ${product.quantity > 0 ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-50'}`}
-                 onClick={() => product.quantity > 0 ? handleResultClick(product) : null}
-               >
+                <li
+                  key={product.id}
+                  className={`p-2 ${product.quantity && product.quantity > 0 ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-50'}`}
+                  onClick={() => product.quantity && product.quantity > 0 ? handleResultClick(product) : null}
+                >
                   <div className="font-medium">{product.name}</div>
                   <div className="text-sm text-gray-600">
                     Stock: {product.quantity} {product.unit_type}
@@ -253,32 +248,38 @@ export const ProductAssignmentPanel = ({
             </ul>
           )}
         </div>
-        
-        {/* Selected product form */}
-        {selectedProducts.map((product) => (
-          <ProductList
-            key={product.id}
-            product={product}
-            decrementQuantity={() =>{decrementQuantity(product.id ?? product.id ?? 0)}}
-            incrementQuantity={() => {incrementQuantity(product.id ?? product.id ?? 0)}}
-            setQuantity={(quantity: number)=> {
-              setQuantity(product.id ?? product.id ?? 0, quantity);
-            }}
+        <ul>
+          {selectedProducts.map((product) => (
+            <li key={product.id}>
+              <ProductList
+              key={product.id}
+              product={product}
+              decrementQuantity={() => { decrementQuantity(product.id ) }}
+              incrementQuantity={() => { incrementQuantity(product.id ) }}
+              setQuantity={(quantity: number) => {
+                setQuantity(product.id, quantity);
+              }}
+
+            />
+            </li>
             
-          />
-          
-        ))}
-        <button onClick={()=>{
+
+          ))}
+        </ul>
+
+        <button onClick={() => {
           const checkedProducts: CheckoutProduct[] = selectedProducts.map(product => ({
-            product_id: product.id,
+            id: product.id,
             quantity: product.quantity || 1,
-            // adjustable price
+            name: product.name,
+            price: product.price,
+            unit_type: product.unit_type ?? '',
+            total_price: product.price * product.quantity,
           }));
-          const productRequest: AssignedProductRequest = {
-            products: checkedProducts,
-          };
-          
-          onAssignProduct( productRequest, patientVisit.id);
+
+          console.log("checkedProducts", checkedProducts, selectedProducts);
+
+          onAssignProduct(checkedProducts, patientVisit.id);
         }}> Order</button>
       </div>
     </div>

@@ -1,10 +1,10 @@
 import { CommonResponse } from "@models/common";
-import { AssignedProductRequest, ListProductParams, Product } from "@models/product";
+import { AssignedProductRequest, InsertProductRequest, ListProductParams, Product } from "@models/product";
 import { getToken } from "@utils/storage"
 import axios from "axios";
 import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH, PRODUCT_URL_PATH } from "constants/constants";
 
-export async function InsertProduct(payload: Product): Promise<CommonResponse<Product>> {
+export async function InsertProduct(payload: InsertProductRequest): Promise<CommonResponse<Product>> {
     try {
         const token = getToken();
         const response = await axios.post(
