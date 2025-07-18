@@ -65,7 +65,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     GenerateVisitTab(patientVisit);
                     setVisitDetails(patientVisit.patient_checkpoints)
                     setPatient(patientVisit.patient);
-                  
+
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -75,12 +75,12 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
 
         fetchData();
     }, [patientVisitId])
-   
+
     async function fetchVisit() {
         try {
             const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
             if (patientVisit !== undefined) {
-                setPatientVisit(patientVisit);           
+                setPatientVisit(patientVisit);
             }
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -130,7 +130,6 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     }
 
     async function updateVisit(visit: UpdatePatientVisitRequest) {
-        console.log("updateVisit", visit);
         try {
             // First add to the backend and get the response
             // (which might include an ID or other server-generated fields)
@@ -204,6 +203,6 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         </div>
     )
 
-    
+
 
 }

@@ -293,7 +293,7 @@ const InventoryComponent = () => {
       )}
       <TableContainer component={Paper} className="shadow-md">
         <Table>
-          <TableHead className="bg-gray-50">
+          <TableHead className="bg-white">
             <TableRow>
               <TableCell className="font-semibold">ID</TableCell>
               <TableCell className="font-semibold">Name</TableCell>
