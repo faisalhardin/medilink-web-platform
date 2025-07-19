@@ -4,11 +4,8 @@ import { GetPatientVisitDetailedByID, UpdatePatientVisit, UpsertPatientVisitDeta
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
-import { Product, AssignedProductRequest, CheckoutProduct } from '@models/product';
+import { AssignedProductRequest, CheckoutProduct } from '@models/product';
 
-// Add these new imports for product assignment
-import { AssignProductToVisit, RemoveAssignedProduct, GetAssignedProducts } from '@requests/products';
-import SearchPanel from './SearchPanel';
 
 export interface journeyTab {
     id: number,
@@ -24,8 +21,6 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [visitDetails, setVisitDetails] = useState<VisitDetail[]>([]);
     const [patientVisit, setPatientVisit] = useState<PatientVisit>({} as PatientVisit);
     const [patient, setPatient] = useState<Patient>({} as Patient);
-    // Add state for assigned products
-    const [assignedProducts, setAssignedProducts] = useState<AssignedProductRequest[]>([]);
 
     const updateActiveTab = (tab: journeyTab) => {
         setActiveTab(tab);
