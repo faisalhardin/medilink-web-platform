@@ -1,13 +1,20 @@
+// Modified PatientVisitDetail.tsx
 import { useEffect, useState } from 'react'
-import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
-import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, PatientVisitDetail as VisitDetail } from "@models/patient";
+import { GetPatientVisitDetailedByID, UpdatePatientVisit, UpsertPatientVisitDetailRequest } from '@requests/patient';
+import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
+import { ProductAssignmentPanel } from './ProductAssignmentPanel';
+import { CheckoutProduct } from '@models/product';
+import { OrderProduct } from '@requests/visit';
+
 
 export interface journeyTab {
     id: number,
     name: string,
     servicePointID?: number
 }
+
+
 
 export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComponentProps) => {
     const [journeyPointTab, setJourneyPointTab] = useState<journeyTab[]>([]);
@@ -21,6 +28,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     }
 
     const GenerateVisitTab = (_patientVisit: GetPatientVisitDetailedResponse) => {
+        // Existing code...
         var setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
         var _activeTab: journeyTab = {
             id: _patientVisit.journey_point_id,
@@ -42,71 +50,38 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
 
         setJourneyPointTab(journeyPointTabs);
-        
     }
 
     useEffect(() => {
-        console.log("here")
         const fetchData = async () => {
-
             try {
-                const patientVisitDetail = await GetPatientVisitDetailedByID(patientVisitId);
-                if (patientVisitDetail !== undefined) {
-                    setPatientVisit(patientVisitDetail);
-                    GenerateVisitTab(patientVisitDetail);
-                    setVisitDetails(patientVisitDetail.patient_checkpoints)
-                    setPatient(patientVisitDetail.patient);
+                const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
+                if (patientVisit !== undefined) {
+                    setPatientVisit(patientVisit);
+                    GenerateVisitTab(patientVisit);
+                    setVisitDetails(patientVisit.patient_checkpoints)
+                    setPatient(patientVisit.patient);
+
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setVisitDetails([]);
             }
-
         }
 
         fetchData();
-    }, [])
+    }, [patientVisitId])
 
-    return (
-        <div className='flex-1 p-6 h-screen'>
-            <div className='bg-white p-6 '>
-                <div className='flex items-center mb-6'>
-                    <div>
-                        <h2 className='text-xl font-semibold'>
-                            {patient.name}
-                        </h2>
-                        <p>
-                            {patient.sex}
-                        </p>
-                    </div>
-                </div>
-                <div className='border-b border-gray-200 mb-6 pb-2'>
-                    <ul className='flex'>
-                        {journeyPointTab.map((item, idx) => {
-                            return (
-                                <li onClick={() => {
-                                    updateActiveTab(item)
-                                }} className='mr-6' key={idx}>
-                                    <a className="text-gray-600 pb-2 border-b-2 border-transparent hover:border-blue-600 cursor-pointer">
-                                        {item.name}
-                                    </a>
-                                </li>
-
-                            )
-                        })}
-                    </ul>
-                </div>
-
-                <PatientVisitlDetailNotes
-                    visitDetails={visitDetails}
-                    activeTab={activeTab}
-                    patientVisit={patientVisit}
-                    upsertVisitDetailFunc={upsertVisitDetail}
-                />
-
-            </div>
-        </div>
-    )
+    async function fetchVisit() {
+        try {
+            const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
+            if (patientVisit !== undefined) {
+                setPatientVisit(patientVisit);
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }
 
     async function upsertVisitDetail(visitDetail: PatientVisitDetail) {
         try {
@@ -149,5 +124,81 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
             throw error; // Re-throw if you want calling code to handle it
         }
     }
+
+    async function updateProductOrder(visit: UpdatePatientVisitRequest) {
+        try {
+            // First add to the backend and get the response
+            // (which might include an ID or other server-generated fields)
+            await OrderProduct({
+                visit_id: visit.id,
+                products: visit.product_cart
+            });
+            fetchVisit();
+        } catch (error) {
+            console.error("Failed to create visit:", error);
+            // Handle error (show notification, etc.)
+            throw error; // Re-throw if you want calling code to handle it
+        }
+    }
+
+    return (
+        <div className='flex-1 p-6 h-screen'>
+            <div className='bg-white p-6'>
+                <div className='flex items-center mb-6'>
+                    <div>
+                        <h2 className='text-xl font-semibold'>
+                            {patient.name}
+                        </h2>
+                        <p>
+                            {patient.sex}
+                        </p>
+                    </div>
+                </div>
+                <div className='border-b border-gray-200 mb-6 pb-2'>
+                    <ul className='flex'>
+                        {journeyPointTab.map((item, idx) => {
+                            return (
+                                <li onClick={() => {
+                                    updateActiveTab(item)
+                                }} className='mr-6' key={idx}>
+                                    <a className={`pb-2 border-b-2 cursor-pointer ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-blue-600'}`}>
+                                        {item.name}
+                                    </a>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </div>
+
+                <div className="flex">
+                    <div className="w-9/12 pr-4">
+                        <PatientVisitlDetailNotes
+                            visitDetails={visitDetails}
+                            activeTab={activeTab}
+                            patientVisit={patientVisit}
+                            upsertVisitDetailFunc={upsertVisitDetail}
+                            updateVisitFunc={updateProductOrder}
+                        />
+                    </div>
+                    <div className='w-3/12'>
+                        <ProductAssignmentPanel
+                            patientVisit={patientVisit}
+                            journeyPointId={activeTab.id}
+                            assignedProducts={[]}
+                            orderedProducts={[]}
+                            onAssignProduct={(productRequest: CheckoutProduct[]) => {
+                                updateProductOrder({
+                                    id: patientVisit.id,
+                                    product_cart: productRequest,
+                                })
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+
+
 
 }

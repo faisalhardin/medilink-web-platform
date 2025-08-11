@@ -7,15 +7,15 @@ import {
   Alert
 } from "@mui/material";
 import {
-  Add, Edit, Delete, Refresh, FilterList, Search,
+  Add, Edit, Delete, FilterList, Search,
   Warning, Inventory as InventoryIcon, ShoppingCart, AttachMoney
 } from "@mui/icons-material";
 import { useModal } from "../context/ModalContext";
 import InventoryForm from "../components/InventoryForm";
-import { ListProductParams, Product } from "@models/product";
+import { Product } from "@models/product";
 import { InsertProduct, ListProducts } from "@requests/products";
 import { useLocation, useNavigate } from "react-router-dom";
-import { List, debounce } from "lodash";
+import { debounce } from "lodash";
 
 
 const InventoryComponent = () => {
@@ -103,7 +103,7 @@ const InventoryComponent = () => {
         console.log("Fetching with params:", params); // Debug log
 
         const productResponse = await ListProducts(params);
-        setProducts(productResponse.data as Product[]);
+        setProducts(productResponse as Product[]);
       } catch (error) {
         console.error("Error fetching products:", error);
         setError("Failed to load products");
@@ -293,7 +293,7 @@ const InventoryComponent = () => {
       )}
       <TableContainer component={Paper} className="shadow-md">
         <Table>
-          <TableHead className="bg-gray-50">
+          <TableHead className="bg-white">
             <TableRow>
               <TableCell className="font-semibold">ID</TableCell>
               <TableCell className="font-semibold">Name</TableCell>

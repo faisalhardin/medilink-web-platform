@@ -1,21 +1,78 @@
 
 export interface Product {
-    id?: number;
+    id: number;
     name: string;
-    id_mst_product?: number;
-    price?: number;
-    is_item?: boolean;
-    is_treatment?: boolean;
+    price: number;
+    is_item: boolean;
+    is_treatment: boolean;
     quantity: number;
-    unit_type?: string;
+    unit_type: string;
+  }
+
+  export interface InsertProductRequest {
+    name: string;
+    price: number;
+    is_item: boolean;
+    is_treatment: boolean;
+    quantity: number;
+    unit_type: string;
   }
 
 export interface ListProductParams {
+  ids?: number[];
   name?: string;
-  page?: number;
+  idMstProduct?: number[];
+  idMstProducts?: number[];
+  idMstInstitution?: number;
+  isItem?: boolean;
+  isTreatment?: boolean;
   limit?: number;
-  sortBy?: string;
-  sortOrder?: string;
-  is_item?: boolean;
-  is_treatment?: boolean;
+  offset?: number;
+  page?: number;
+  fromTime?: string; // ISO date string format
+  toTime?: string; // ISO date string format
+}
+
+// Add this new interface
+export interface AssignedProductRequest {
+  products: CheckoutProduct[];
+}
+
+export interface CheckoutProduct {
+  id: number;
+  quantity: number;
+  name: string
+  unit_type: string;
+  price: number;
+  total_price: number;
+  discount_rate?: number;
+  discount_price?: number;
+  adjusted_price?: number;
+}
+
+
+export interface TrxVisitProduct {
+  id: number;
+  id_trx_institution_product: number;
+  id_trx_patient_visit: number;
+  id_dtl_patient_visit: number;
+  quantity: number;
+  unit_type: string;
+  price: number;
+  discount_rate: number;
+  discount_price: number;
+  total_price: number;
+  adjusted_price: number;
+}
+
+// src/components/Checkout/types.ts
+export interface CheckoutProductX {
+  id: number;
+  name: string;
+  price: number;
+  image?: string;
+}
+
+export interface CartItem extends CheckoutProductX {
+  quantity: number;
 }

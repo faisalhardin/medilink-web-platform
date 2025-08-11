@@ -1,22 +1,42 @@
 import { useEffect, useMemo, useState } from 'react'
 import { EditorComponent } from './EditorComponent';
-import { PatientVisit, PatientVisitDetail, PatientVisitDetail as VisitDetail } from "@models/patient";
+import { PatientVisit, PatientVisitDetail, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { Id } from 'types';
 import { getStorageUserJourneyPointsIDAsSet, getStorageUserServicePointsIDAsSet } from '@utils/storage';
 import { journeyTab } from './PatientVisitDetail';
+import { ProductAssignmentPanel } from './ProductAssignmentPanel';
+import { Product, AssignedProductRequest, CheckoutProduct } from '@models/product';
+
+// Add these new imports for product assignment
+import { AssignProductToVisit, RemoveAssignedProduct, GetAssignedProducts } from '@requests/products';
+import SearchPanel from './SearchPanel';
 
 interface patientVisitProps {
     patientVisit: PatientVisit,
     visitDetails?: VisitDetail[],
     activeTab: journeyTab,
     upsertVisitDetailFunc: (param: PatientVisitDetail) => void;
+    updateVisitFunc: (params: UpdatePatientVisitRequest) => void;
 }
 
-export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc }: patientVisitProps) => {
+export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc, updateVisitFunc }: patientVisitProps) => {
     const [myVisitDetails, setMyVisitDetails] = useState<VisitDetail[]>([]);
     const [otherVisitDetails, setOtherVisitDetails] = useState<VisitDetail[]>([]);
     const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set()); // [1
     const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
+
+    const [assignedProducts, setAssignedProducts] = useState<CheckoutProduct[]>([]);
+
+    async function assignProduct(product: AssignedProductRequest, id_trx_patient_visit: number): Promise<void> {
+        try {
+            const result = await AssignProductToVisit(product, id_trx_patient_visit);
+            // setAssignedProducts(prev => [...prev, result]);
+            return result;
+        } catch (error) {
+            console.error("Failed to assign product:", error);
+            throw error;
+        }
+    }
 
     useEffect(() => {
         const _userServicePoints = getStorageUserServicePointsIDAsSet() || new Set();
@@ -24,7 +44,6 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
         const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
         setUserJourneyPoints(_userJourneyPoints);
-        
         const details = visitDetails == undefined? [] as VisitDetail[] : visitDetails;
         if (details.length === 0) {
             setMyVisitDetails([]);
@@ -62,7 +81,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
 
     return (
         <div className='flex w-full'>
-            <div className='w-7/12 pl-8 pr-3'>
+            <div className=' pl-8 pr-3'>
                 {myVisitDetails.length > 0 && myVisitDetails.filter((detail: VisitDetail) => {
                     return detail.journey_point_id === activeTab.id
                 }).map((detail: VisitDetail) => (
@@ -95,18 +114,6 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                             
                         }}  />
                         }
-            </div>
-            <div className='w-5/12 border-l-2 p-6'>
-                {otherVisitDetails
-                    .filter((detail) => {
-                        return detail.journey_point_id === activeTab.id;
-                    })
-                    .map((detail: VisitDetail) => (
-                        <EditorComponent
-                            id={`content-${detail.id}`}
-                            readOnly={true}
-                            data={detail} key={detail.id} />
-                    ))}
             </div>
         </div>
     )

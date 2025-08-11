@@ -122,7 +122,6 @@ export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Prom
 
   export async function GetPatientVisitDetailedByID(patientVisitID:number): Promise<GetPatientVisitDetailedResponse> {
     try {
-        console.log(patientVisitID, "patientVisitID")
       const token = getToken();
       const response = await axios.get(
           `${PATIENT_VISIT_PATH}/${patientVisitID}`, 

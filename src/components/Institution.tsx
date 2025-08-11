@@ -127,7 +127,7 @@ const InstitutionProfileComponent = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="flex-1 p-6 w-full mx-auto">
       {/* Header Section with Action Buttons */}
       <Card className="mb-6 p-6 shadow-md">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
