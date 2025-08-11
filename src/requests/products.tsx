@@ -2,7 +2,7 @@ import { CommonResponse } from "@models/common";
 import { AssignedProductRequest, InsertProductRequest, ListProductParams, Product } from "@models/product";
 import { getToken } from "@utils/storage"
 import axios from "axios";
-import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH, PRODUCT_URL_PATH } from "constants/constants";
+import { PATIENT_PATH, PATIENT_VISIT_PATH, PRODUCT_URL_PATH } from "constants/constants";
 
 export async function InsertProduct(payload: InsertProductRequest): Promise<CommonResponse<Product>> {
     try {
@@ -17,9 +17,6 @@ export async function InsertProduct(payload: InsertProductRequest): Promise<Comm
                 },
             }
         );
-        if (response.status >= 400) {
-            throw new Error;
-          }
         const responseData = await response.data;
         return responseData;
     } catch (error) {

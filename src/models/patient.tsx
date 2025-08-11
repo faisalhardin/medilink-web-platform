@@ -113,6 +113,11 @@ export interface UpdatePatientVisitPayload {
   product_cart?: CheckoutProduct[];
 }
 
+export interface OrderProductRequest {
+  visit_id: number;
+  products?: CheckoutProduct[];
+}
+
 export interface GetPatientVisitParam {
   visit_id?: number;
   journey_board_id?: number;

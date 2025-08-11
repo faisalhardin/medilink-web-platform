@@ -4,7 +4,8 @@ import { GetPatientVisitDetailedByID, UpdatePatientVisit, UpsertPatientVisitDeta
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
-import { AssignedProductRequest, CheckoutProduct } from '@models/product';
+import { CheckoutProduct } from '@models/product';
+import { OrderProduct } from '@requests/visit';
 
 
 export interface journeyTab {
@@ -124,13 +125,13 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
     }
 
-    async function updateVisit(visit: UpdatePatientVisitRequest) {
+    async function updateProductOrder(visit: UpdatePatientVisitRequest) {
         try {
             // First add to the backend and get the response
             // (which might include an ID or other server-generated fields)
-            await UpdatePatientVisit({
-                id: visit.id,
-                product_cart: visit.product_cart
+            await OrderProduct({
+                visit_id: visit.id,
+                products: visit.product_cart
             });
             fetchVisit();
         } catch (error) {
@@ -176,7 +177,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             activeTab={activeTab}
                             patientVisit={patientVisit}
                             upsertVisitDetailFunc={upsertVisitDetail}
-                            updateVisitFunc={updateVisit}
+                            updateVisitFunc={updateProductOrder}
                         />
                     </div>
                     <div className='w-3/12'>
@@ -186,7 +187,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             assignedProducts={[]}
                             orderedProducts={[]}
                             onAssignProduct={(productRequest: CheckoutProduct[]) => {
-                                updateVisit({
+                                updateProductOrder({
                                     id: patientVisit.id,
                                     product_cart: productRequest,
                                 })

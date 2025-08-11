@@ -69,7 +69,7 @@ export const ProductAssignmentPanel = ({
   const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const debouncedUpdateCart = useCallback(
-    debounce((patientVisit: PatientVisit, products: Product[]) => {
+    debounce(async (patientVisit: PatientVisit, products: Product[]) => {
       // Here you can make API calls to sync the cart
       const productsCart: CheckoutProduct[] = products.map((product) => {
         return {
@@ -82,7 +82,7 @@ export const ProductAssignmentPanel = ({
 
         };
       });
-      const resp = UpdatePatientVisit({
+      const resp = await UpdatePatientVisit({
         id: patientVisit.id,
         product_cart: productsCart
       });

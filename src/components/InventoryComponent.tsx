@@ -7,15 +7,15 @@ import {
   Alert
 } from "@mui/material";
 import {
-  Add, Edit, Delete, Refresh, FilterList, Search,
+  Add, Edit, Delete, FilterList, Search,
   Warning, Inventory as InventoryIcon, ShoppingCart, AttachMoney
 } from "@mui/icons-material";
 import { useModal } from "../context/ModalContext";
 import InventoryForm from "../components/InventoryForm";
-import { ListProductParams, Product } from "@models/product";
+import { Product } from "@models/product";
 import { InsertProduct, ListProducts } from "@requests/products";
 import { useLocation, useNavigate } from "react-router-dom";
-import { List, debounce } from "lodash";
+import { debounce } from "lodash";
 
 
 const InventoryComponent = () => {
