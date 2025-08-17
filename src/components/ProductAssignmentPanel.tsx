@@ -1,8 +1,8 @@
 // Modified ProductAssignmentPanel.tsx with improved search panel functionality
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { PatientVisit, PatientVisitDetail } from '@models/patient';
 import { ListProducts } from '@requests/products';
-import { Product, AssignedProductRequest, CheckoutProduct, TrxVisitProduct } from '@models/product';
+import { Product, AssignedProductRequest, CheckoutProduct, TrxVisitProduct, ProductPanelProps } from '@models/product';
 import { debounce } from 'lodash';
 import { UpdatePatientVisit } from '@requests/patient';
 
@@ -15,19 +15,18 @@ interface ProductAssignmentPanelProps {
 }
 
 interface ProductListProps {
-  product: Product;
+  productPanelProps: ProductPanelProps;
   decrementQuantity: () => void;
   incrementQuantity: () => void;
   setQuantity: (id: number) => void;
 }
 
-const ProductQuantityPanel = ({ product, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
- 
-  
+const ProductQuantityPanel = ({productPanelProps, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
+  const quantity = (productPanelProps.cartProduct?.quantity || 0) - (productPanelProps.orderedProduct?.quantity || 0)
   return (
     (
       <div className="border rounded p-3 mb-2">
-        <div className="font-medium">{product.name}</div>
+        <div className="font-medium">{productPanelProps.orderedProduct?.name || productPanelProps.cartProduct?.name}</div>
         <div className="flex items-center gap-2 mb-2">
           <div className="flex items-center border rounded">
             <button
@@ -38,11 +37,10 @@ const ProductQuantityPanel = ({ product, decrementQuantity, incrementQuantity, s
             </button>
             <input
               className="px-3 py-1 border-l border-r w-12 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              value={product.quantity || 1}
+              value={productPanelProps.cartProduct?.quantity || 0}
               type="number"
-              // min="0"
               onChange={(e) => {
-                setQuantity(parseInt(e.target.value) || 1);
+                setQuantity(parseInt(e.target.value) || 0);
               }}
             />
             <button
@@ -52,6 +50,11 @@ const ProductQuantityPanel = ({ product, decrementQuantity, incrementQuantity, s
               +
             </button>
           </div>
+          {quantity !== 0 && (
+            <span className={quantity > 0 ? 'positive-quantity' : 'negative-quantity'}>
+              {quantity > 0 ? `+${quantity}` : quantity}
+            </span>
+          )}
         </div>
       </div>
     )
@@ -60,6 +63,7 @@ const ProductQuantityPanel = ({ product, decrementQuantity, incrementQuantity, s
 
 export const ProductAssignmentPanel = ({
   patientVisit,
+  orderedProducts,
   onAssignProduct,
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,6 +71,37 @@ export const ProductAssignmentPanel = ({
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
+  const productPanelList = useMemo(()=> {
+    const cartProduct = patientVisit.product_cart?.reduce((prev, prod) => {prev[prod.id] = prod;
+      return prev;
+    }, {} as { [key:number]: Product});
+     const _orderedProduct: ProductPanelProps[] = orderedProducts.map((prod) => {
+      const _cartProduct = cartProduct && cartProduct[prod.id_trx_institution_product];
+      if (_cartProduct) {
+        delete cartProduct[prod.id_trx_institution_product];
+      }
+      return {
+        product_id: prod.id_trx_institution_product,
+        cartProduct: _cartProduct,
+        orderedProduct: prod,
+      } as ProductPanelProps;
+     })
+    const isEmpty = !cartProduct || Object.entries(cartProduct).length === 0;
+     if (isEmpty) {
+      return _orderedProduct;
+     }
+
+      for (const key in cartProduct) {
+        _orderedProduct.push({
+          product_id: cartProduct[key].id,
+
+          name: cartProduct[key].name,
+          cartProduct: cartProduct[key],
+        })
+      }
+
+     return _orderedProduct
+  }, [orderedProducts, patientVisit.product_cart])
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const debouncedUpdateCart = useCallback(
     debounce(async (patientVisit: PatientVisit, products: Product[]) => {
@@ -86,7 +121,6 @@ export const ProductAssignmentPanel = ({
         id: patientVisit.id,
         product_cart: productsCart
       });
-      console.log("resp", resp);
     }, 1400),
     []
   );
@@ -284,15 +318,16 @@ export const ProductAssignmentPanel = ({
           )}
         </div>
         <ul>
-          {selectedProducts.map((product) => (
-            <li key={product.id}>
+          {
+          productPanelList.map((product) => (
+            <li key={product.product_id}>
               <ProductQuantityPanel
-              key={product.id}
-              product={product}
-              decrementQuantity={() => { decrementQuantity(product.id ) }}
-              incrementQuantity={() => { incrementQuantity(product.id ) }}
+              key={product.product_id}
+              productPanelProps={product}
+              decrementQuantity={() => { decrementQuantity(product.product_id) }}
+              incrementQuantity={() => { incrementQuantity(product.product_id) }}
               setQuantity={(quantity: number) => {
-                setQuantity(product.id, quantity);
+                setQuantity(product.product_id, quantity);
               }}
 
             />

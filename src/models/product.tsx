@@ -56,6 +56,7 @@ export interface TrxVisitProduct {
   id_trx_institution_product: number;
   id_trx_patient_visit: number;
   id_dtl_patient_visit: number;
+  name: string;
   quantity: number;
   unit_type: string;
   price: number;
@@ -63,6 +64,13 @@ export interface TrxVisitProduct {
   discount_price: number;
   total_price: number;
   adjusted_price: number;
+}
+
+export interface ProductPanelProps {
+  product_id: number;
+  name: string;
+  orderedProduct?: TrxVisitProduct;
+  cartProduct?: Product;
 }
 
 // src/components/Checkout/types.ts

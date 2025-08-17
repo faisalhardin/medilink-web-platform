@@ -8,7 +8,7 @@ import { ProductAssignmentPanel } from './ProductAssignmentPanel';
 import { Product, AssignedProductRequest, CheckoutProduct } from '@models/product';
 
 // Add these new imports for product assignment
-import { AssignProductToVisit, RemoveAssignedProduct, GetAssignedProducts } from '@requests/products';
+import { AssignProductToVisit } from '@requests/products';
 import SearchPanel from './SearchPanel';
 
 interface patientVisitProps {

@@ -118,6 +118,11 @@ export interface OrderProductRequest {
   products?: CheckoutProduct[];
 }
 
+export interface ListOrderProductRequest {
+  visit_product_id?: number;
+  visit_id?: number;
+}
+
 export interface GetPatientVisitParam {
   visit_id?: number;
   journey_board_id?: number;

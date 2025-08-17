@@ -4,8 +4,8 @@ import { GetPatientVisitDetailedByID, UpdatePatientVisit, UpsertPatientVisitDeta
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
-import { CheckoutProduct } from '@models/product';
-import { OrderProduct } from '@requests/visit';
+import { CheckoutProduct, TrxVisitProduct,  } from '@models/product';
+import { ListOrderedProduct, OrderProduct } from '@requests/products';
 
 
 export interface journeyTab {
@@ -22,6 +22,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [visitDetails, setVisitDetails] = useState<VisitDetail[]>([]);
     const [patientVisit, setPatientVisit] = useState<PatientVisit>({} as PatientVisit);
     const [patient, setPatient] = useState<Patient>({} as Patient);
+    const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);
 
     const updateActiveTab = (tab: journeyTab) => {
         setActiveTab(tab);
@@ -55,6 +56,23 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const trxProducts = await ListOrderedProduct({
+                    visit_id: patientVisitId
+                })
+                if (trxProducts !== undefined) {
+                    setTrxProduct(trxProducts);
+                }
+            } catch  (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        fetchData();
+    },[])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
                 const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
                 if (patientVisit !== undefined) {
                     setPatientVisit(patientVisit);
@@ -63,6 +81,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     setPatient(patientVisit.patient);
 
                 }
+               
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setVisitDetails([]);
@@ -185,7 +204,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             patientVisit={patientVisit}
                             journeyPointId={activeTab.id}
                             assignedProducts={[]}
-                            orderedProducts={[]}
+                            orderedProducts={trxProduct}
                             onAssignProduct={(productRequest: CheckoutProduct[]) => {
                                 updateProductOrder({
                                     id: patientVisit.id,

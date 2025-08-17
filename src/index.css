@@ -474,3 +474,11 @@ img.ProseMirror-separator {
 }
 
 .ProseMirror p { margin-bottom: 1em }
+
+.positive-quantity {
+  color: green;
+}
+
+.negative-quantity {
+  color: red;
+}
