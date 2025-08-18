@@ -64,6 +64,9 @@ export interface TrxVisitProduct {
   discount_price: number;
   total_price: number;
   adjusted_price: number;
+  is_item: boolean;
+  is_treatment: boolean;
+  
 }
 
 export interface ProductPanelProps {

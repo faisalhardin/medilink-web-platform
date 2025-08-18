@@ -140,7 +140,6 @@ export async function OrderProduct(payload: OrderProductRequest): Promise<Common
 }
 
 export async function ListOrderedProduct(param: ListOrderProductRequest) {
-    console.log("<<<",param);
     try {
         const token = getToken();
         const response = await axios.get(

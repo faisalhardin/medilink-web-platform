@@ -1,10 +1,10 @@
 // Modified PatientVisitDetail.tsx
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { GetPatientVisitDetailedByID, UpdatePatientVisit, UpsertPatientVisitDetailRequest } from '@requests/patient';
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
-import { CheckoutProduct, TrxVisitProduct,  } from '@models/product';
+import { CheckoutProduct, Product, ProductPanelProps, TrxVisitProduct,  } from '@models/product';
 import { ListOrderedProduct, OrderProduct } from '@requests/products';
 
 
@@ -204,6 +204,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             patientVisit={patientVisit}
                             journeyPointId={activeTab.id}
                             assignedProducts={[]}
+                            // productPanelProps={productPanelList}
                             orderedProducts={trxProduct}
                             onAssignProduct={(productRequest: CheckoutProduct[]) => {
                                 updateProductOrder({

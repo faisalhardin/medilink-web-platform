@@ -21,7 +21,7 @@ interface ProductListProps {
   setQuantity: (id: number) => void;
 }
 
-const ProductQuantityPanel = ({productPanelProps, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
+const ProductQuantityPanel = ({ productPanelProps, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
   const quantity = (productPanelProps.cartProduct?.quantity || 0) - (productPanelProps.orderedProduct?.quantity || 0)
   return (
     (
@@ -64,6 +64,8 @@ const ProductQuantityPanel = ({productPanelProps, decrementQuantity, incrementQu
 export const ProductAssignmentPanel = ({
   patientVisit,
   orderedProducts,
+  journeyPointId,
+  // productPanelProps,
   onAssignProduct,
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,37 +73,6 @@ export const ProductAssignmentPanel = ({
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
-  const productPanelList = useMemo(()=> {
-    const cartProduct = patientVisit.product_cart?.reduce((prev, prod) => {prev[prod.id] = prod;
-      return prev;
-    }, {} as { [key:number]: Product});
-     const _orderedProduct: ProductPanelProps[] = orderedProducts.map((prod) => {
-      const _cartProduct = cartProduct && cartProduct[prod.id_trx_institution_product];
-      if (_cartProduct) {
-        delete cartProduct[prod.id_trx_institution_product];
-      }
-      return {
-        product_id: prod.id_trx_institution_product,
-        cartProduct: _cartProduct,
-        orderedProduct: prod,
-      } as ProductPanelProps;
-     })
-    const isEmpty = !cartProduct || Object.entries(cartProduct).length === 0;
-     if (isEmpty) {
-      return _orderedProduct;
-     }
-
-      for (const key in cartProduct) {
-        _orderedProduct.push({
-          product_id: cartProduct[key].id,
-
-          name: cartProduct[key].name,
-          cartProduct: cartProduct[key],
-        })
-      }
-
-     return _orderedProduct
-  }, [orderedProducts, patientVisit.product_cart])
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const debouncedUpdateCart = useCallback(
     debounce(async (patientVisit: PatientVisit, products: Product[]) => {
@@ -154,22 +125,96 @@ export const ProductAssignmentPanel = ({
 
   const handleResultClick = (product: Product) => {
     // setSelectedProduct(product);
-    const updatedProducts =  addProduct({ ...product, quantity: 1 });
+    const updatedProducts = addProduct({ ...product, quantity: 1 });
     setSearchTerm(product.name);
     setShowResults(false);
     debouncedUpdateCart(patientVisit, updatedProducts);
   };
 
+  // useEffect(() => {
+  //   const products = patientVisit.product_cart == undefined ? [] : patientVisit.product_cart;
+  //   if (products.length > 0 ) {
+  //     setSelectedProducts(products);
+  //   } 
+  // }, [patientVisit.product_cart]);
+
   useEffect(() => {
-    const products = patientVisit.product_cart == undefined ? [] : patientVisit.product_cart;
-    if (products.length > 0 ) {
-      setSelectedProducts(products);
-    } 
-  }, [patientVisit.product_cart]);
+    // 1. Safe null/undefined handling
+    const cartProducts = patientVisit?.product_cart || [];
+    const orderedProductsList = orderedProducts || [];
+    
+    // 2. Early return for empty data
+    if (cartProducts.length === 0 && orderedProductsList.length === 0) {
+      setSelectedProducts([]);
+      return;
+    }
+
+    // 3. Create a comprehensive product list
+    const cartProductIds = new Set(cartProducts.map(p => p?.id).filter(Boolean));
+
+     console.log("reach here 3");
+
+    // 4. Find ordered products that aren't in cart
+    const missingFromCart = orderedProductsList.filter(prod => 
+      prod?.id_trx_institution_product && 
+      !cartProductIds.has(prod.id_trx_institution_product)
+    );
+    console.log("reach here 2");
+    // 5. Convert missing ordered products to cart format
+  const missingProducts = missingFromCart.map(prod => ({
+    id: prod.id_trx_institution_product,
+    name: prod.name || 'Unknown Product',
+    price: prod.price || 0,
+    quantity: 0, // Start with 0 for ordered products not in cart
+    is_item: prod.is_item || false,
+    is_treatment: prod.is_treatment || false,
+    unit_type: prod.unit_type || '',
+  })).filter(p => p.id); // Remove any products without valid IDs
+
+  // 6. Combine cart products with missing ordered products
+  const combinedProducts = [
+    ...cartProducts,
+    ...missingProducts
+  ];
+
+  // 7. Remove duplicates based on ID
+  const uniqueProducts = combinedProducts.reduce((acc, product) => {
+    if (product?.id && !acc.some(p => p.id === product.id)) {
+      acc.push(product);
+    }
+    return acc;
+  }, [] as Product[]);
+
+  // 8. Only update if there's actually a change
+  setSelectedProducts(prev => {
+    // Compare arrays to avoid unnecessary updates
+    if (prev.length !== uniqueProducts.length) {
+      return uniqueProducts;
+    }
+    
+    const prevIds = new Set(prev.map(p => p.id));
+    const newIds = new Set(uniqueProducts.map(p => p.id));
+    
+    // Check if IDs are different
+    if (prevIds.size !== newIds.size || 
+        [...prevIds].some(id => !newIds.has(id))) {
+      return uniqueProducts;
+    }
+    
+    // Check if quantities are different
+    const hasQuantityChanges = uniqueProducts.some(newProduct => {
+      const prevProduct = prev.find(p => p.id === newProduct.id);
+      return prevProduct?.quantity !== newProduct.quantity;
+    });
+    
+    return hasQuantityChanges ? uniqueProducts : prev;
+  });
+
+}, [patientVisit?.product_cart, orderedProducts]);
 
   // Handle clicks outside of the search container
   useEffect(() => {
-    
+
     const handleClickOutside = (event: MouseEvent) => {
       if (
         searchContainerRef.current &&
@@ -212,9 +257,47 @@ export const ProductAssignmentPanel = ({
     }
   };
 
+  const productPanelList = useMemo(() => {
+    const cartProduct = selectedProducts.reduce((prev, prod) => {
+      prev[prod.id] = prod;
+      return prev;
+    }, {} as { [key: number]: Product });
+
+    const _orderedProduct: ProductPanelProps[] = orderedProducts.map((prod) => {
+      
+      let _cartProduct = cartProduct && cartProduct[prod.id_trx_institution_product];
+      if (_cartProduct) {
+        delete cartProduct[prod.id_trx_institution_product];
+      }
+
+      return {
+        product_id: prod.id_trx_institution_product,
+        cartProduct: _cartProduct,
+        orderedProduct: prod,
+      } as ProductPanelProps;
+    })
+    const isEmpty = !cartProduct || Object.entries(cartProduct).length === 0;
+    if (isEmpty) {
+      console.log("empty cart", _orderedProduct);
+      return _orderedProduct;
+    }
+
+    for (const key in cartProduct) {
+      _orderedProduct.push({
+        product_id: cartProduct[key].id,
+
+        name: cartProduct[key].name,
+        cartProduct: cartProduct[key],
+      })
+    }
+
+    console.log("productPanelList", _orderedProduct);
+    return _orderedProduct
+  }, [patientVisit.product_cart, selectedProducts])
+
   const incrementQuantity = (id: number) => {
     const updatedProducts = selectedProducts.map(p =>
-      p.id === id ? { ...p, quantity: (p.quantity || 1) + 1 } : p
+      p.id === id ? { ...p, quantity: (p.quantity || 0) + 1 } : p
     )
     setSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
@@ -222,9 +305,11 @@ export const ProductAssignmentPanel = ({
   };
 
   const decrementQuantity = (id: number) => {
+    console.log("decrementQuantity", id, selectedProducts);
     const updatedProducts = selectedProducts.map(p =>
       p.id === id && p.quantity ? { ...p, quantity: (p.quantity) - 1 || 0 } : p
-    ).filter(p => p.quantity !== 0);
+    );
+    // .filter(p => p.quantity !== 0);
     setSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
   };
@@ -319,22 +404,22 @@ export const ProductAssignmentPanel = ({
         </div>
         <ul>
           {
-          productPanelList.map((product) => (
-            <li key={product.product_id}>
-              <ProductQuantityPanel
-              key={product.product_id}
-              productPanelProps={product}
-              decrementQuantity={() => { decrementQuantity(product.product_id) }}
-              incrementQuantity={() => { incrementQuantity(product.product_id) }}
-              setQuantity={(quantity: number) => {
-                setQuantity(product.product_id, quantity);
-              }}
+            productPanelList.map((product) => (
+              <li key={product.product_id}>
+                <ProductQuantityPanel
+                  key={`${product.product_id}-${product.cartProduct?.quantity || 0}-${product.orderedProduct?.quantity || 0}`}
+                  productPanelProps={product}
+                  decrementQuantity={() => { decrementQuantity(product.product_id) }}
+                  incrementQuantity={() => { incrementQuantity(product.product_id) }}
+                  setQuantity={(quantity: number) => {
+                    setQuantity(product.product_id, quantity);
+                  }}
 
-            />
-            </li>
-            
+                />
+              </li>
 
-          ))}
+
+            ))}
         </ul>
 
         <button onClick={() => {
