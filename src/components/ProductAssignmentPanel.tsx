@@ -17,6 +17,7 @@ interface ProductAssignmentPanelProps {
 
 interface ProductListProps {
   name: string | undefined;
+  unitType: string;
   cartQuantity: number;
   orderedQuantity: number;
   decrementQuantity: () => void;
@@ -24,24 +25,24 @@ interface ProductListProps {
   setQuantity: (id: number) => void;
 }
 
-const ProductQuantityPanel = ({  name, cartQuantity, orderedQuantity, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
-  const quantityDiff =cartQuantity - orderedQuantity;
-  console.log("new quantity", quantityDiff, cartQuantity, orderedQuantity);
-  
+const ProductQuantityPanel = ({ name, unitType, cartQuantity, orderedQuantity, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
+  const quantityDiff = cartQuantity - orderedQuantity;
+
   return (
     (
-      <div className="border rounded p-3 mb-2">
-        <div className="font-medium">{name}</div>
+      <div className="border rounded p-1 mb-2 text-sm">
+        <div className="font-medium">{name} <span className='text-xs font-extralight'>({unitType})</span></div>
         <div className="flex items-center gap-2 mb-2">
-          <div className="flex items-center border rounded">
-            <button onClick={decrementQuantity}>-</button>
+          <div className="flex items-center border rounded text-xs">
+            <button className="px-1.5 py-0.5" onClick={decrementQuantity}>-</button>
             <input
-              className="px-3 py-1 border-l border-r w-12 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              id={name}
+              className="px-1 py-0.5 border-l border-r w-6 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               type="number"
               value={cartQuantity}
               onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
             />
-            <button onClick={incrementQuantity}>+</button>
+            <button className="px-1.5 py-0.5" onClick={incrementQuantity}>+</button>
           </div>
           {quantityDiff !== 0 && (
             <span className={quantityDiff > 0 ? "positive-quantity" : "negative-quantity"}>
@@ -342,6 +343,7 @@ export const ProductAssignmentPanel = ({
                 <ProductQuantityPanel
                   key={product.product_id}
                   name={product.cartProduct?.name ?? product.orderedProduct?.name}
+                  unitType={product.cartProduct?.unit_type ?? product.orderedProduct?.unit_type ?? ''}
                   cartQuantity={product.cartProduct?.quantity ?? 0}
                   orderedQuantity={product.orderedProduct?.quantity ?? 0}
                   decrementQuantity={() => { decrementQuantity(product.product_id) }}
