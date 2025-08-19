@@ -21,6 +21,32 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [patientVisit, setPatientVisit] = useState<PatientVisit>({} as PatientVisit);
     const [patient, setPatient] = useState<Patient>({} as Patient);
     const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);
+    const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
+
+    const updateSelectedProducts = (products: Product[]) => {
+        setSelectedProducts(prev => {
+            if (prev.length !== products.length) {
+                return products;
+            }
+
+            const prevIds = new Set(prev.map(p => p.id));
+            const newIds = new Set(products.map(p => p.id));
+
+            if (
+                prevIds.size !== newIds.size ||
+                [...prevIds].some(id => !newIds.has(id))
+            ) {
+                return products;
+            }
+
+            const hasQuantityChanges = products.some(newProduct => {
+                const prevProduct = prev.find(p => p.id === newProduct.id);
+                return prevProduct?.quantity !== newProduct.quantity;
+            });
+
+            return hasQuantityChanges ? products : prev;
+        });
+    };
 
     const updateActiveTab = (tab: journeyTab) => {
         setActiveTab(tab);
@@ -76,7 +102,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     GenerateVisitTab(patientVisit);
                     setVisitDetails(patientVisit.patient_checkpoints)
                     setPatient(patientVisit.patient);
-
+                    setSelectedProducts(patientVisit.product_cart || []);
                 }
                
             } catch (error) {
@@ -200,8 +226,9 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         <ProductAssignmentPanel
                             patientVisit={patientVisit}
                             journeyPointId={activeTab.id}
-                            cartProducts={patientVisit.product_cart || []}
+                            cartProducts={selectedProducts}
                             orderedProducts={trxProduct}
+                            updateSelectedProducts={updateSelectedProducts}
                             onAssignProduct={(productRequest: CheckoutProduct[]) => {
                                 updateProductOrder({
                                     id: patientVisit.id,

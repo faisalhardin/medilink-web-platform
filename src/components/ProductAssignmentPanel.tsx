@@ -11,6 +11,7 @@ interface ProductAssignmentPanelProps {
   journeyPointId: number;
   cartProducts: Product[];
   orderedProducts: TrxVisitProduct[];
+  updateSelectedProducts: (products: Product[]) => void;
   onAssignProduct: (product: CheckoutProduct[], visitID: number) => void;
 }
 
@@ -57,7 +58,9 @@ export const ProductAssignmentPanel = ({
   patientVisit,
   cartProducts,
   orderedProducts,
+
   journeyPointId,
+  updateSelectedProducts,
   // productPanelProps,
   onAssignProduct,
 }: ProductAssignmentPanelProps) => {
@@ -65,7 +68,7 @@ export const ProductAssignmentPanel = ({
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
+  // const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   
   const updateVisitCart = async (patientVisit: PatientVisit, products: Product[]) => {
@@ -135,7 +138,7 @@ export const ProductAssignmentPanel = ({
     
     // 2. Early return for empty data
     if (_cartProducts.length === 0 && orderedProductsList.length === 0) {
-      setSelectedProducts([]);
+      updateSelectedProducts([]);
       return;
     }
 
@@ -174,30 +177,7 @@ export const ProductAssignmentPanel = ({
   }, [] as Product[]);
 
   // 8. Only update if there's actually a change
-  setSelectedProducts(prev => {
-    console.log("changes");
-    // Compare arrays to avoid unnecessary updates
-    if (prev.length !== uniqueProducts.length) {
-      return uniqueProducts;
-    }
-    
-    const prevIds = new Set(prev.map(p => p.id));
-    const newIds = new Set(uniqueProducts.map(p => p.id));
-    
-    // Check if IDs are different
-    if (prevIds.size !== newIds.size || 
-        [...prevIds].some(id => !newIds.has(id))) {
-      return uniqueProducts;
-    }
-    
-    // Check if quantities are different
-    const hasQuantityChanges = uniqueProducts.some(newProduct => {
-      const prevProduct = prev.find(p => p.id === newProduct.id);
-      return prevProduct?.quantity !== newProduct.quantity;
-    });
-    
-    return hasQuantityChanges ? uniqueProducts : prev;
-  });
+  updateSelectedProducts(uniqueProducts);
 
 }, [cartProducts, orderedProducts]);
 
@@ -226,32 +206,31 @@ export const ProductAssignmentPanel = ({
 
   const addProduct = (product: Product): Product[] => {
     // Check if product already exists in the list
-    const existingProductIndex = selectedProducts.findIndex(p => p.id === product.id);
+    const existingProductIndex = cartProducts.findIndex(p => p.id === product.id);
     if (existingProductIndex >= 0) {
       // Product exists, update its quantity
-      const updatedProducts = [...selectedProducts];
+      const updatedProducts = [...cartProducts];
       const existingProduct = updatedProducts[existingProductIndex];
       updatedProducts[existingProductIndex] = {
         ...existingProduct,
         quantity: (existingProduct.quantity || 1) + (product.quantity || 1)
       };
-      setSelectedProducts(updatedProducts);
+      updateSelectedProducts(updatedProducts);
       return updatedProducts;
     } else {
       // Product doesn't exist, add it to the list
       console.log("add new", product);
-      const updatedProducts = [...selectedProducts, product];
-      setSelectedProducts(updatedProducts);
+      const updatedProducts = [...cartProducts, product];
+      updateSelectedProducts(updatedProducts);
       return updatedProducts;
     }
   };
 
   let productPanelList = useMemo(() => {
-    const cartProduct = selectedProducts.reduce((prev, prod) => {
+    const cartProduct = cartProducts.reduce((prev, prod) => {
       prev[prod.id] = prod;
       return prev;
     }, {} as { [key: number]: Product });
-    console.log("xxx ordered product", orderedProducts, selectedProducts);
     const panelProps: ProductPanelProps[] = orderedProducts.map((prod) => {
       
       let _cartProduct = cartProduct && cartProduct[prod.id_trx_institution_product];
@@ -282,40 +261,39 @@ export const ProductAssignmentPanel = ({
 
     console.log("productPanelList", panelProps);
     return panelProps
-  }, [orderedProducts, selectedProducts])
+  }, [orderedProducts, cartProducts])
 
   const incrementQuantity = (id: number) => {
-    const updatedProducts = selectedProducts.map(p =>
+    const updatedProducts = cartProducts.map(p =>
       p.id === id ? { ...p, quantity: (p.quantity || 0) + 1 } : p
     )
-    setSelectedProducts(updatedProducts);
+    updateSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
 
   };
 
   const decrementQuantity = (id: number) => {
-    console.log("decrementQuantity", id, selectedProducts);
-    const updatedProducts = selectedProducts.map(p =>
+    const updatedProducts = cartProducts.map(p =>
       p.id === id && p.quantity ? { ...p, quantity: (p.quantity) - 1 || 0 } : p
     );
     // .filter(p => p.quantity !== 0);
-    setSelectedProducts(updatedProducts);
+    updateSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
   };
 
   const setQuantity = (id: number, quantity: number) => {
-    const updatedProducts = selectedProducts.map(p =>
+    const updatedProducts = cartProducts.map(p =>
       p.id === id ? { ...p, quantity: quantity } : p
     ).filter(p => p.quantity !== 0);
 
-    setSelectedProducts(updatedProducts);
+    updateSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
 
   };
 
   const deleteProduct = (id: number) => {
-    const newProductList = selectedProducts.filter(product => product.id !== id);
-    setSelectedProducts(newProductList);
+    const newProductList = cartProducts.filter(product => product.id !== id);
+    updateSelectedProducts(newProductList);
   };
 
   return (
@@ -380,7 +358,7 @@ export const ProductAssignmentPanel = ({
         </ul>
 
         <button onClick={() => {
-          const checkedProducts: CheckoutProduct[] = selectedProducts.map(product => ({
+          const checkedProducts: CheckoutProduct[] = cartProducts.map(product => ({
             id: product.id,
             quantity: product.quantity || 1,
             name: product.name,
@@ -389,7 +367,6 @@ export const ProductAssignmentPanel = ({
             total_price: product.price * product.quantity,
           }));
 
-          console.log("checkedProducts", checkedProducts, selectedProducts);
 
           onAssignProduct(checkedProducts, patientVisit.id);
         }}> Order</button>
