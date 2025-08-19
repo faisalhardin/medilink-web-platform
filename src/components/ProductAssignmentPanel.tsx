@@ -9,50 +9,42 @@ import { UpdatePatientVisit } from '@requests/patient';
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
   journeyPointId: number;
-  assignedProducts: AssignedProductRequest[];
+  cartProducts: Product[];
   orderedProducts: TrxVisitProduct[];
   onAssignProduct: (product: CheckoutProduct[], visitID: number) => void;
 }
 
 interface ProductListProps {
-  productPanelProps: ProductPanelProps;
+  name: string | undefined;
+  cartQuantity: number;
+  orderedQuantity: number;
   decrementQuantity: () => void;
   incrementQuantity: () => void;
   setQuantity: (id: number) => void;
 }
 
-const ProductQuantityPanel = ({ productPanelProps, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
-  const quantity = (productPanelProps.cartProduct?.quantity || 0) - (productPanelProps.orderedProduct?.quantity || 0)
+const ProductQuantityPanel = ({  name, cartQuantity, orderedQuantity, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
+  const quantityDiff =cartQuantity - orderedQuantity;
+  console.log("new quantity", quantityDiff, cartQuantity, orderedQuantity);
+  
   return (
     (
       <div className="border rounded p-3 mb-2">
-        <div className="font-medium">{productPanelProps.orderedProduct?.name || productPanelProps.cartProduct?.name}</div>
+        <div className="font-medium">{name}</div>
         <div className="flex items-center gap-2 mb-2">
           <div className="flex items-center border rounded">
-            <button
-              className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
-              onClick={decrementQuantity}
-            >
-              -
-            </button>
+            <button onClick={decrementQuantity}>-</button>
             <input
               className="px-3 py-1 border-l border-r w-12 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              value={productPanelProps.cartProduct?.quantity || 0}
               type="number"
-              onChange={(e) => {
-                setQuantity(parseInt(e.target.value) || 0);
-              }}
+              value={cartQuantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
             />
-            <button
-              className="px-3 py-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
-              onClick={incrementQuantity}
-            >
-              +
-            </button>
+            <button onClick={incrementQuantity}>+</button>
           </div>
-          {quantity !== 0 && (
-            <span className={quantity > 0 ? 'positive-quantity' : 'negative-quantity'}>
-              {quantity > 0 ? `+${quantity}` : quantity}
+          {quantityDiff !== 0 && (
+            <span className={quantityDiff > 0 ? "positive-quantity" : "negative-quantity"}>
+              {quantityDiff > 0 ? `+${quantityDiff}` : quantityDiff}
             </span>
           )}
         </div>
@@ -63,6 +55,7 @@ const ProductQuantityPanel = ({ productPanelProps, decrementQuantity, incrementQ
 
 export const ProductAssignmentPanel = ({
   patientVisit,
+  cartProducts,
   orderedProducts,
   journeyPointId,
   // productPanelProps,
@@ -74,10 +67,9 @@ export const ProductAssignmentPanel = ({
   const [isSearching, setIsSearching] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const debouncedUpdateCart = useCallback(
-    debounce(async (patientVisit: PatientVisit, products: Product[]) => {
-      // Here you can make API calls to sync the cart
-      const productsCart: CheckoutProduct[] = products.map((product) => {
+  
+  const updateVisitCart = async (patientVisit: PatientVisit, products: Product[]) => {
+   const productsCart: CheckoutProduct[] = products.map((product) => {
         return {
           id: product.id,
           quantity: product.quantity,
@@ -92,7 +84,12 @@ export const ProductAssignmentPanel = ({
         id: patientVisit.id,
         product_cart: productsCart
       });
-    }, 1400),
+  };
+  
+  const debouncedUpdateCart = useCallback(
+    debounce(async (patientVisit: PatientVisit, products: Product[]) => {
+      updateVisitCart(patientVisit, products);
+    }, 1000),
     []
   );
 
@@ -131,35 +128,26 @@ export const ProductAssignmentPanel = ({
     debouncedUpdateCart(patientVisit, updatedProducts);
   };
 
-  // useEffect(() => {
-  //   const products = patientVisit.product_cart == undefined ? [] : patientVisit.product_cart;
-  //   if (products.length > 0 ) {
-  //     setSelectedProducts(products);
-  //   } 
-  // }, [patientVisit.product_cart]);
-
   useEffect(() => {
     // 1. Safe null/undefined handling
-    const cartProducts = patientVisit?.product_cart || [];
+    const _cartProducts = cartProducts || [];
     const orderedProductsList = orderedProducts || [];
     
     // 2. Early return for empty data
-    if (cartProducts.length === 0 && orderedProductsList.length === 0) {
+    if (_cartProducts.length === 0 && orderedProductsList.length === 0) {
       setSelectedProducts([]);
       return;
     }
 
     // 3. Create a comprehensive product list
-    const cartProductIds = new Set(cartProducts.map(p => p?.id).filter(Boolean));
-
-     console.log("reach here 3");
+    const cartProductIds = new Set(_cartProducts.map(p => p?.id).filter(Boolean));
 
     // 4. Find ordered products that aren't in cart
     const missingFromCart = orderedProductsList.filter(prod => 
       prod?.id_trx_institution_product && 
       !cartProductIds.has(prod.id_trx_institution_product)
     );
-    console.log("reach here 2");
+    
     // 5. Convert missing ordered products to cart format
   const missingProducts = missingFromCart.map(prod => ({
     id: prod.id_trx_institution_product,
@@ -173,7 +161,7 @@ export const ProductAssignmentPanel = ({
 
   // 6. Combine cart products with missing ordered products
   const combinedProducts = [
-    ...cartProducts,
+    ..._cartProducts,
     ...missingProducts
   ];
 
@@ -187,6 +175,7 @@ export const ProductAssignmentPanel = ({
 
   // 8. Only update if there's actually a change
   setSelectedProducts(prev => {
+    console.log("changes");
     // Compare arrays to avoid unnecessary updates
     if (prev.length !== uniqueProducts.length) {
       return uniqueProducts;
@@ -210,7 +199,7 @@ export const ProductAssignmentPanel = ({
     return hasQuantityChanges ? uniqueProducts : prev;
   });
 
-}, [patientVisit?.product_cart, orderedProducts]);
+}, [cartProducts, orderedProducts]);
 
   // Handle clicks outside of the search container
   useEffect(() => {
@@ -257,13 +246,13 @@ export const ProductAssignmentPanel = ({
     }
   };
 
-  const productPanelList = useMemo(() => {
+  let productPanelList = useMemo(() => {
     const cartProduct = selectedProducts.reduce((prev, prod) => {
       prev[prod.id] = prod;
       return prev;
     }, {} as { [key: number]: Product });
-
-    const _orderedProduct: ProductPanelProps[] = orderedProducts.map((prod) => {
+    console.log("xxx ordered product", orderedProducts, selectedProducts);
+    const panelProps: ProductPanelProps[] = orderedProducts.map((prod) => {
       
       let _cartProduct = cartProduct && cartProduct[prod.id_trx_institution_product];
       if (_cartProduct) {
@@ -278,12 +267,12 @@ export const ProductAssignmentPanel = ({
     })
     const isEmpty = !cartProduct || Object.entries(cartProduct).length === 0;
     if (isEmpty) {
-      console.log("empty cart", _orderedProduct);
-      return _orderedProduct;
+      console.log("empty cart", panelProps);
+      return panelProps;
     }
 
     for (const key in cartProduct) {
-      _orderedProduct.push({
+      panelProps.push({
         product_id: cartProduct[key].id,
 
         name: cartProduct[key].name,
@@ -291,9 +280,9 @@ export const ProductAssignmentPanel = ({
       })
     }
 
-    console.log("productPanelList", _orderedProduct);
-    return _orderedProduct
-  }, [patientVisit.product_cart, selectedProducts])
+    console.log("productPanelList", panelProps);
+    return panelProps
+  }, [orderedProducts, selectedProducts])
 
   const incrementQuantity = (id: number) => {
     const updatedProducts = selectedProducts.map(p =>
@@ -328,40 +317,6 @@ export const ProductAssignmentPanel = ({
     const newProductList = selectedProducts.filter(product => product.id !== id);
     setSelectedProducts(newProductList);
   };
-
-  // const handleAssignx = async () => {
-  //   if (!selectedProduct) return;
-
-  //   const newAssignment: AssignedProduct = {
-  //     id: selectedProduct.id || 0,
-  //     patient_visit_id: patientVisit.id,
-  //     journey_point_id: journeyPointId,
-  //     quantity,
-  //     notes,
-  //     product: selectedProduct
-  //   };
-
-  //   await onAssignProduct(newAssignment);
-
-  //   // Reset form
-  //   setSelectedProduct(null);
-  //   setQuantity(1);
-  //   setNotes('');
-  //   setSearchTerm('');
-  //   setSearchResults([]);
-  // };
-
-  // const incrementQuantity = (id) => {
-  //   if (selectedProduct && quantity < selectedProduct.quantity) {
-  //     setQuantity(prev => prev + 1);
-  //   }
-  // };
-
-  // const decrementQuantity = () => {
-  //   if (quantity > 1) {
-  //     setQuantity(prev => prev - 1);
-  //   }
-  // };
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -407,8 +362,10 @@ export const ProductAssignmentPanel = ({
             productPanelList.map((product) => (
               <li key={product.product_id}>
                 <ProductQuantityPanel
-                  key={`${product.product_id}-${product.cartProduct?.quantity || 0}-${product.orderedProduct?.quantity || 0}`}
-                  productPanelProps={product}
+                  key={product.product_id}
+                  name={product.cartProduct?.name ?? product.orderedProduct?.name}
+                  cartQuantity={product.cartProduct?.quantity ?? 0}
+                  orderedQuantity={product.orderedProduct?.quantity ?? 0}
                   decrementQuantity={() => { decrementQuantity(product.product_id) }}
                   incrementQuantity={() => { incrementQuantity(product.product_id) }}
                   setQuantity={(quantity: number) => {
