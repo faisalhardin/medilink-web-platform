@@ -1,3 +1,5 @@
+import { CheckoutProduct, Product } from "@models/product";
+
 /**
  * Generically merges two arrays of objects based on a common ID field
  * @param array1 First array of objects
@@ -53,4 +55,22 @@ export function mergeArrays<T extends Record<string, any>, K extends keyof T>(
     // Convert the map values back to an array
     return Array.from(objectMap.values());
   }
-  
+
+export const convertProductToCheckoutProduct = (p: Product): CheckoutProduct => {
+  return {
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    quantity: p.quantity,
+    total_price: p.price * p.quantity,
+    discount_rate: 0,
+    discount_price: 0,
+    adjusted_price: p.price * p.quantity,
+    unit_type: p.unit_type,
+    is_item: p.is_item,
+    is_treatment: p.is_treatment,
+  }
+}
+export const convertProductsToCheckoutProducts = (product: Product[]): CheckoutProduct[] => {
+  return product.map(p => (convertProductToCheckoutProduct(p)));
+}

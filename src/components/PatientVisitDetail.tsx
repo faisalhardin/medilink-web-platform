@@ -6,6 +6,7 @@ import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
 import { CheckoutProduct, Product, ProductPanelProps, TrxVisitProduct,  } from '@models/product';
 import { ListOrderedProduct, OrderProduct } from '@requests/products';
+import { convertProductsToCheckoutProducts} from '@utils/common'
 
 
 export interface journeyTab {
@@ -20,12 +21,13 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [visitDetails, setVisitDetails] = useState<VisitDetail[]>([]);
     const [patientVisit, setPatientVisit] = useState<PatientVisit>({} as PatientVisit);
     const [patient, setPatient] = useState<Patient>({} as Patient);
-    const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);
-    const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
+    const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);    
+    const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
 
-    const updateSelectedProducts = (products: Product[]) => {
+    const updateSelectedProducts = (products: CheckoutProduct[]) => {
         setSelectedProducts(prev => {
             if (prev.length !== products.length) {
+                console.log("Length mismatch");
                 return products;
             }
 
@@ -39,12 +41,12 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 return products;
             }
 
-            const hasQuantityChanges = products.some(newProduct => {
+            const hasValidChangesHappen = products.some(newProduct => {
                 const prevProduct = prev.find(p => p.id === newProduct.id);
-                return prevProduct?.quantity !== newProduct.quantity;
+                return (prevProduct?.quantity !== newProduct.quantity) || (prevProduct?.adjusted_price !== newProduct.adjusted_price);
             });
-
-            return hasQuantityChanges ? products : prev;
+            const returnVal = hasValidChangesHappen ? products : prev;
+            return returnVal
         });
     };
 
@@ -102,7 +104,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     GenerateVisitTab(patientVisit);
                     setVisitDetails(patientVisit.patient_checkpoints)
                     setPatient(patientVisit.patient);
-                    setSelectedProducts(patientVisit.product_cart || []);
+                    setSelectedProducts(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
                 }
                
             } catch (error) {

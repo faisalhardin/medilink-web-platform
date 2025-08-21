@@ -2,16 +2,19 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { PatientVisit, PatientVisitDetail } from '@models/patient';
 import { ListProducts } from '@requests/products';
-import { Product, AssignedProductRequest, CheckoutProduct, TrxVisitProduct, ProductPanelProps } from '@models/product';
+import { Product, AssignedProductRequest, CheckoutProduct, TrxVisitProduct, ProductPanelProps, ProductOrderConfirmationProps } from '@models/product';
 import { debounce } from 'lodash';
 import { UpdatePatientVisit } from '@requests/patient';
+import { convertProductToCheckoutProduct} from '@utils/common'
+import { useDrawer } from 'hooks/useDrawer';
+import { Drawer } from '@components/Drawer';
 
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
   journeyPointId: number;
-  cartProducts: Product[];
+  cartProducts: CheckoutProduct[];
   orderedProducts: TrxVisitProduct[];
-  updateSelectedProducts: (products: Product[]) => void;
+  updateSelectedProducts: (products: CheckoutProduct[]) => void;
   onAssignProduct: (product: CheckoutProduct[], visitID: number) => void;
 }
 
@@ -20,70 +23,89 @@ interface ProductListProps {
   unitType: string;
   cartQuantity: number;
   orderedQuantity: number;
+  price: number;
+  adjustedPrice: number;
   decrementQuantity: () => void;
   incrementQuantity: () => void;
   setQuantity: (id: number) => void;
+  setAdjustedPrice: (adjustedPrice: number) => void;
 }
 
-const ProductQuantityPanel = ({ name, unitType, cartQuantity, orderedQuantity, decrementQuantity, incrementQuantity, setQuantity }: ProductListProps) => {
+const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPrice, orderedQuantity, decrementQuantity, incrementQuantity, setQuantity, setAdjustedPrice }: ProductListProps) => {
+  const [isEditingPrice, setIsEditingPrice] = useState(false);
+  
   const quantityDiff = cartQuantity - orderedQuantity;
 
+  const handlePriceChange = (newPrice: number) => {
+    console.log('newPrice', newPrice)
+    setAdjustedPrice(newPrice);
+  };
+
+  const handlePriceInputBlur = () => {
+    setIsEditingPrice(false);
+    setAdjustedPrice(adjustedPrice);
+  };
+
   return (
-    (
-      <div className="border rounded p-1 mb-2 text-sm">
-        <div className="font-medium">{name} <span className='text-xs font-extralight'>({unitType})</span></div>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex items-center border rounded text-xs">
-            <button className="px-1.5 py-0.5" onClick={decrementQuantity}>-</button>
-            <input
-              id={name}
-              className="px-1 py-0.5 border-l border-r w-6 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              type="number"
-              value={cartQuantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-            />
-            <button className="px-1.5 py-0.5" onClick={incrementQuantity}>+</button>
-          </div>
-          {quantityDiff !== 0 && (
-            <span className={quantityDiff > 0 ? "positive-quantity" : "negative-quantity"}>
-              {quantityDiff > 0 ? `+${quantityDiff}` : quantityDiff}
-            </span>
-          )}
+    <div className="border rounded p-1 mb-2 text-sm">
+      <div className="font-medium">{name} <span className='text-xs font-extralight'>({unitType})</span></div>
+      <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center border rounded text-xs">
+          <button className="px-1.5 py-0.5" onClick={decrementQuantity}>-</button>
+          <input
+            id={name}
+            className="px-1 py-0.5 border-l border-r w-6 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            type="number"
+            value={cartQuantity}
+            onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+          />
+          <button className="px-1.5 py-0.5" onClick={incrementQuantity}>+</button>
+        </div>
+        {quantityDiff !== 0 && (
+          <span className={quantityDiff > 0 ? "positive-quantity" : "negative-quantity"}>
+            {quantityDiff > 0 ? `+${quantityDiff}` : quantityDiff}
+          </span>
+        )}
+      </div>
+      
+      {/* Price Box */}
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-gray-600">Price:</span>
+        <div className="flex items-center border rounded">
+          <input
+            className="px-2 py-0.5 w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            type="number"
+            step="0.01"
+            id='price'
+            placeholder={(price * cartQuantity).toString()}
+            value={adjustedPrice}
+            onFocus={() => setIsEditingPrice(true)}
+            onBlur={handlePriceInputBlur}
+            onChange={(e) => handlePriceChange(parseFloat(e.target.value) || 0)}
+          />
         </div>
       </div>
-    )
-  )
-}
+    </div>
+  );
+};
+
 
 export const ProductAssignmentPanel = ({
   patientVisit,
   cartProducts,
   orderedProducts,
-
   journeyPointId,
   updateSelectedProducts,
-  // productPanelProps,
   onAssignProduct,
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  // const [selectedProducts, setSelectedProducts] = useState<Product[]>(patientVisit.product_cart || []);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const cartDrawer = useDrawer();
   
-  const updateVisitCart = async (patientVisit: PatientVisit, products: Product[]) => {
-   const productsCart: CheckoutProduct[] = products.map((product) => {
-        return {
-          id: product.id,
-          quantity: product.quantity,
-          unit_type: product.unit_type,
-          total_price: product.price * product.quantity,
-          price: product.price,
-          name: product.name,
-
-        };
-      });
+  const updateVisitCart = async (patientVisit: PatientVisit, productsCart: CheckoutProduct[]) => {
       const resp = await UpdatePatientVisit({
         id: patientVisit.id,
         product_cart: productsCart
@@ -91,7 +113,7 @@ export const ProductAssignmentPanel = ({
   };
   
   const debouncedUpdateCart = useCallback(
-    debounce(async (patientVisit: PatientVisit, products: Product[]) => {
+    debounce(async (patientVisit: PatientVisit, products: CheckoutProduct[]) => {
       updateVisitCart(patientVisit, products);
     }, 1000),
     []
@@ -153,7 +175,7 @@ export const ProductAssignmentPanel = ({
     );
     
     // 5. Convert missing ordered products to cart format
-  const missingProducts = missingFromCart.map(prod => ({
+  const missingProducts:CheckoutProduct[] = missingFromCart.map(prod => ({
     id: prod.id_trx_institution_product,
     name: prod.name || 'Unknown Product',
     price: prod.price || 0,
@@ -161,6 +183,8 @@ export const ProductAssignmentPanel = ({
     is_item: prod.is_item || false,
     is_treatment: prod.is_treatment || false,
     unit_type: prod.unit_type || '',
+    adjusted_price: prod.adjusted_price || 0,
+    total_price: prod.total_price || 0,
   })).filter(p => p.id); // Remove any products without valid IDs
 
   // 6. Combine cart products with missing ordered products
@@ -175,7 +199,7 @@ export const ProductAssignmentPanel = ({
       acc.push(product);
     }
     return acc;
-  }, [] as Product[]);
+  }, [] as CheckoutProduct[]);
 
   // 8. Only update if there's actually a change
   updateSelectedProducts(uniqueProducts);
@@ -205,7 +229,7 @@ export const ProductAssignmentPanel = ({
     };
   }, [showResults]);
 
-  const addProduct = (product: Product): Product[] => {
+  const addProduct = (product: Product): CheckoutProduct[] => {
     // Check if product already exists in the list
     const existingProductIndex = cartProducts.findIndex(p => p.id === product.id);
     if (existingProductIndex >= 0) {
@@ -220,8 +244,7 @@ export const ProductAssignmentPanel = ({
       return updatedProducts;
     } else {
       // Product doesn't exist, add it to the list
-      console.log("add new", product);
-      const updatedProducts = [...cartProducts, product];
+      const updatedProducts = [...cartProducts, convertProductToCheckoutProduct(product)];
       updateSelectedProducts(updatedProducts);
       return updatedProducts;
     }
@@ -231,7 +254,7 @@ export const ProductAssignmentPanel = ({
     const cartProduct = cartProducts.reduce((prev, prod) => {
       prev[prod.id] = prod;
       return prev;
-    }, {} as { [key: number]: Product });
+    }, {} as { [key: number]: CheckoutProduct });
     const panelProps: ProductPanelProps[] = orderedProducts.map((prod) => {
       
       let _cartProduct = cartProduct && cartProduct[prod.id_trx_institution_product];
@@ -247,7 +270,6 @@ export const ProductAssignmentPanel = ({
     })
     const isEmpty = !cartProduct || Object.entries(cartProduct).length === 0;
     if (isEmpty) {
-      console.log("empty cart", panelProps);
       return panelProps;
     }
 
@@ -260,7 +282,6 @@ export const ProductAssignmentPanel = ({
       })
     }
 
-    console.log("productPanelList", panelProps);
     return panelProps
   }, [orderedProducts, cartProducts])
 
@@ -282,6 +303,14 @@ export const ProductAssignmentPanel = ({
     debouncedUpdateCart(patientVisit, updatedProducts);
   };
 
+  const setAdjustedPrice = (productID: number, adjustedPrice: number) => {
+    const updatedProducts = cartProducts.map(p =>
+      p.id === productID && p.adjusted_price ? { ...p, adjusted_price: adjustedPrice } : p
+    );
+
+    updateSelectedProducts(updatedProducts);
+  }
+
   const setQuantity = (id: number, quantity: number) => {
     const updatedProducts = cartProducts.map(p =>
       p.id === id ? { ...p, quantity: quantity } : p
@@ -298,81 +327,197 @@ export const ProductAssignmentPanel = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h3 className="text-lg font-medium mb-4">Assign Products</h3>
+    <>
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="text-lg font-medium mb-4">Assign Products</h3>
 
-      {/* Search and assign section with improved search panel */}
-      <div className="mb-4">
-        <div ref={searchContainerRef} className="relative mb-2">
-          <input
-            type="text"
-            className="w-full border rounded px-2 py-1"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            onFocus={() => setShowResults(searchResults.length > 0)}
-          />
+        {/* Search and assign section with improved search panel */}
+        <div className="mb-4">
+          <div ref={searchContainerRef} className="relative mb-2">
+            <input
+              type="text"
+              className="w-full border rounded px-2 py-1"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              onFocus={() => setShowResults(searchResults.length > 0)}
+            />
 
-          {isSearching && (
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
-              Searching...
-            </div>
-          )}
+            {isSearching && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+                Searching...
+              </div>
+            )}
 
-          {showResults && (
-            <ul className="absolute w-full max-h-40 overflow-y-auto mt-0 p-0 list-none border border-gray-300 rounded-b-md bg-white z-10 shadow-md">
-              {searchResults.map(product => (
-                <li
-                  key={product.id}
-                  className={`p-2 ${product.quantity && product.quantity > 0 ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-50'}`}
-                  onClick={() => product.quantity && product.quantity > 0 ? handleResultClick(product) : null}
-                >
-                  <div className="font-medium">{product.name}</div>
-                  <div className="text-sm text-gray-600">
-                    Stock: {product.quantity} {product.unit_type}
-                  </div>
+            {showResults && (
+              <ul className="absolute w-full max-h-40 overflow-y-auto mt-0 p-0 list-none border border-gray-300 rounded-b-md bg-white z-10 shadow-md">
+                {searchResults.map(product => (
+                  <li
+                    key={product.id}
+                    className={`p-2 ${product.quantity && product.quantity > 0 ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-50'}`}
+                    onClick={() => product.quantity && product.quantity > 0 ? handleResultClick(product) : null}
+                  >
+                    <div className="font-medium">{product.name}</div>
+                    <div className="text-sm text-gray-600">
+                      Stock: {product.quantity} {product.unit_type}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <ul>
+            {
+              productPanelList.map((product) => (
+                <li key={product.product_id}>
+                  <ProductQuantityPanel
+                    key={product.product_id}
+                    name={product.cartProduct?.name ?? product.orderedProduct?.name}
+                    unitType={product.cartProduct?.unit_type ?? product.orderedProduct?.unit_type ?? ''}
+                    cartQuantity={product.cartProduct?.quantity ?? 0}
+                    orderedQuantity={product.orderedProduct?.quantity ?? 0}
+                    price={product.cartProduct?.price ?? product.orderedProduct?.price ?? 0}
+                    adjustedPrice={product.cartProduct?.adjusted_price ?? product.orderedProduct?.adjusted_price ?? 0}
+                    setAdjustedPrice={(adjustedPrice: number) => {
+                      setAdjustedPrice(product.product_id, adjustedPrice);
+                    }}
+                    decrementQuantity={() => { decrementQuantity(product.product_id) }}
+                    incrementQuantity={() => { incrementQuantity(product.product_id) }}
+                    setQuantity={(quantity: number) => {
+                      setQuantity(product.product_id, quantity);
+                    }}
+
+                  />
                 </li>
+
+
+              ))}
+          </ul>
+
+          <button
+            onClick={cartDrawer.openDrawer}
+          > Order</button>
+        </div>
+      </div>
+      <Drawer
+        isOpen={cartDrawer.isOpen}
+        onClose={cartDrawer.closeDrawer}
+        title="Product Order Confirmation"
+        maxWidth="md"
+        position="right"
+      >
+        <ProductOrderConfirmation
+          products={cartProducts}
+          visitID={patientVisit.id}
+          onClose={cartDrawer.closeDrawer}
+          subTotal={(cartProducts.reduce((acc, p) => acc + (p.adjusted_price || p.total_price), 0))}
+          onRemoveItem={() => { }}
+          updateSelectedProducts={updateSelectedProducts}
+          onMakeOrder={() => { }}
+        />
+      </Drawer>
+    </>
+    
+    
+  );
+};
+
+const ProductOrderConfirmation = ({
+  visitID,
+  products,
+  subTotal,
+  onRemoveItem,
+  onClose,
+  updateSelectedProducts,
+  onMakeOrder,
+}: ProductOrderConfirmationProps) => {
+
+  const setAdjustedPrice = (productID: number, adjustedPrice: number) => {
+    const updatedProducts = products.map(p =>
+      p.id === productID && p.adjusted_price ? { ...p, adjusted_price: adjustedPrice } : p
+    );
+
+    updateSelectedProducts(updatedProducts);
+  }
+
+  const decrementQuantity = (id: number) => {
+    const updatedProducts = products.map(p =>
+      p.id === id && p.quantity ? { ...p, quantity: (p.quantity) - 1 || 0 } : p
+    );
+    updateSelectedProducts(updatedProducts);
+  };
+
+  const incrementQuantity = (id: number) => {
+    const updatedProducts = products.map(p =>
+      p.id === id ? { ...p, quantity: (p.quantity || 0) + 1 } : p
+    )
+    updateSelectedProducts(updatedProducts);
+
+  };
+
+  const setQuantity = (id: number, quantity: number) => {
+    const updatedProducts = products.map(p =>
+      p.id === id ? { ...p, quantity: quantity } : p
+    ).filter(p => p.quantity !== 0);
+
+    updateSelectedProducts(updatedProducts);
+
+  };
+
+
+  return (
+    <>
+      {/* Items List */}
+      <div className="px-4 py-6 sm:px-6">
+        <div className="flow-root">
+          {products.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Your cart is empty</p>
+            </div>
+          ) : (
+            <ul role="list" className="-my-6 divide-y divide-gray-200">
+              {products.map((product) => (
+                <ProductQuantityPanel
+                  key={product.id}
+                  name={product.name}
+                  unitType={product.unit_type}
+                  cartQuantity={product.quantity}
+                  orderedQuantity={product.quantity}
+                  price={product.price}
+                  adjustedPrice={product.adjusted_price ?? (product.price * product.quantity)}
+                  setAdjustedPrice={(adjustedPrice: number)=>{
+                    setAdjustedPrice(product.id, adjustedPrice);
+                  }}
+                  decrementQuantity={() => { decrementQuantity(product.id) }}
+                  incrementQuantity={() => { incrementQuantity(product.id) }}
+                  setQuantity={(quantity: number) => {
+                    setQuantity(product.id, quantity);
+                  }}
+
+                />
               ))}
             </ul>
           )}
         </div>
-        <ul>
-          {
-            productPanelList.map((product) => (
-              <li key={product.product_id}>
-                <ProductQuantityPanel
-                  key={product.product_id}
-                  name={product.cartProduct?.name ?? product.orderedProduct?.name}
-                  unitType={product.cartProduct?.unit_type ?? product.orderedProduct?.unit_type ?? ''}
-                  cartQuantity={product.cartProduct?.quantity ?? 0}
-                  orderedQuantity={product.orderedProduct?.quantity ?? 0}
-                  decrementQuantity={() => { decrementQuantity(product.product_id) }}
-                  incrementQuantity={() => { incrementQuantity(product.product_id) }}
-                  setQuantity={(quantity: number) => {
-                    setQuantity(product.product_id, quantity);
-                  }}
-
-                />
-              </li>
-
-
-            ))}
-        </ul>
-
-        <button onClick={() => {
-          const checkedProducts: CheckoutProduct[] = cartProducts.map(product => ({
-            id: product.id,
-            quantity: product.quantity || 1,
-            name: product.name,
-            price: product.price,
-            unit_type: product.unit_type ?? '',
-            total_price: product.price * product.quantity,
-          }));
-
-
-          onAssignProduct(checkedProducts, patientVisit.id);
-        }}> Order</button>
       </div>
-    </div>
-  );
-};
+
+      {/* Footer */}
+      {products.length > 0 && (
+        <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
+          <div className="flex justify-between text-base font-medium text-gray-900">
+            <p>Subtotal</p>
+            <p>Rp{subTotal}</p>
+          </div>
+          <div className="mt-6">
+            <button
+              onClick={onMakeOrder}
+              className="flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            >
+              Checkout
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}

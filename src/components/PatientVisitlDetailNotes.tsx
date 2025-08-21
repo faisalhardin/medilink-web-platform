@@ -4,12 +4,6 @@ import { PatientVisit, PatientVisitDetail, UpdatePatientVisitRequest, PatientVis
 import { Id } from 'types';
 import { getStorageUserJourneyPointsIDAsSet, getStorageUserServicePointsIDAsSet } from '@utils/storage';
 import { journeyTab } from './PatientVisitDetail';
-import { ProductAssignmentPanel } from './ProductAssignmentPanel';
-import { Product, AssignedProductRequest, CheckoutProduct } from '@models/product';
-
-// Add these new imports for product assignment
-import { AssignProductToVisit } from '@requests/products';
-import SearchPanel from './SearchPanel';
 
 interface patientVisitProps {
     patientVisit: PatientVisit,
@@ -24,19 +18,6 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
     const [otherVisitDetails, setOtherVisitDetails] = useState<VisitDetail[]>([]);
     const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set()); // [1
     const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
-
-    const [assignedProducts, setAssignedProducts] = useState<CheckoutProduct[]>([]);
-
-    async function assignProduct(product: AssignedProductRequest, id_trx_patient_visit: number): Promise<void> {
-        try {
-            const result = await AssignProductToVisit(product, id_trx_patient_visit);
-            // setAssignedProducts(prev => [...prev, result]);
-            return result;
-        } catch (error) {
-            console.error("Failed to assign product:", error);
-            throw error;
-        }
-    }
 
     useEffect(() => {
         const _userServicePoints = getStorageUserServicePointsIDAsSet() || new Set();

@@ -48,6 +48,8 @@ export interface CheckoutProduct {
   discount_rate?: number;
   discount_price?: number;
   adjusted_price?: number;
+  is_item?: boolean;
+  is_treatment?: boolean;
 }
 
 
@@ -73,7 +75,17 @@ export interface ProductPanelProps {
   product_id: number;
   name: string;
   orderedProduct?: TrxVisitProduct;
-  cartProduct?: Product;
+  cartProduct?: CheckoutProduct;
+}
+
+export interface ProductOrderConfirmationProps {
+  products: CheckoutProduct[];
+  visitID: number;
+  subTotal: number;
+  onRemoveItem: (id: string) => void;
+  onClose: () => void;
+  updateSelectedProducts: (products: CheckoutProduct[]) => void;
+  onMakeOrder: () => void;
 }
 
 // src/components/Checkout/types.ts
