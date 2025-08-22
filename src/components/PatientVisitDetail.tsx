@@ -27,7 +27,6 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const updateSelectedProducts = (products: CheckoutProduct[]) => {
         setSelectedProducts(prev => {
             if (prev.length !== products.length) {
-                console.log("Length mismatch");
                 return products;
             }
 

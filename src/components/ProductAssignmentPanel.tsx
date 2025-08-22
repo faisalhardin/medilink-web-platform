@@ -32,17 +32,14 @@ interface ProductListProps {
 }
 
 const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPrice, orderedQuantity, decrementQuantity, incrementQuantity, setQuantity, setAdjustedPrice }: ProductListProps) => {
-  const [isEditingPrice, setIsEditingPrice] = useState(false);
   
   const quantityDiff = cartQuantity - orderedQuantity;
-
-  const handlePriceChange = (newPrice: number) => {
-    console.log('newPrice', newPrice)
+    
+    const handlePriceChange = (newPrice: number) => {
     setAdjustedPrice(newPrice);
   };
 
   const handlePriceInputBlur = () => {
-    setIsEditingPrice(false);
     setAdjustedPrice(adjustedPrice);
   };
 
@@ -79,7 +76,6 @@ const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPri
             id='price'
             placeholder={(price * cartQuantity).toString()}
             value={adjustedPrice}
-            onFocus={() => setIsEditingPrice(true)}
             onBlur={handlePriceInputBlur}
             onChange={(e) => handlePriceChange(parseFloat(e.target.value) || 0)}
           />
@@ -286,35 +282,52 @@ export const ProductAssignmentPanel = ({
   }, [orderedProducts, cartProducts])
 
   const incrementQuantity = (id: number) => {
-    const updatedProducts = cartProducts.map(p =>
-      p.id === id ? { ...p, quantity: (p.quantity || 0) + 1 } : p
-    )
+    const updatedProducts = cartProducts.map(p => {
+      if (p.id === id) {
+        const newQuantity = (p.quantity || 0) + 1;
+        return {
+          ...p,
+          quantity: newQuantity,
+          adjusted_price: newQuantity * p.price,
+        };
+      }
+      return p;
+    }
+    );
     updateSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
 
   };
 
   const decrementQuantity = (id: number) => {
-    const updatedProducts = cartProducts.map(p =>
-      p.id === id && p.quantity ? { ...p, quantity: (p.quantity) - 1 || 0 } : p
-    );
-    // .filter(p => p.quantity !== 0);
+    const updatedProducts = cartProducts.map(p => {
+      if (p.id === id && p.quantity) {
+        const newQuantity = p.quantity - 1;
+        return {
+          ...p,
+          quantity: newQuantity >= 0 ? newQuantity : 0,
+          adjusted_price: (newQuantity >= 0 ? newQuantity : 0) * p.price
+        };
+      } 
+      return p;
+      
+    });
     updateSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
   };
 
   const setAdjustedPrice = (productID: number, adjustedPrice: number) => {
     const updatedProducts = cartProducts.map(p =>
-      p.id === productID && p.adjusted_price ? { ...p, adjusted_price: adjustedPrice } : p
+      p.id === productID  ? { ...p, adjusted_price: adjustedPrice } : p
     );
-
+    console.log("after update",updatedProducts)
     updateSelectedProducts(updatedProducts);
   }
 
   const setQuantity = (id: number, quantity: number) => {
     const updatedProducts = cartProducts.map(p =>
-      p.id === id ? { ...p, quantity: quantity } : p
-    ).filter(p => p.quantity !== 0);
+      p.id === id ? { ...p, quantity: quantity,  adjusted_price: p.quantity * p.price } : p
+    );
 
     updateSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
@@ -411,6 +424,10 @@ export const ProductAssignmentPanel = ({
           visitID={patientVisit.id}
           onClose={cartDrawer.closeDrawer}
           subTotal={(cartProducts.reduce((acc, p) => acc + (p.adjusted_price || p.total_price), 0))}
+          setQuantity={setQuantity}
+          decrementQuantity={decrementQuantity}
+          incrementQuantity={incrementQuantity}
+          setAdjustedPrice={setAdjustedPrice}
           onRemoveItem={() => { }}
           updateSelectedProducts={updateSelectedProducts}
           onMakeOrder={() => { }}
@@ -430,39 +447,12 @@ const ProductOrderConfirmation = ({
   onClose,
   updateSelectedProducts,
   onMakeOrder,
+  incrementQuantity,
+  decrementQuantity,
+  setQuantity,
+  setAdjustedPrice,
 }: ProductOrderConfirmationProps) => {
 
-  const setAdjustedPrice = (productID: number, adjustedPrice: number) => {
-    const updatedProducts = products.map(p =>
-      p.id === productID && p.adjusted_price ? { ...p, adjusted_price: adjustedPrice } : p
-    );
-
-    updateSelectedProducts(updatedProducts);
-  }
-
-  const decrementQuantity = (id: number) => {
-    const updatedProducts = products.map(p =>
-      p.id === id && p.quantity ? { ...p, quantity: (p.quantity) - 1 || 0 } : p
-    );
-    updateSelectedProducts(updatedProducts);
-  };
-
-  const incrementQuantity = (id: number) => {
-    const updatedProducts = products.map(p =>
-      p.id === id ? { ...p, quantity: (p.quantity || 0) + 1 } : p
-    )
-    updateSelectedProducts(updatedProducts);
-
-  };
-
-  const setQuantity = (id: number, quantity: number) => {
-    const updatedProducts = products.map(p =>
-      p.id === id ? { ...p, quantity: quantity } : p
-    ).filter(p => p.quantity !== 0);
-
-    updateSelectedProducts(updatedProducts);
-
-  };
 
 
   return (
@@ -477,24 +467,24 @@ const ProductOrderConfirmation = ({
           ) : (
             <ul role="list" className="-my-6 divide-y divide-gray-200">
               {products.map((product) => (
-                <ProductQuantityPanel
-                  key={product.id}
-                  name={product.name}
-                  unitType={product.unit_type}
-                  cartQuantity={product.quantity}
-                  orderedQuantity={product.quantity}
-                  price={product.price}
-                  adjustedPrice={product.adjusted_price ?? (product.price * product.quantity)}
-                  setAdjustedPrice={(adjustedPrice: number)=>{
-                    setAdjustedPrice(product.id, adjustedPrice);
-                  }}
-                  decrementQuantity={() => { decrementQuantity(product.id) }}
-                  incrementQuantity={() => { incrementQuantity(product.id) }}
-                  setQuantity={(quantity: number) => {
-                    setQuantity(product.id, quantity);
-                  }}
-
-                />
+                <li key={product.id}>
+                    <ProductQuantityPanel
+                    key={product.id}
+                    name={product.name}
+                    unitType={product.unit_type}
+                    cartQuantity={product.quantity}
+                    orderedQuantity={product.quantity}
+                    price={product.price}
+                    adjustedPrice={product.adjusted_price ?? (product.price * product.quantity)}
+                    setAdjustedPrice={(adjustedPrice: number)=>{
+                      console.log("adjustedPrice", adjustedPrice)
+                      setAdjustedPrice(product.id, adjustedPrice);
+                    }}
+                    decrementQuantity={() => { decrementQuantity(product.id) }}
+                    incrementQuantity={() => { incrementQuantity(product.id) }}
+                    setQuantity={(quantity: number) => { setQuantity(product.id, quantity) }}
+                  />
+                </li>
               ))}
             </ul>
           )}

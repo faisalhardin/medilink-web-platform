@@ -86,6 +86,10 @@ export interface ProductOrderConfirmationProps {
   onClose: () => void;
   updateSelectedProducts: (products: CheckoutProduct[]) => void;
   onMakeOrder: () => void;
+  incrementQuantity: (id: number) => void;
+  decrementQuantity: (id: number) => void;
+  setQuantity: (id: number, quantity: number) => void;
+  setAdjustedPrice: (id: number, price: number) => void;
 }
 
 // src/components/Checkout/types.ts
