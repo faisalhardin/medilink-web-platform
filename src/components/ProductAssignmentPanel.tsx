@@ -5,7 +5,7 @@ import { ListProducts } from '@requests/products';
 import { Product, AssignedProductRequest, CheckoutProduct, TrxVisitProduct, ProductPanelProps, ProductOrderConfirmationProps } from '@models/product';
 import { debounce } from 'lodash';
 import { UpdatePatientVisit } from '@requests/patient';
-import { convertProductToCheckoutProduct} from '@utils/common'
+import { convertProductToCheckoutProduct, formatPrice} from '@utils/common'
 import { useDrawer } from 'hooks/useDrawer';
 import { Drawer } from '@components/Drawer';
 
@@ -50,15 +50,6 @@ const ProductQuantityPanel = ({
   const [isEditingPrice, setIsEditingPrice] = useState(false);
   
   const quantityDiff = cartQuantity - orderedQuantity;
-
-  // Format price with thousand separators
-  const formatPrice = (num: number): string => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(num);
-  };
 
   // Parse formatted price back to number
   const parsePrice = (str: string): number => {
@@ -121,7 +112,7 @@ const ProductQuantityPanel = ({
       
       {/* Price Box with Thousand Separators */}
       {panelClass === 'product-panel-item-m' && 
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center justify-end gap-2 text-xs">
         <span className="text-gray-600">Price:</span>
         <div className="flex items-center border rounded">
           <input
@@ -557,7 +548,7 @@ const ProductOrderConfirmation = ({
         <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
           <div className="flex justify-between text-base font-medium text-gray-900">
             <p>Subtotal</p>
-            <p>Rp{subTotal}</p>
+            <p>{formatPrice(subTotal)}</p>
           </div>
           <div className="mt-6">
             <button

@@ -74,3 +74,11 @@ export const convertProductToCheckoutProduct = (p: Product): CheckoutProduct => 
 export const convertProductsToCheckoutProducts = (product: Product[]): CheckoutProduct[] => {
   return product.map(p => (convertProductToCheckoutProduct(p)));
 }
+
+export const formatPrice = (num: number, currency: string = "IDR"): string => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 0,
+    }).format(num);
+  };
