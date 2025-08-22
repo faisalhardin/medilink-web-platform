@@ -47,7 +47,8 @@ const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPri
   return (
     <div className={`${panelClass}-border rounded p-1 mb-2 ${panelClass}-text`}>
       <div className="font-medium">{name} <span className={`${panelClass}-text ${panelClass}-font`}>({unitType})</span></div>
-      <div className="flex items-center gap-2 mb-2">
+      <div className="grid grid-cols-2">
+        <div className="flex items-center gap-2 mb-2">
         <div className={`flex items-center border rounded ${panelClass}-quantity`}>
           <button className="px-1.5 py-0.5" onClick={decrementQuantity}>-</button>
           <input
@@ -68,23 +69,25 @@ const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPri
       
       {/* Price Box */}
       {panelClass === 'product-panel-item-m' && 
-        <div className="flex items-center gap-2 text-xs ">
-        <span className="text-gray-600">Price:</span>
-        <div className="flex items-center border rounded">
-          <input
-            className="px-2 py-0.5 w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            type="number"
-            step="0.01"
-            id='price'
-            placeholder={(price * cartQuantity).toString()}
-            value={adjustedPrice}
-            onBlur={handlePriceInputBlur}
-            onChange={(e) => handlePriceChange(parseFloat(e.target.value) || 0)}
-          />
+        <div className="flex items-end justify-end gap-2 text-xs ">
+          <span className="text-gray-600">Rp</span>
+          <div className="flex items-center border rounded">
+            <input
+              className="px-2 py-0.5 w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              type="number"
+              step="0.01"
+              id='price'
+              placeholder={(price * cartQuantity).toString()}
+              value={adjustedPrice}
+              onBlur={handlePriceInputBlur}
+              onChange={(e) => handlePriceChange(parseFloat(e.target.value) || 0)}
+            />
+          </div>
         </div>
-      </div>
       
       }
+      </div>
+      
       
     </div>
   );
