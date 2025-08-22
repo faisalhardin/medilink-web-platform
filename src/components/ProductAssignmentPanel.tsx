@@ -25,13 +25,14 @@ interface ProductListProps {
   orderedQuantity: number;
   price: number;
   adjustedPrice: number;
+  panelClass: 'product-panel-item-m' | 'product-panel-item-sm';
   decrementQuantity: () => void;
   incrementQuantity: () => void;
   setQuantity: (id: number) => void;
   setAdjustedPrice: (adjustedPrice: number) => void;
 }
 
-const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPrice, orderedQuantity, decrementQuantity, incrementQuantity, setQuantity, setAdjustedPrice }: ProductListProps) => {
+const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPrice, orderedQuantity,panelClass, decrementQuantity, incrementQuantity, setQuantity, setAdjustedPrice }: ProductListProps) => {
   
   const quantityDiff = cartQuantity - orderedQuantity;
     
@@ -44,10 +45,10 @@ const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPri
   };
 
   return (
-    <div className="border rounded p-1 mb-2 text-sm">
-      <div className="font-medium">{name} <span className='text-xs font-extralight'>({unitType})</span></div>
+    <div className={`${panelClass}-border rounded p-1 mb-2 ${panelClass}-text`}>
+      <div className="font-medium">{name} <span className={`${panelClass}-text ${panelClass}-font`}>({unitType})</span></div>
       <div className="flex items-center gap-2 mb-2">
-        <div className="flex items-center border rounded text-xs">
+        <div className={`flex items-center border rounded ${panelClass}-quantity`}>
           <button className="px-1.5 py-0.5" onClick={decrementQuantity}>-</button>
           <input
             id={name}
@@ -66,7 +67,8 @@ const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPri
       </div>
       
       {/* Price Box */}
-      <div className="flex items-center gap-2 text-xs">
+      {panelClass === 'product-panel-item-m' && 
+        <div className="flex items-center gap-2 text-xs ">
         <span className="text-gray-600">Price:</span>
         <div className="flex items-center border rounded">
           <input
@@ -81,6 +83,9 @@ const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPri
           />
         </div>
       </div>
+      
+      }
+      
     </div>
   );
 };
@@ -385,6 +390,7 @@ export const ProductAssignmentPanel = ({
                 <li key={product.product_id}>
                   <ProductQuantityPanel
                     key={product.product_id}
+                    panelClass={'product-panel-item-sm'}
                     name={product.cartProduct?.name ?? product.orderedProduct?.name}
                     unitType={product.cartProduct?.unit_type ?? product.orderedProduct?.unit_type ?? ''}
                     cartQuantity={product.cartProduct?.quantity ?? 0}
@@ -471,13 +477,13 @@ const ProductOrderConfirmation = ({
                     <ProductQuantityPanel
                     key={product.id}
                     name={product.name}
+                    panelClass={'product-panel-item-m'}
                     unitType={product.unit_type}
                     cartQuantity={product.quantity}
                     orderedQuantity={product.quantity}
                     price={product.price}
                     adjustedPrice={product.adjusted_price ?? (product.price * product.quantity)}
                     setAdjustedPrice={(adjustedPrice: number)=>{
-                      console.log("adjustedPrice", adjustedPrice)
                       setAdjustedPrice(product.id, adjustedPrice);
                     }}
                     decrementQuantity={() => { decrementQuantity(product.id) }}

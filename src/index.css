@@ -482,3 +482,35 @@ img.ProseMirror-separator {
 .negative-quantity {
   color: red;
 }
+
+.product-panel-item-sm-text {
+  @apply text-sm;
+}
+
+.product-panel-item-sm-quantity {
+  @apply text-xs;
+}
+
+.product-panel-item-sm-border {
+  @apply border;
+}
+
+.product-panel-item-sm-font {
+  @apply font-extralight;
+}
+
+.product-panel-item-m-text {
+  @apply text-sm;
+}
+
+.product-panel-item-m-quantity {
+  @apply text-sm;
+}
+
+.product-panel-item-m-border {
+
+}
+
+.product-panel-item-m-font {
+  @apply font-light;
+}
