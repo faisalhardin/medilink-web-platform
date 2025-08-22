@@ -32,16 +32,68 @@ interface ProductListProps {
   setAdjustedPrice: (adjustedPrice: number) => void;
 }
 
-const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPrice, orderedQuantity,panelClass, decrementQuantity, incrementQuantity, setQuantity, setAdjustedPrice }: ProductListProps) => {
+const ProductQuantityPanel = ({ 
+  name, 
+  unitType, 
+  cartQuantity, 
+  price, 
+  adjustedPrice,
+  orderedQuantity,
+  panelClass, 
+  decrementQuantity, 
+  incrementQuantity, 
+  setQuantity, 
+  setAdjustedPrice 
+}: ProductListProps) => {
+  // const [adjustedPrice, setAdjustedPriceLocal] = useState<number>(price * cartQuantity);
+  const [priceDisplayValue, setPriceDisplayValue] = useState<string>('');
+  const [isEditingPrice, setIsEditingPrice] = useState(false);
   
   const quantityDiff = cartQuantity - orderedQuantity;
-    
-    const handlePriceChange = (newPrice: number) => {
-    setAdjustedPrice(newPrice);
+
+  // Format price with thousand separators
+  const formatPrice = (num: number): string => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(num);
+  };
+
+  // Parse formatted price back to number
+  const parsePrice = (str: string): number => {
+    return parseFloat(str.replace(/[^\d.-]/g, '')) || 0;
+  };
+
+  // Update display value when adjusted price changes
+  useEffect(() => {
+    if (!isEditingPrice) {
+      setPriceDisplayValue(formatPrice(adjustedPrice));
+    }
+  }, [adjustedPrice, isEditingPrice]);
+
+  // Update adjusted price when quantity or base price changes
+  useEffect(() => {
+      setPriceDisplayValue(formatPrice(adjustedPrice));
+  }, [cartQuantity, isEditingPrice]);
+
+  const handlePriceChange = (value: string) => {
+    // Allow typing without immediate formatting
+    if (/^[\d,]*\.?\d*$/.test(value)) {
+      setPriceDisplayValue(value);
+      const numericValue = parsePrice(value);
+      setAdjustedPrice(numericValue);
+    }
+  };
+
+  const handlePriceInputFocus = () => {
+    setIsEditingPrice(true);
+    // Show raw number for easier editing
+    setPriceDisplayValue(adjustedPrice.toString());
   };
 
   const handlePriceInputBlur = () => {
-    setAdjustedPrice(adjustedPrice);
+    setIsEditingPrice(false);
   };
 
   return (
@@ -67,31 +119,31 @@ const ProductQuantityPanel = ({ name, unitType, cartQuantity, price, adjustedPri
         )}
       </div>
       
-      {/* Price Box */}
+      {/* Price Box with Thousand Separators */}
       {panelClass === 'product-panel-item-m' && 
-        <div className="flex items-end justify-end gap-2 text-xs ">
-          <span className="text-gray-600">Rp</span>
-          <div className="flex items-center border rounded">
-            <input
-              className="px-2 py-0.5 w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              type="number"
-              step="0.01"
-              id='price'
-              placeholder={(price * cartQuantity).toString()}
-              value={adjustedPrice}
-              onBlur={handlePriceInputBlur}
-              onChange={(e) => handlePriceChange(parseFloat(e.target.value) || 0)}
-            />
-          </div>
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-gray-600">Price:</span>
+        <div className="flex items-center border rounded">
+          <input
+            className="px-2 py-0.5 w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            type="text"
+            value={priceDisplayValue}
+            onFocus={handlePriceInputFocus}
+            onBlur={handlePriceInputBlur}
+            onChange={(e) => handlePriceChange(e.target.value)}
+            placeholder="0.00"
+          />
         </div>
-      
-      }
       </div>
       
+      }
+      
+      </div>
       
     </div>
   );
 };
+
 
 
 export const ProductAssignmentPanel = ({
