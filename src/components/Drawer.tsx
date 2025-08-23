@@ -1,3 +1,4 @@
+import CloseIcon from 'assets/icons/CloseIcon';
 import React, { useState, useEffect, useRef, ReactNode } from 'react';
 
 // Base Drawer Props - only handles the drawer mechanics
@@ -128,16 +129,7 @@ export const Drawer: React.FC<DrawerProps> = ({
                     >
                       <span className="absolute -inset-0.5" />
                       <span className="sr-only">Close panel</span>
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        aria-hidden="true"
-                        className="size-6"
-                      >
-                        <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <CloseIcon/>
                     </button>
                   </div>
                 )}

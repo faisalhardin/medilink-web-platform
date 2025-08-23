@@ -8,6 +8,7 @@ import { UpdatePatientVisit } from '@requests/patient';
 import { convertProductToCheckoutProduct, formatPrice} from '@utils/common'
 import { useDrawer } from 'hooks/useDrawer';
 import { Drawer } from '@components/Drawer';
+import CloseIcon from 'assets/icons/CloseIcon';
 
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
@@ -16,6 +17,7 @@ interface ProductAssignmentPanelProps {
   orderedProducts: TrxVisitProduct[];
   updateSelectedProducts: (products: CheckoutProduct[]) => void;
   onAssignProduct: (product: CheckoutProduct[], visitID: number) => void;
+  updatedOrderedProduct: (product: TrxVisitProduct[]) => void;
 }
 
 interface ProductListProps {
@@ -30,6 +32,7 @@ interface ProductListProps {
   incrementQuantity: () => void;
   setQuantity: (id: number) => void;
   setAdjustedPrice: (adjustedPrice: number) => void;
+  onRemove: () => void;
 }
 
 const ProductQuantityPanel = ({ 
@@ -43,7 +46,8 @@ const ProductQuantityPanel = ({
   decrementQuantity, 
   incrementQuantity, 
   setQuantity, 
-  setAdjustedPrice 
+  setAdjustedPrice,
+  onRemove,
 }: ProductListProps) => {
   // const [adjustedPrice, setAdjustedPriceLocal] = useState<number>(price * cartQuantity);
   const [priceDisplayValue, setPriceDisplayValue] = useState<string>('');
@@ -89,7 +93,19 @@ const ProductQuantityPanel = ({
 
   return (
     <div className={`${panelClass}-border rounded p-1 mb-2 ${panelClass}-text`}>
-      <div className="font-medium">{name} <span className={`${panelClass}-text ${panelClass}-font`}>({unitType})</span></div>
+      <div className="flex justify-between items-center">
+        <div className="font-medium">{name} <span className={`${panelClass}-text ${panelClass}-font`}>({unitType})</span></div>
+        <div className='justify-end items-end  -m-2 p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500'>
+           <button
+              type="button"
+              onClick={onRemove}
+              className="relative -m-2 p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Close drawer"
+            >
+              <CloseIcon/>
+            </button>
+        </div>
+      </div>
       <div className="grid grid-cols-2">
         <div className="flex items-center gap-2 mb-2">
         <div className={`flex items-center border rounded ${panelClass}-quantity`}>
@@ -144,6 +160,7 @@ export const ProductAssignmentPanel = ({
   journeyPointId,
   updateSelectedProducts,
   onAssignProduct,
+  updatedOrderedProduct,
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -175,7 +192,6 @@ export const ProductAssignmentPanel = ({
       return;
     }
 
-    setIsSearching(true);
     try {
       const response = await ListProducts({
         name: term,
@@ -371,7 +387,6 @@ export const ProductAssignmentPanel = ({
     const updatedProducts = cartProducts.map(p =>
       p.id === productID  ? { ...p, adjusted_price: adjustedPrice } : p
     );
-    console.log("after update",updatedProducts)
     updateSelectedProducts(updatedProducts);
   }
 
@@ -386,8 +401,11 @@ export const ProductAssignmentPanel = ({
   };
 
   const deleteProduct = (id: number) => {
-    const newProductList = cartProducts.filter(product => product.id !== id);
-    updateSelectedProducts(newProductList);
+    const updatedProducts = cartProducts.filter(product => product.id !== id);
+    const updatededOrderedProducts = orderedProducts.filter(product => product.id_trx_institution_product !== id);
+    updatedOrderedProduct(updatededOrderedProducts)
+    updateSelectedProducts(updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts);
   };
 
   return (
@@ -451,6 +469,9 @@ export const ProductAssignmentPanel = ({
                     setQuantity={(quantity: number) => {
                       setQuantity(product.product_id, quantity);
                     }}
+                    onRemove={() => {
+                      deleteProduct(product.product_id);
+                    }}
 
                   />
                 </li>
@@ -480,9 +501,13 @@ export const ProductAssignmentPanel = ({
           decrementQuantity={decrementQuantity}
           incrementQuantity={incrementQuantity}
           setAdjustedPrice={setAdjustedPrice}
-          onRemoveItem={() => { }}
           updateSelectedProducts={updateSelectedProducts}
-          onMakeOrder={() => { }}
+          onMakeOrder={() => { 
+            onAssignProduct(cartProducts, patientVisit.id);
+            setSearchResults([]);
+            cartDrawer.closeDrawer();
+          }}
+          deleteProduct={deleteProduct}
         />
       </Drawer>
     </>
@@ -495,7 +520,6 @@ const ProductOrderConfirmation = ({
   visitID,
   products,
   subTotal,
-  onRemoveItem,
   onClose,
   updateSelectedProducts,
   onMakeOrder,
@@ -503,9 +527,8 @@ const ProductOrderConfirmation = ({
   decrementQuantity,
   setQuantity,
   setAdjustedPrice,
+  deleteProduct,
 }: ProductOrderConfirmationProps) => {
-
-
 
   return (
     <>
@@ -535,6 +558,9 @@ const ProductOrderConfirmation = ({
                     decrementQuantity={() => { decrementQuantity(product.id) }}
                     incrementQuantity={() => { incrementQuantity(product.id) }}
                     setQuantity={(quantity: number) => { setQuantity(product.id, quantity) }}
+                    onRemove={() => {
+                      deleteProduct(product.id);
+                    }}
                   />
                 </li>
               ))}

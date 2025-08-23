@@ -82,7 +82,6 @@ export interface ProductOrderConfirmationProps {
   products: CheckoutProduct[];
   visitID: number;
   subTotal: number;
-  onRemoveItem: (id: string) => void;
   onClose: () => void;
   updateSelectedProducts: (products: CheckoutProduct[]) => void;
   onMakeOrder: () => void;
@@ -90,6 +89,7 @@ export interface ProductOrderConfirmationProps {
   decrementQuantity: (id: number) => void;
   setQuantity: (id: number, quantity: number) => void;
   setAdjustedPrice: (id: number, price: number) => void;
+  deleteProduct: (id:number) => void;
 }
 
 // src/components/Checkout/types.ts

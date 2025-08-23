@@ -23,31 +23,28 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [patient, setPatient] = useState<Patient>({} as Patient);
     const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);    
     const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
-
+    
     const updateSelectedProducts = (products: CheckoutProduct[]) => {
         setSelectedProducts(prev => {
-            if (prev.length !== products.length) {
-                return products;
-            }
+            // Create maps for easier comparison
+            const prevMap = new Map(prev.map(p => [p.id, p]));
+            const newMap = new Map(products.map(p => [p.id, p]));
 
-            const prevIds = new Set(prev.map(p => p.id));
-            const newIds = new Set(products.map(p => p.id));
+            // Check if there are any differences
+            const hasDifferences = 
+                prev.length !== products.length || // Length changed
+                products.some(newProduct => {
+                    const prevProduct = prevMap.get(newProduct.id);
+                    return !prevProduct || // New product
+                        prevProduct.quantity !== newProduct.quantity ||
+                        prevProduct.adjusted_price !== newProduct.adjusted_price;
+                }) ||
+                prev.some(prevProduct => !newMap.has(prevProduct.id)); // Removed product
 
-            if (
-                prevIds.size !== newIds.size ||
-                [...prevIds].some(id => !newIds.has(id))
-            ) {
-                return products;
-            }
-
-            const hasValidChangesHappen = products.some(newProduct => {
-                const prevProduct = prev.find(p => p.id === newProduct.id);
-                return (prevProduct?.quantity !== newProduct.quantity) || (prevProduct?.adjusted_price !== newProduct.adjusted_price);
-            });
-            const returnVal = hasValidChangesHappen ? products : prev;
-            return returnVal
+            return hasDifferences ? products : prev;
         });
     };
+
 
     const updateActiveTab = (tab: journeyTab) => {
         setActiveTab(tab);
@@ -236,6 +233,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                                     product_cart: productRequest,
                                 })
                             }}
+                            updatedOrderedProduct={setTrxProduct}
                         />
                     </div>
                 </div>
