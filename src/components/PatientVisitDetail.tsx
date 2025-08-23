@@ -169,9 +169,11 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         try {
             // First add to the backend and get the response
             // (which might include an ID or other server-generated fields)
+            const cartProduct = visit.product_cart?.filter(p => p.quantity > 0) || [];
+            
             await OrderProduct({
                 visit_id: visit.id,
-                products: visit.product_cart
+                products: cartProduct
             });
             fetchProducts();
         } catch (error) {

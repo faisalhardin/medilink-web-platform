@@ -210,7 +210,6 @@ export const ProductAssignmentPanel = ({
   };
 
   const handleResultClick = (product: Product) => {
-    // setSelectedProduct(product);
     const updatedProducts = addProduct({ ...product, quantity: 1 });
     setSearchTerm(product.name);
     setShowResults(false);
@@ -301,7 +300,7 @@ export const ProductAssignmentPanel = ({
       const existingProduct = updatedProducts[existingProductIndex];
       updatedProducts[existingProductIndex] = {
         ...existingProduct,
-        quantity: (existingProduct.quantity || 1) + (product.quantity || 1)
+        quantity: existingProduct.quantity > 0 ? (existingProduct.quantity || 1) + (product.quantity || 1) : 1,
       };
       updateSelectedProducts(updatedProducts);
       return updatedProducts;
@@ -401,9 +400,12 @@ export const ProductAssignmentPanel = ({
   };
 
   const deleteProduct = (id: number) => {
-    const updatedProducts = cartProducts.filter(product => product.id !== id);
-    const updatededOrderedProducts = orderedProducts.filter(product => product.id_trx_institution_product !== id);
-    updatedOrderedProduct(updatededOrderedProducts)
+    const updatedProducts = cartProducts.map(p =>
+      p.id === id ? { ...p, quantity: -1} : p
+    );
+
+    // const updatededOrderedProducts = orderedProducts.filter(product => product.id_trx_institution_product !== id);
+    // updatedOrderedProduct(updatededOrderedProducts)
     updateSelectedProducts(updatedProducts);
     debouncedUpdateCart(patientVisit, updatedProducts);
   };
@@ -450,7 +452,9 @@ export const ProductAssignmentPanel = ({
           </div>
           <ul>
             {
-              productPanelList.map((product) => (
+              productPanelList.
+              filter(p => (p.cartProduct?.quantity && p.cartProduct?.quantity >= 0)).
+              map((product) => (
                 <li key={product.product_id}>
                   <ProductQuantityPanel
                     key={product.product_id}
@@ -496,7 +500,7 @@ export const ProductAssignmentPanel = ({
           products={cartProducts}
           visitID={patientVisit.id}
           onClose={cartDrawer.closeDrawer}
-          subTotal={(cartProducts.reduce((acc, p) => acc + (p.adjusted_price || p.total_price), 0))}
+          subTotal={(cartProducts.reduce((acc, p) => acc + (p.quantity > 0 ? (p.adjusted_price || p.total_price):0), 0))}
           setQuantity={setQuantity}
           decrementQuantity={decrementQuantity}
           incrementQuantity={incrementQuantity}
@@ -541,7 +545,9 @@ const ProductOrderConfirmation = ({
             </div>
           ) : (
             <ul role="list" className="-my-6 divide-y divide-gray-200">
-              {products.map((product) => (
+              {products.
+              filter(p => (p.quantity >= 0)).
+              map((product) => (
                 <li key={product.id}>
                     <ProductQuantityPanel
                     key={product.id}
