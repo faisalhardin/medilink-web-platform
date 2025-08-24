@@ -7,7 +7,9 @@ import PatientPage from "@pages/Patient";
 import PatientDetail from "@pages/PatientDetail";
 import PatientRegistrationPage from "@pages/PatientRegistration";
 import PatientVisitDetailPage from "@pages/PatientVisitDetail";
+import VisitRegistrationPage from "@pages/VisitRegistration";
 import { Routes, Route } from "react-router-dom";
+// import PatieVisitReg
 
 
 const DefaultLayout = () => {
@@ -23,6 +25,7 @@ const DefaultLayout = () => {
           <Route path="/patient-visit/:id" element={<PatientVisitDetailPage/>} />
           <Route path="/journey-board/:boardID" element={<JourneyBoard/>} />
           <Route path="/inventory" element={<InventoryPage/>} />
+          <Route path="/visit-form" element={<VisitRegistrationPage/>} />
         </Routes>
     </main>
   );

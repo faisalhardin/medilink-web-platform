@@ -7,7 +7,12 @@ import { ListVisitsByPatient } from "@requests/patient"
 import AdmitIcon from "assets/icons/AdmitIcon";
 import { useModal } from "context/ModalContext";
 
-export function PatientListComponent({ journey_board_id }: { journey_board_id?: number }): JSX.Element {
+interface PatientListComponentProps {
+    journey_board_id?: number;
+    onPatientSelect?: (patient: PatientModel) => void;
+}
+
+export function PatientListComponent({ journey_board_id, onPatientSelect }: PatientListComponentProps): JSX.Element {
 
     const { register, handleSubmit, formState: { errors } } = useForm<GetPatientParam>();
     const [patients, setPatients] = useState<PatientModel[]>([]);
@@ -87,7 +92,7 @@ export function PatientListComponent({ journey_board_id }: { journey_board_id?: 
                     <table className="table-auto w-full shadow-md rounded-lg overflow-hidden text-sm">
                         <thead className="bg-primary-6 text-white">
                             <tr>
-                                <th className="text-left text-xs px-6 py-3">NIK</th>
+                                <th className="text-left text-xs px-6 py-3">NIK1</th>
                                 <th className="text-left text-xs px-6 py-3">Name</th>
                                 <th className="text-left text-xs px-6 py-3">Place of Birth</th>
                                 <th className="text-left text-xs px-6 py-3">Date of Birth</th>
@@ -103,11 +108,12 @@ export function PatientListComponent({ journey_board_id }: { journey_board_id?: 
                                     <td className="p-4">{patient.place_of_birth}</td>
                                     <td className="p-4">{patient.date_of_birth}</td>
                                     <td className="p-4">
-                                        <a href={`/patient-detail/${patient.uuid}`}><img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6" /></a>
-                                        {journey_board_id && <a onClick={() => handleAdmitClick({
+                                        {/* <a href={`/patient-detail/${patient.uuid}`}><img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6" /></a> */}
+                                        {/* {journey_board_id && <a onClick={() => handleAdmitClick({
                                             patient_uuid: patient.uuid,
                                             board_id: journey_board_id,
-                                        })} > <div className="h-[30px] w-[30px]"> <AdmitIcon /></div></a>}
+                                        })} > <div className="h-[30px] w-[30px]"> <AdmitIcon /></div></a>} */}
+                                        {onPatientSelect && <button  onClick={() => onPatientSelect(patient)}><img src="/src/assets/icons/wmd-detail.svg" className="h-6 w-6" /></button>}
                                     </td>
                                 </tr>
                             ))}

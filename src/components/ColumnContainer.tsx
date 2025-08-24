@@ -186,7 +186,7 @@ function ColumnContainer({
         </SortableContext>
       </div>
       {/* Column footer */}
-      <ModalLink to={`/patient`} state={{journey_board_id: column.board_id}}>
+      <ModalLink to={`/visit-form`} state={{journey_board_id: column.board_id}}>
       <div
         className="flex gap-2 items-center border-primary-1 border-2 rounded-md p-4 border-x-primary-1 hover:bg-primary-3 hover:text-rose-500 active:bg-black"
       >
