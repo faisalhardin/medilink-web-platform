@@ -123,6 +123,12 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
     } 
 
+    /**
+     * Upserts (creates or updates) a patient visit detail record
+     * Handles both new visit detail creation and existing record updates
+     * @param visitDetail - The patient visit detail object to create or update
+     * @returns Promise<PatientVisitDetail> - The created/updated visit detail from server
+     */
     async function upsertVisitDetail(visitDetail: PatientVisitDetail) {
         try {
             // First add to the backend and get the response
