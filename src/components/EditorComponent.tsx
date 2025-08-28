@@ -8,10 +8,10 @@ interface EditorComponentProps {
   data?: any; // Optional: Preloaded data
   placeHolder?: string; // Placeholder text for the editor
   readOnly?: boolean
-  onSave?: (data: any) => void; // Custom save function
+  onChange?: (data: any) => void; // Custom change function
 }
 
-export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave }: EditorComponentProps) => {
+export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChange }: EditorComponentProps) => {
   const editorInstance = useRef<EditorJS | null>(null);
   
   useEffect(() => {
@@ -30,6 +30,12 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave 
           onReady: () => {
             console.log("Editor.js is ready!");
           },
+          onChange: async () => {
+            if (onChange) {
+              const savedData = await editorInstance.current?.save();
+              onChange(savedData);
+            }
+          }
         });
       }
     };
@@ -58,8 +64,8 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave 
     try {
       const outputData = await editorInstance.current.save();
       
-      if (onSave) {
-        onSave(outputData); // Call the custom save function if provided
+      if (onChange) {
+        onChange(outputData); // Call the custom save function if provided
       }
     } catch (error) {
       console.error("Saving failed:", error);
@@ -69,14 +75,6 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onSave 
   return (
     <div >
       <div id={id}/>
-      {!readOnly && (
-        <button
-          onClick={saveEditorContent}
-          className="text-white bg-primary-7 hover:bg-primary-5 px-4 py-2 mt-2 rounded"
-        >
-          Save
-        </button>
-      )}
     </div>
   )
 }

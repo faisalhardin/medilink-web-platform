@@ -16,8 +16,9 @@ interface patientVisitProps {
 export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc, updateVisitFunc }: patientVisitProps) => {
     const [myVisitDetails, setMyVisitDetails] = useState<VisitDetail[]>([]);
     const [otherVisitDetails, setOtherVisitDetails] = useState<VisitDetail[]>([]);
-    const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set()); // [1
+    const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set());
     const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
+    const [isChanged, setIsChanged] = useState(false);
 
     useEffect(() => {
         const _userServicePoints = getStorageUserServicePointsIDAsSet() || new Set();
@@ -66,23 +67,36 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                 {myVisitDetails.length > 0 && myVisitDetails.filter((detail: VisitDetail) => {
                     return detail.journey_point_id === activeTab.id
                 }).map((detail: VisitDetail) => (
-                    <EditorComponent
-                        key={detail.id}
-                        id={`editor-${detail.id}`}
-                        readOnly={false}
-                        data={detail || null}
-                        placeHolder="Jot here..."
-                        onSave={(notes:Record<string, any>) =>{
-                            detail.notes = notes;
-                            upsertVisitDetailFunc(detail);
-                        }} />
+                    <>
+                        <EditorComponent
+                            key={detail.id}
+                            id={`editor-${detail.id}`}
+                            readOnly={false}
+                            data={detail}
+                            placeHolder="Jot here..."
+                            onChange={(notes: Record<string, any>) => {
+                                detail.notes = notes;
+                                setIsChanged(true);
+                            }}
+                        />
+                        <button 
+                            onClick={() => {
+                                upsertVisitDetailFunc(detail);
+                                setIsChanged(false)
+                            }}
+                            className={`${isChanged ? '' : 'hidden'} text-white bg-primary-7 hover:bg-primary-5 px-4 py-2 mt-2 rounded`}
+                        >
+                            Save
+                        </button>
+                    </>
+                        
                 ))
                 }
                 { shouldShowEditor && <EditorComponent
                         id='editorjs'
                         readOnly={false}
                         placeHolder="Jot here..."
-                        onSave={(notes:Record<string, any>) =>{
+                        onChange={(notes:Record<string, any>) =>{
                             var journeyPointID:number = activeTab.id;
 
                             var detail:VisitDetail = {
