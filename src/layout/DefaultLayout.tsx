@@ -25,7 +25,6 @@ const DefaultLayout = () => {
           <Route path="/patient-visit/:id" element={<PatientVisitDetailPage/>} />
           <Route path="/journey-board/:boardID" element={<JourneyBoard/>} />
           <Route path="/inventory" element={<InventoryPage/>} />
-          <Route path="/visit-form" element={<VisitRegistrationPage/>} />
         </Routes>
     </main>
   );

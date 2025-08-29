@@ -9,9 +9,10 @@ interface EditorComponentProps {
   placeHolder?: string; // Placeholder text for the editor
   readOnly?: boolean
   onChange?: (data: any) => void; // Custom change function
+  className?: string
 }
 
-export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChange }: EditorComponentProps) => {
+export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChange, className }: EditorComponentProps) => {
   const editorInstance = useRef<EditorJS | null>(null);
   
   useEffect(() => {
@@ -35,7 +36,7 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
               const savedData = await editorInstance.current?.save();
               onChange(savedData);
             }
-          }
+          },
         });
       }
     };
@@ -74,7 +75,7 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
       
   return (
     <div >
-      <div id={id}/>
+      <div id={id} className={className}/>
     </div>
   )
 }
