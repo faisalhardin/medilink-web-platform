@@ -104,7 +104,8 @@ export interface PatientVisitDetail {
 
 export interface InsertPatientVisitPayload {
   patient_uuid: string;
-  board_id: number;
+  journey_point_id: number;
+  notes: Record<string, any>;
 }
 
 export interface UpdatePatientVisitPayload {

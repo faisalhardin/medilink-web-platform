@@ -79,7 +79,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
             const trxProducts = await ListOrderedProduct({
                 visit_id: patientVisitId
             })
-            if (trxProducts !== undefined) {
+            if (trxProducts) {
                 setTrxProduct(trxProducts);
             }
         } catch  (error) {

@@ -1,9 +1,9 @@
 import PlusIcon from "assets/icons/PlusIcon";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Column, Id, Task } from "../types";
 import { JourneyPoint, PatientVisitTask } from "@models/journey";
 import ColumnContainer from "./ColumnContainer";
-import { PatientVisit } from "@models/patient";
+import { Patient, PatientVisit } from "@models/patient";
 import lodash from 'lodash';
 import {
   DndContext,
@@ -21,6 +21,9 @@ import TaskCard from "./TaskCard";
 import { GetJourneyPoints, UpdateJourneyPoint } from "@requests/journey";
 import { ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
 import { useParams } from "react-router-dom";
+import { useModal } from "context/ModalContext";
+import React from "react";
+import VisitFormComponent from "./VisitForm";
 
 const registrationColumn: JourneyPoint = {
   id: 0,
@@ -62,7 +65,7 @@ function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
 
 function KanbanBoard() {
   const { boardID } = useParams<{ boardID: string }>();
- 
+  const {openModal} = useModal();
 
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
   const [tasks, setTasks] = useState<PatientVisitTask[]>([]);  
@@ -221,16 +224,14 @@ function KanbanBoard() {
   );
 
   function createTask(columnId: Id) {
-    return
-    const newTask: PatientVisitTask = {
-      id: generateId(),
-      columnId,
-      notes: `Task ${tasks.length + 1}`,
-      status: "new",
-      column_update_time: Math.floor(Date.now() / 1000),
-    };
-
-    setTasks([...tasks, newTask]);
+    
+    openModal(
+      <Suspense fallback={<div>Loading...</div>}>
+        {React.createElement(VisitFormComponent, {
+          journeyPointID: columnId as number
+        })}
+      </Suspense>,
+    )
   }
 
   function deleteTask(id: Id) {

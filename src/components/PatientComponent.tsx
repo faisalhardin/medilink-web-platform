@@ -33,17 +33,7 @@ export function PatientListComponent({ journey_board_id, onPatientSelect }: Pati
             console.error(err);
         }
 
-    };
-
-    const handleAdmitClick = async (payload: InsertPatientVisitPayload) => {
-        try {
-            await InsertPatientVisit(payload);
-            closeModal();
-        } catch (e) {
-            console.error(e);
-            alert('Failed to admit patient.');
-        }
-    }
+    };   
 
     return (
         <div className="w-full h-full overflow-auto">
