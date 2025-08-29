@@ -79,7 +79,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
             const trxProducts = await ListOrderedProduct({
                 visit_id: patientVisitId
             })
-            if (trxProducts !== undefined) {
+            if (trxProducts) {
                 setTrxProduct(trxProducts);
             }
         } catch  (error) {
@@ -123,6 +123,12 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
     } 
 
+    /**
+     * Upserts (creates or updates) a patient visit detail record
+     * Handles both new visit detail creation and existing record updates
+     * @param visitDetail - The patient visit detail object to create or update
+     * @returns Promise<PatientVisitDetail> - The created/updated visit detail from server
+     */
     async function upsertVisitDetail(visitDetail: PatientVisitDetail) {
         try {
             // First add to the backend and get the response
@@ -169,9 +175,11 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         try {
             // First add to the backend and get the response
             // (which might include an ID or other server-generated fields)
+            const cartProduct = visit.product_cart?.filter(p => p.quantity > 0) || [];
+            
             await OrderProduct({
                 visit_id: visit.id,
-                products: visit.product_cart
+                products: cartProduct
             });
             fetchProducts();
         } catch (error) {

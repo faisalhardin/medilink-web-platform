@@ -180,7 +180,6 @@ export const UpsertPatientVisitDetailRequest = async (patientVisitDetail: Upsert
                 },
               }
           );
-        console.log("UpsertPatientVisitDetailRequest ",response);
         const responseData = await response.data;
         return responseData.data;
     } catch (error) {

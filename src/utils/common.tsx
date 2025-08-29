@@ -62,7 +62,7 @@ export const convertProductToCheckoutProduct = (p: Product): CheckoutProduct => 
     name: p.name,
     price: p.price,
     quantity: p.quantity,
-    total_price: p.price * p.quantity,
+    total_price: p.price * (p.quantity>=0 ? p.quantity:0),
     discount_rate: 0,
     discount_price: 0,
     adjusted_price: p.price * p.quantity,

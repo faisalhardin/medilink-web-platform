@@ -11,6 +11,12 @@ export interface Patient {
   address: string;
   sex: string;
   religion: string;
+  phone_number: string;
+  email: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relationship: string;
+  blood_type: string;
 }
 
 export interface RegisterPatient {
@@ -98,7 +104,8 @@ export interface PatientVisitDetail {
 
 export interface InsertPatientVisitPayload {
   patient_uuid: string;
-  board_id: number;
+  journey_point_id: number;
+  notes: Record<string, any>;
 }
 
 export interface UpdatePatientVisitPayload {
