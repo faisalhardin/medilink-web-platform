@@ -24,6 +24,7 @@ import { useParams } from "react-router-dom";
 import { useModal } from "context/ModalContext";
 import React from "react";
 import VisitFormComponent from "./VisitForm";
+import FilterBar from "./FilterBar";
 
 const registrationColumn: JourneyPoint = {
   id: 0,
@@ -69,6 +70,10 @@ function KanbanBoard() {
 
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
   const [tasks, setTasks] = useState<PatientVisitTask[]>([]);  
+
+  const onFilterChange = (filter: Record<string, any>) => {
+    console.log(filter);
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -118,16 +123,18 @@ function KanbanBoard() {
   );
 
   return (
+    <div className="m-auto gap-2 flex flex-col min-h-screen w-full items-center overflow-x-auto overflow-y-hidden p-[40px]">
+    <div className="w-full">
+      <FilterBar onFiltersChange={onFilterChange}/>
+    </div>
     <div
       className="
-        m-auto
         flex
-        min-h-screen
         w-full
         items-center
         overflow-x-auto
         overflow-y-hidden
-        px-[40px]
+        
     "
     >
       <DndContext
@@ -220,6 +227,7 @@ function KanbanBoard() {
           document.body
         )}
       </DndContext>
+    </div>
     </div>
   );
 
