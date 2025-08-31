@@ -1,11 +1,36 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDownIcon, XMarkIcon, FunnelIcon, ClockIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
 
 interface TimeRange {
   preset?: string;
   startDate?: string;
   endDate?: string;
   label?: string;
+}
+
+interface TimePreset {
+  label: string;
+  value: string;
+  icon: string;
+  startDate: () => Date;
+  endDate: () => Date;
+}
+
+interface FilterOption {
+  label: string;
+  value: string;
+}
+
+interface FilterConfig {
+  key: string;
+  label: string;
+  type: 'select' | 'dateRange' | 'timeRange' | 'multiSelect' | 'search' | 'number' | 'boolean';
+  icon: string;
+  options?: FilterOption[];
+  timePresets?: TimePreset[];
+  placeholder?: string;
+  multiple?: boolean;
+  searchable?: boolean;
 }
 
 interface FilterBarProps {
@@ -15,18 +40,10 @@ interface FilterBarProps {
 export function FilterBar({ onFiltersChange }: FilterBarProps) {
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [customDateMode, setCustomDateMode] = useState<Record<string, boolean>>({});
   const filterBarRef = useRef<HTMLDivElement>(null);
 
   // New Relic-style time presets
-  const timePresets = [
-    {
-      label: 'Last 30 minutes',
-      value: 'last_30_minutes',
-      icon: '⚡',
-      startDate: () => new Date(Date.now() - 30 * 60 * 1000),
-      endDate: () => new Date()
-    },
+  const timePresets: TimePreset[] = [
     {
       label: 'Last hour',
       value: 'last_hour',
@@ -102,21 +119,9 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
       },
       endDate: () => new Date()
     },
-    {
-      label: 'Last 3 months',
-      value: 'last_3_months',
-      icon: '📋',
-      startDate: () => {
-        const date = new Date();
-        date.setMonth(date.getMonth() - 3);
-        date.setHours(0, 0, 0, 0);
-        return date;
-      },
-      endDate: () => new Date()
-    }
   ];
 
-  const filterConfigs = [
+  const filterConfigs: FilterConfig[]  = [
     {
       key: 'timeRange',
       label: 'Time Range',
@@ -124,17 +129,6 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
       icon: '🕒',
       timePresets
     },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      icon: '📊',
-      options: [
-        { label: 'Active', value: 'active' },
-        { label: 'Completed', value: 'completed' },
-        { label: 'Pending', value: 'pending' }
-      ]
-    }
   ];
 
   // Close dropdown when clicking outside
@@ -166,7 +160,6 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
     };
 
     handleFilterChange('timeRange', timeRange);
-    // setCustomDateMode(prev => ({ ...prev, timeRange: false }));
   };
 
   const handleCustomDateChange = (field: 'startDate' | 'endDate', value: string) => {
@@ -206,7 +199,6 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
 
   const clearAllFilters = () => {
     setActiveFilters({});
-    setCustomDateMode({});
     onFiltersChange?.({});
   };
 
@@ -214,25 +206,11 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
     setOpenDropdown(openDropdown === key ? null : key);
   };
 
-  const toggleCustomDateMode = (filterKey: string) => {
-    setCustomDateMode(prev => ({
-      ...prev,
-      [filterKey]: !prev[filterKey]
-    }));
-  };
-
   const formatFilterValue = (key: string, value: any) => {
     if (key === 'timeRange' && value) {
       return value.label || 'Custom range';
     }
     return value;
-  };
-
-  const getActiveTimePreset = (timeRange: TimeRange) => {
-    if (timeRange.preset) {
-      return timePresets.find(preset => preset.value === timeRange.preset);
-    }
-    return null;
   };
 
   return (
@@ -273,60 +251,9 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
                     <div className="p-3">
                       {config.type === 'timeRange' ? (
                         <div className="space-y-3">
-                          {/* New Relic-style header */}
-                          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                            <div className="flex items-center space-x-2">
-                              <ClockIcon className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm font-medium text-gray-900">Select Time Range</span>
-                            </div>
-                            <button
-                              onClick={() => toggleCustomDateMode(config.key)}
-                              className={`text-xs px-2 py-1 rounded transition-colors ${
-                                customDateMode[config.key]
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'text-gray-500 hover:text-gray-700'
-                              }`}
-                            >
-                              Custom
-                            </button>
-                          </div>
-
-                          {!customDateMode[config.key] ? (
-                            /* Preset Options */
-                            <div className="space-y-1 max-h-64 overflow-y-auto">
-                              {config.timePresets?.map((preset) => {
-                                const isActive = activeFilters.timeRange?.preset === preset.value;
-                                return (
-                                  <button
-                                    key={preset.value}
-                                    onClick={() => handleTimePresetSelect(preset)}
-                                    className={`
-                                      w-full text-left px-3 py-2 text-sm rounded-md transition-all duration-150 flex items-center justify-between
-                                      ${isActive
-                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                        : 'text-gray-700 hover:bg-gray-50'
-                                      }
-                                    `}
-                                  >
-                                    <div className="flex items-center">
-                                      <span className="mr-2">{preset.icon}</span>
-                                      {preset.label}
-                                    </div>
-                                    {isActive && (
-                                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          ) : (
+                          {(
                             /* Custom Date Range */
-                            <div className="space-y-3">
-                              <div className="flex items-center space-x-2 text-sm text-gray-600 mb-3">
-                                <CalendarIcon className="h-4 w-4" />
-                                <span>Custom Date Range</span>
-                              </div>
-                              
+                            <div className="space-y-3">                              
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
                                   <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -356,7 +283,7 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
                               <div className="pt-2 border-t border-gray-100">
                                 <div className="text-xs text-gray-500 mb-2">Quick Select:</div>
                                 <div className="flex flex-wrap gap-1">
-                                  {timePresets.slice(2, 6).map((preset) => (
+                                  {timePresets.map((preset) => (
                                     <button
                                       key={preset.value}
                                       onClick={() => handleTimePresetSelect(preset)}
