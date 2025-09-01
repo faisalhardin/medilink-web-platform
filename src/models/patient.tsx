@@ -1,3 +1,4 @@
+import { CommonQueryParams } from "./common";
 import { JourneyPoint } from "./journey";
 import { CheckoutProduct, Product } from "./product";
 
@@ -130,7 +131,7 @@ export interface ListOrderProductRequest {
   visit_id?: number;
 }
 
-export interface GetPatientVisitParam {
+export interface GetPatientVisitParam extends CommonQueryParams {
   visit_id?: number;
   journey_board_id?: number;
 }

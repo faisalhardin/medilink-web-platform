@@ -3,7 +3,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { Column, Id, Task } from "../types";
 import { JourneyPoint, PatientVisitTask } from "@models/journey";
 import ColumnContainer from "./ColumnContainer";
-import { Patient, PatientVisit } from "@models/patient";
+import { GetPatientVisitParam, Patient, PatientVisit } from "@models/patient";
 import lodash from 'lodash';
 import {
   DndContext,
@@ -24,7 +24,8 @@ import { useParams } from "react-router-dom";
 import { useModal } from "context/ModalContext";
 import React from "react";
 import VisitFormComponent from "./VisitForm";
-import FilterBar from "./FilterBar";
+import FilterBar, { FilterPresetToday } from "./FilterBar";
+import { formatDateTimeWithOffset } from "@utils/common";
 
 const registrationColumn: JourneyPoint = {
   id: 0,
@@ -66,14 +67,16 @@ function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
 
 function KanbanBoard() {
   const { boardID } = useParams<{ boardID: string }>();
+  const [ queryParams, setQueryParams ] = useState<GetPatientVisitParam>({
+    journey_board_id: boardID,
+    from_time: formatDateTimeWithOffset(FilterPresetToday.startDate()),
+    to_time: formatDateTimeWithOffset(FilterPresetToday.endDate()),
+  } as GetPatientVisitParam);
+  
   const {openModal} = useModal();
 
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
   const [tasks, setTasks] = useState<PatientVisitTask[]>([]);  
-
-  const onFilterChange = (filter: Record<string, any>) => {
-    console.log(filter);
-  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,17 +97,36 @@ function KanbanBoard() {
           return a.position - b.position;
         }));
 
-        // Second API call (dependent on the first)
-        const patientVisits = await ListVisitsByParams({
-          journey_board_id: boardIDNumber,
-        });
-        setTasks(mapPatientVisitsToTasks(patientVisits));
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
     fetchData();
   }, [boardID]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const patientVisits = await ListVisitsByParams(queryParams);
+        setTasks(mapPatientVisitsToTasks(patientVisits));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, [queryParams])
+
+   const onFilterChange = (filter: Record<string, any>) => {
+    const updatedParams: GetPatientVisitParam = {
+      ...queryParams,
+      journey_board_id: queryParams.journey_board_id,
+      
+      from_time: filter.timeRange?.startDate || queryParams.from_time || '',
+      to_time: filter.timeRange?.endDate || queryParams.to_time || '',
+    };
+      setQueryParams(updatedParams);
+
+    };
 
   const columnsId = useMemo(() => columns.map((col) => col.id), [columns]); // TODO: changes cause it to have unresponsive draging effect
 
@@ -125,7 +147,7 @@ function KanbanBoard() {
   return (
     <div className="m-auto gap-2 flex flex-col min-h-screen w-full items-center overflow-x-auto overflow-y-hidden p-[40px]">
     <div className="w-full">
-      <FilterBar onFiltersChange={onFilterChange}/>
+      <FilterBar onFiltersChange={onFilterChange} defaultFilters={FilterPresetToday}/>
     </div>
     <div
       className="

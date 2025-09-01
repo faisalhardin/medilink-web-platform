@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDownIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { formatDateTimeWithOffset } from '@utils/common';
+
 
 interface TimeRange {
   preset?: string;
@@ -35,14 +37,36 @@ interface FilterConfig {
 
 interface FilterBarProps {
   onFiltersChange?: (filters: Record<string, any>) => void;
+  defaultFilters?: Record<string, any>;
 }
 
-export function FilterBar({ onFiltersChange }: FilterBarProps) {
+export const FilterPresetToday = {
+  label: 'Today',
+  value: 'today',
+  icon: '📅',
+  startDate: () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  },
+  endDate: () => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return today;
+  }
+}
+
+export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
 
-  // New Relic-style time presets
+  useEffect(() => {
+    if (defaultFilters) {
+      handleTimePresetSelect(defaultFilters)
+    }
+  }, [])
+
   const timePresets: TimePreset[] = [
     {
       label: 'Last hour',
@@ -51,21 +75,7 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
       startDate: () => new Date(Date.now() - 60 * 60 * 1000),
       endDate: () => new Date()
     },
-    {
-      label: 'Today',
-      value: 'today',
-      icon: '📅',
-      startDate: () => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return today;
-      },
-      endDate: () => {
-        const today = new Date();
-        today.setHours(23, 59, 59, 999);
-        return today;
-      }
-    },
+      FilterPresetToday,
     {
       label: 'Yesterday',
       value: 'yesterday',
@@ -149,8 +159,8 @@ export function FilterBar({ onFiltersChange }: FilterBarProps) {
   }, [openDropdown]);
 
   const handleTimePresetSelect = (preset: any) => {
-    const startDate = preset.startDate().toISOString().split('T')[0];
-    const endDate = preset.endDate().toISOString().split('T')[0];
+    const startDate = formatDateTimeWithOffset(preset.startDate());
+    const endDate = formatDateTimeWithOffset(preset.endDate());
     
     const timeRange: TimeRange = {
       preset: preset.value,
