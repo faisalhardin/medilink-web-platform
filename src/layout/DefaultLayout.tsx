@@ -7,7 +7,6 @@ import PatientPage from "@pages/Patient";
 import PatientDetail from "@pages/PatientDetail";
 import PatientRegistrationPage from "@pages/PatientRegistration";
 import PatientVisitDetailPage from "@pages/PatientVisitDetail";
-import VisitRegistrationPage from "@pages/VisitRegistration";
 import { Routes, Route } from "react-router-dom";
 // import PatieVisitReg
 

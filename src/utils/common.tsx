@@ -82,3 +82,28 @@ export const formatPrice = (num: number, currency: string = "IDR"): string => {
       minimumFractionDigits: 0,
     }).format(num);
   };
+
+export const formatDateTime = (date: Date): string => {
+  // Use UTC format to avoid URL encoding issues with + symbol
+  // This will produce: 2025-06-20T00:00:00.000Z
+  return date.toISOString();
+}
+
+// Alternative: If you still want timezone info but in a different format
+export const formatDateTimeWithOffset = (date: Date): string => {
+  // Format as: 2025-06-20T00:00:00.000+07:00
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  // Get timezone offset in minutes and convert to HH:MM format
+  const offset = date.getTimezoneOffset();
+  const offsetHours = Math.abs(Math.floor(offset / 60));
+  const offsetMinutes = Math.abs(offset % 60);
+  const offsetSign = offset <= 0 ? '+' : '-';
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
+}

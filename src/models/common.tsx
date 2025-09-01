@@ -5,4 +5,8 @@ export  interface CommonResponse<T> {
 
 export interface CommonQueryParams {
     q: string;
+    from_time: string;
+    to_time: string;
+    page: number;
+    limit: number;
 }
