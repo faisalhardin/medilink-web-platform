@@ -10,9 +10,10 @@ import { useModal } from "context/ModalContext";
 interface PatientListComponentProps {
     journey_board_id?: number;
     onPatientSelect?: (patient: PatientModel) => void;
+    isInDrawer?: boolean;
 }
 
-export function PatientListComponent({ journey_board_id, onPatientSelect }: PatientListComponentProps): JSX.Element {
+export function PatientListComponent({ journey_board_id, onPatientSelect, isInDrawer = false }: PatientListComponentProps): JSX.Element {
     const [patients, setPatients] = useState<PatientModel[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { closeModal } = useModal();
@@ -60,51 +61,52 @@ export function PatientListComponent({ journey_board_id, onPatientSelect }: Pati
     };
 
     return (
-        <div className="w-full h-full overflow-auto bg-gray-50 p-6">
+        <div className={`w-full h-full overflow-auto bg-gray-50 ${isInDrawer ? 'p-3' : 'p-3 sm:p-6'}`}>
             {/* Search Form */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Search Patients</h2>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${isInDrawer ? 'p-3 mb-4' : 'p-3 sm:p-6 mb-4 sm:mb-6'}`}>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Search Patients</h2>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Name</label>
                             <input
                                 {...register('name')}
                                 type="text"
                                 placeholder="Enter patient name"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">NIK</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">NIK</label>
                             <input
                                 {...register('nik')}
                                 type="text"
                                 placeholder="Enter NIK"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
                             <input
                                 {...register('date_of_birth')}
                                 type="date"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
                         <div className="flex items-end">
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="w-full bg-blue-600 text-white px-3 py-1.5 sm:py-2 text-sm rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center">
-                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <svg className="animate-spin -ml-1 mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Searching...
+                                        <span className="hidden sm:inline">Searching...</span>
+                                        <span className="sm:hidden">...</span>
                                     </div>
                                 ) : (
                                     'Search'
@@ -117,35 +119,149 @@ export function PatientListComponent({ journey_board_id, onPatientSelect }: Pati
 
             {/* Patient List */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">Patient Results</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                <div className={`border-b border-gray-200 ${isInDrawer ? 'px-3 py-3' : 'px-3 sm:px-6 py-3 sm:py-4'}`}>
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">Patient Results</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
                         {patients.length} patient{patients.length !== 1 ? 's' : ''} found
                     </p>
                 </div>
                 
                 {patients.length === 0 ? (
-                    <div className="p-12 text-center">
+                    <div className="p-6 sm:p-12 text-center">
                         <div className="text-gray-400 mb-4">
-                            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                         </div>
                         <h3 className="text-sm font-medium text-gray-900 mb-2">No patients found</h3>
-                        <p className="text-sm text-gray-500">Try adjusting your search criteria</p>
+                        <p className="text-xs sm:text-sm text-gray-500">Try adjusting your search criteria</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-200">
                         {patients.map((patient, index) => (
                             <div 
                                 key={patient.uuid} 
-                                className={`p-6 hover:bg-gray-50 transition-colors cursor-pointer ${
-                                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                }`}
+                                className={`hover:bg-gray-50 transition-colors cursor-pointer ${
+                                    isInDrawer ? 'p-3' : 'p-3 sm:p-6'
+                                } ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
                                 onClick={() => onPatientSelect?.(patient)}
                             >
+                                {/* Drawer Layout: Vertical Stack */}
+                                {isInDrawer && (
+                                <div>
+                                    <div className="flex items-start space-x-3 mb-3">
+                                        {/* Patient Avatar */}
+                                        <div className="flex-shrink-0">
+                                            <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-base">
+                                                {patient.name.charAt(0).toUpperCase()}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Patient Name and Badges */}
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-base font-semibold text-gray-900 mb-2">
+                                                {patient.name}
+                                            </h4>
+                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                                    patient.sex === 'male' 
+                                                        ? 'bg-blue-100 text-blue-800' 
+                                                        : 'bg-pink-100 text-pink-800'
+                                                }`}>
+                                                    {patient.sex === 'male' ? '♂' : '♀'} {patient.sex}
+                                                </span>
+                                                {patient.blood_type && (
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        {patient.blood_type}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Patient Details - Vertical Stack */}
+                                    <div className="space-y-2 text-sm text-gray-600">
+                                        <div className="flex items-center space-x-3">
+                                            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span className="font-medium text-gray-700">NIK:</span>
+                                            <span>{patient.nik}</span>
+                                        </div>
+                                        
+                                        <div className="flex items-center space-x-3">
+                                            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z" />
+                                            </svg>
+                                            <span className="font-medium text-gray-700">Age:</span>
+                                            <span>
+                                                {patient.date_of_birth ? (
+                                                    <>
+                                                        {formatDate(patient.date_of_birth)} 
+                                                        <span className="text-gray-500 ml-1">
+                                                            ({calculateAge(patient.date_of_birth)} years)
+                                                        </span>
+                                                    </>
+                                                ) : 'N/A'}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="flex items-center space-x-3">
+                                            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            <span className="font-medium text-gray-700">Born:</span>
+                                            <span>{patient.place_of_birth || 'N/A'}</span>
+                                        </div>
+                                        
+                                        {patient.phone_number && (
+                                            <div className="flex items-center space-x-3">
+                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                </svg>
+                                                <span className="font-medium text-gray-700">Phone:</span>
+                                                <span>{patient.phone_number}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Action Button - Full Width on Mobile */}
+                                    <div className="mt-4">
+                                        {onPatientSelect ? (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onPatientSelect(patient);
+                                                }}
+                                                className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                            >
+                                                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                Select Patient
+                                            </button>
+                                        ) : (
+                                            <a 
+                                                href={`/patient-detail/${patient.uuid}`}
+                                                className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                            >
+                                                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                View Details
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                                )}
+
+                                {/* Desktop Layout: Horizontal */}
+                                {!isInDrawer && (
                                 <div className="flex items-center justify-between">
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-4">
                                             {/* Patient Avatar */}
                                             <div className="flex-shrink-0">
@@ -176,17 +292,17 @@ export function PatientListComponent({ journey_board_id, onPatientSelect }: Pati
                                                 
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                                                     <div className="flex items-center space-x-2">
-                                                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                         </svg>
-                                                        <span>NIK: {patient.nik}</span>
+                                                        <span className="truncate">NIK: {patient.nik}</span>
                                                     </div>
                                                     
                                                     <div className="flex items-center space-x-2">
-                                                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z" />
                                                         </svg>
-                                                        <span>
+                                                        <span className="truncate">
                                                             {patient.date_of_birth ? (
                                                                 <>
                                                                     {formatDate(patient.date_of_birth)} 
@@ -199,7 +315,7 @@ export function PatientListComponent({ journey_board_id, onPatientSelect }: Pati
                                                     </div>
                                                     
                                                     <div className="flex items-center space-x-2">
-                                                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         </svg>
@@ -211,10 +327,10 @@ export function PatientListComponent({ journey_board_id, onPatientSelect }: Pati
                                                 
                                                 {patient.phone_number && (
                                                     <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600">
-                                                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                                         </svg>
-                                                        <span>{patient.phone_number}</span>
+                                                        <span className="truncate">{patient.phone_number}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -251,6 +367,7 @@ export function PatientListComponent({ journey_board_id, onPatientSelect }: Pati
                                         )}
                                     </div>
                                 </div>
+                                )}
                             </div>
                         ))}
                     </div>

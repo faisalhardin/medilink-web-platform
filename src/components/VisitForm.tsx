@@ -178,6 +178,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
       >
         <PatientListComponent 
           journey_board_id={journeyPointID}
+          isInDrawer={true}
           onPatientSelect={(patient: PatientModel) => {
             setSelectedPatient(patient);
             patientDrawer.closeDrawer();
