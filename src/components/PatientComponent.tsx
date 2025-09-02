@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
 import { InsertPatientVisit, ListPatients, RegisterPatientRequest } from "@requests/patient";
-import { GetPatientParam, InsertPatientVisitPayload, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
+import { GetPatientParam, InsertPatientVisitPayload, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { ListVisitsByPatient } from "@requests/patient"
 import AdmitIcon from "assets/icons/AdmitIcon";
 import { useModal } from "context/ModalContext";
@@ -377,43 +377,252 @@ export function PatientListComponent({ journey_board_id, onPatientSelect, isInDr
     )
 }
 
+// New interfaces for the updated data structure
+// interface PatientJourneyPoint {
+//     id: number;
+//     id_trx_patient_visit: number;
+//     name_mst_journey_point: string;
+//     journey_point_id: number;
+//     create_time: string;
+//     update_time: string;
+// }
+
+// interface PatientVisitData {
+//     id: number;
+//     create_time: string;
+//     patient_journeypoints: PatientJourneyPoint[];
+// }
+
+// interface PatientVisitsResponse {
+//     data: PatientVisitData[];
+// }
+
 export const PatientVisitsComponent = ({ patientUUID }: PatientVisitsComponentProps) => {
-    const [patientVisits, setPatientVisits] = useState<PatientVisit[]>([]);
+    const [patientVisits, setPatientVisits] = useState<PatientVisitDetailed[]>([]);
+    const [activeTab, setActiveTab] = useState<number>(0);
+    const [isLoading, setIsLoading] = useState(false);
+
     useEffect(() => {
-        try {
-            ListVisitsByPatient(patientUUID).then((data) => {
-                setPatientVisits(data);
-            });
-        } catch (err) {
-            console.error(err);
+        const fetchVisits = async () => {
+            try {
+                setIsLoading(true);
+                const response = await ListVisitsByPatient(patientUUID);
+                // Handle the new API response structure
+                setPatientVisits(response);
+                // Set first visit as active by default
+                if (response.length > 0) {
+                    setActiveTab(response[0].id);
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (patientUUID) {
+            fetchVisits();
         }
-    }, [patientUUID])
+    }, [patientUUID]);
+
+    // Helper function to format date
+    const formatDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    // Helper function to format relative time
+    const formatRelativeTime = (dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+        
+        if (diffInHours < 1) return 'Just now';
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+        return formatDate(dateString);
+    };
+
+    // Helper function to get status color
+    const getStatusColor = (journeyPoint: PatientVisitDetail): string => {
+        // const createTime = new Date(journeyPoint.create_time);
+        // const updateTime = new Date(journeyPoint.update_time);
+        const isCompleted = true;// createTime.getTime() !== updateTime.getTime();
+        
+        return isCompleted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+    };
+
+    // Helper function to get status text
+    const getStatusText = (journeyPoint: PatientVisitDetail): string => {
+        // const createTime = new Date(journeyPoint.create_time);
+        // const updateTime = new Date(journeyPoint.update_time);
+        const isCompleted = true;//createTime.getTime() !== updateTime.getTime();
+        
+        return isCompleted ? 'Completed' : 'In Progress';
+    };
+
+    if (isLoading) {
+        return (
+            <div className="p-6 w-full">
+                <div className="flex items-center justify-center py-12">
+                    <div className="flex items-center space-x-2">
+                        <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="text-gray-600">Loading visits...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (patientVisits.length === 0) {
+        return (
+            <div className="p-6 w-full">
+                <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                        <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">No visits found</h3>
+                    <p className="text-sm text-gray-500">This patient hasn't had any visits yet.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const activeVisit = patientVisits.find(visit => visit.id === activeTab);
 
     return (
         <div className="p-6 w-full">
-            <table className="table-fixed w-full shadow-md rounded-lg overflow-hidden my-6 text-sm">
-                <thead className="bg-primary-6 text-white">
-                    <tr>
-                        <th className="text-left px-6 py-3">Visit Date</th>
-                        <th className="text-left px-6 py-3">Action</th>
-                        <th className="text-left px-6 py-3">Status</th>
-                        <th className="text-left px-6 py-3">Note</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {patientVisits.map((visit, index) => (
-                        <tr key={visit.id} className={`${index % 2 === 0 ? "bg-primary-1" : "bg-primary-2"
-                            } border-b last:border-none`}>
-                            <td className="px-6 py-4">{visit.create_time}</td>
-                            <td className="px-6 py-4">{visit.action}</td>
-                            <td className="px-6 py-4">{visit.status}</td>
-                            <td className="px-6 py-4">{visit.notes}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Patient Visits</h2>
+                
+                {/* Horizontal Tabs */}
+                <div className="border-b border-gray-200">
+                    <nav className="-mb-px flex space-x-8 overflow-x-auto">
+                        {patientVisits.map((visit) => (
+                            <button
+                                key={visit.id}
+                                onClick={() => setActiveTab(visit.id)}
+                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                    activeTab === visit.id
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
+                            >
+                                <div className="flex flex-col items-start">
+                                    <span className="font-medium">
+                                        Visit #{visit.id}
+                                    </span>
+                                    <span className="text-xs text-gray-400 mt-1">
+                                        {formatDate(visit.create_time)}
+                                    </span>
+                                </div>
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+            </div>
+
+            {/* Active Visit Content */}
+            {activeVisit && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    {/* Visit Header */}
+                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    Visit #{activeVisit.id}
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    Started {formatDate(activeVisit.create_time)}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-sm text-gray-500">
+                                    {activeVisit.patient_journeypoints?.length} journey point{activeVisit.patient_journeypoints?.length !== 1 ? 's' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Journey Points */}
+                    <div className="divide-y divide-gray-200">
+                        {activeVisit.patient_journeypoints?.length === 0 ? (
+                            <div className="p-6 text-center">
+                                <div className="text-gray-400 mb-2">
+                                    <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    </svg>
+                                </div>
+                                <p className="text-sm text-gray-500">No journey points recorded for this visit.</p>
+                            </div>
+                        ) : (
+                            activeVisit.patient_journeypoints?.map((journeyPoint, index) => (
+                                <div key={journeyPoint.id} className="p-6">
+                                    <div className="flex items-start space-x-4">
+                                        {/* Journey Point Icon */}
+                                        <div className="flex-shrink-0">
+                                            <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                {index + 1}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Journey Point Details */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <h4 className="text-base font-semibold text-gray-900">
+                                                    {journeyPoint.name_mst_journey_point}
+                                                </h4>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(journeyPoint)}`}>
+                                                    {getStatusText(journeyPoint)}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                                <div className="flex items-center space-x-2">
+                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span className="font-medium text-gray-700">Started:</span>
+                                                    <span>{formatDate(journeyPoint.create_time)}</span>
+                                                </div>
+                                                
+                                                <div className="flex items-center space-x-2">
+                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span className="font-medium text-gray-700">Updated:</span>
+                                                    <span>{formatRelativeTime(journeyPoint.create_time)}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600">
+                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                </svg>
+                                                <span className="font-medium text-gray-700">Journey Point ID:</span>
+                                                <span>{journeyPoint.journey_point_id}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
-    )
+    );
 }
 
 export function PatientRegistrationComponent() {

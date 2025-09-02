@@ -52,7 +52,7 @@ export interface GetPatientVisitDetailedResponse {
   service_point_name: string;
   service_point_id: number;
   column_update_time: number;
-  patient_checkpoints: PatientVisitDetail[];
+  patient_journeypoints: PatientVisitDetail[];
   patient: Patient;
   journey_point: JourneyPoint;
   product_cart: Product[];
@@ -77,6 +77,10 @@ export interface PatientVisit {
   product_cart: Product[];
 }
 
+export interface PatientVisitDetailed extends PatientVisit {
+  patient_journeypoints: PatientVisitDetail[];
+}
+
 export interface UpdatePatientVisitRequest {
   id: number;
   action?: string;
@@ -95,12 +99,14 @@ export interface UpdatePatientVisitRequest {
 
 export interface PatientVisitDetail {
   id?: number;
+  id_trx_patient_visit?: number;
   name_mst_journey_point?: string;
   journey_point_id: number;
   id_patient_visit: number;
   notes: Record<string, any>;
   service_point_id?: number;
   contributors?: string;
+  create_time: string;
 }
 
 export interface InsertPatientVisitPayload {
@@ -134,6 +140,7 @@ export interface ListOrderProductRequest {
 export interface GetPatientVisitParam extends CommonQueryParams {
   visit_id?: number;
   journey_board_id?: number;
+  patient_uuid?: string;
 }
 
 export interface PatientVisitsComponentProps {

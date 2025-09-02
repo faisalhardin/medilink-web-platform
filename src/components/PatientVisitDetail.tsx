@@ -61,7 +61,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         var journeyPointTabs: journeyTab[] = [
             _activeTab,
         ];
-        for (const patientVisitJourneyPoint of _patientVisit.patient_checkpoints) {
+        for (const patientVisitJourneyPoint of _patientVisit.patient_journeypoints) {
             if (!setOfJourneyPointID.has(patientVisitJourneyPoint.journey_point_id)) {
                 setOfJourneyPointID.add(patientVisitJourneyPoint.journey_point_id);
                 journeyPointTabs.push({
@@ -98,7 +98,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 if (patientVisit !== undefined) {
                     setPatientVisit(patientVisit);
                     GenerateVisitTab(patientVisit);
-                    setVisitDetails(patientVisit.patient_checkpoints)
+                    setVisitDetails(patientVisit.patient_journeypoints)
                     setPatient(patientVisit.patient);
                     setSelectedProducts(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
                 }
