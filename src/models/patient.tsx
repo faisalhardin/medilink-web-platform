@@ -31,6 +31,7 @@ export interface RegisterPatient {
 }
 
 export interface GetPatientParam {
+  patient_ids?: string;
   date_of_birth?: string;
   name?: string;
   institution_id?: number;
@@ -144,6 +145,7 @@ export interface GetPatientVisitParam extends CommonQueryParams {
 }
 
 export interface PatientVisitsComponentProps extends GetPatientVisitParam {
+  patient?: Patient;
 }
 
 export interface PatientVisitDetailComponentProps {

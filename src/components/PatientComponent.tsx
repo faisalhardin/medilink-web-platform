@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
 import { InsertPatientVisit, ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
-import { GetPatientParam, InsertPatientVisitPayload, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
+import { GetPatientParam, InsertPatientVisitPayload, Patient, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { ListVisitsByPatient } from "@requests/patient"
 import AdmitIcon from "assets/icons/AdmitIcon";
 import { useModal } from "context/ModalContext";
@@ -379,8 +379,9 @@ export function PatientListComponent({ journey_board_id, onPatientSelect, isInDr
     )
 }
 
-export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientVisitsComponentProps) => {
+export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }: PatientVisitsComponentProps) => {
     const [patientVisits, setPatientVisits] = useState<PatientVisitDetailed[]>([]);
+    const [internalPatient, setPatient] = useState<Patient | null>(patient || null);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -411,8 +412,24 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientV
         }
     }, [patient_uuid]);
 
+    useEffect(() => {
+        if (!internalPatient && patient_uuid) {
+            // console.log("patient_uuid", patient_uuid, internalPatient);
+            const fetchPatient = async () => {
+                const _patients = await ListPatients({
+                    patient_ids: patient_uuid,
+                })
+                console.log("xx",_patients);
+                if (_patients.length == 1) {
+                    setPatient(_patients[0]);
+                }
+            }
+            fetchPatient();
+        }
+    }, []);
+
     // Helper function to format date
-    const formatDate = (dateString: string): string => {
+    const formatDateTime = (dateString: string): string => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { 
             year: 'numeric', 
@@ -423,6 +440,15 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientV
         });
     };
 
+    const formatDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+        });
+    }
+
     // Helper function to format relative time
     const formatRelativeTime = (dateString: string): string => {
         const date = new Date(dateString);
@@ -432,7 +458,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientV
         if (diffInHours < 1) return 'Just now';
         if (diffInHours < 24) return `${diffInHours}h ago`;
         if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
-        return formatDate(dateString);
+        return formatDateTime(dateString);
     };
 
     // Helper function to get status color
@@ -487,8 +513,13 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientV
     return (
         <div className="p-6 w-full">
             <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Patient Visits</h2>
-                
+                <div>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-2">{internalPatient?.name}'s Visits</h2>
+                    <div className="flex items-center space-x-4 mb-4">
+                        <p className="text-sm text-gray-500">{internalPatient?.uuid}</p>
+                        <span className="text-xs text-gray-400">{formatDate(internalPatient?.date_of_birth || '')}</span>
+                    </div>
+                </div>
                 {/* Horizontal Tabs */}
                 <div className="border-b border-gray-200">
                     <nav className="-mb-px flex space-x-8 overflow-x-auto">
@@ -507,7 +538,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientV
                                         Visit #{visit.id}
                                     </span>
                                     <span className="text-xs text-gray-400 mt-1">
-                                        {formatDate(visit.create_time)}
+                                        {formatDateTime(visit.create_time)}
                                     </span>
                                 </div>
                             </button>
@@ -527,7 +558,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientV
                                     Visit #{activeVisit.id}
                                 </h3>
                                 <p className="text-sm text-gray-600 mt-1">
-                                    Started {formatDate(activeVisit.create_time)}
+                                    Started {formatDateTime(activeVisit.create_time)}
                                 </p>
                             </div>
                             <div className="text-right">
@@ -538,67 +569,75 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientV
                         </div>
                     </div>
 
-                    {/* Journey Points */}
-                    <div className="divide-y divide-gray-200">
+                    {/* Journey Points - Pinterest Style Wall */}
+                    <div className="p-6">
                         {activeVisit.patient_journeypoints?.length === 0 ? (
-                            <div className="p-6 text-center">
-                                <div className="text-gray-400 mb-2">
-                                    <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="text-center py-12">
+                                <div className="text-gray-400 mb-4">
+                                    <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
                                 </div>
-                                <p className="text-sm text-gray-500">No journey points recorded for this visit.</p>
+                                <h3 className="text-sm font-medium text-gray-900 mb-2">No journey points recorded</h3>
+                                <p className="text-sm text-gray-500">This visit doesn't have any journey points yet.</p>
                             </div>
                         ) : (
-                            activeVisit.patient_journeypoints?.map((journeyPoint, index) => (
-                                <div key={journeyPoint.id} className="p-6">
-                                    <div className="flex items-start space-x-4">
-                                        {/* Journey Point Icon */}
-                                        <div className="flex-shrink-0">
-                                            <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                {index + 1}
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Journey Point Details */}
-                                        <div className="flex flex-col space-x-2">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between mb-2">
+                            <div
+                                className={`w-full ${
+                                    activeVisit.patient_journeypoints?.length === 1
+                                        ? 'max-w-2xl mx-auto'
+                                        : ''
+                                }`}
+                                style={{
+                                    columnCount:
+                                        activeVisit.patient_journeypoints?.length === 1
+                                            ? 1
+                                            : 2,
+                                    columnGap: '1.5rem',
+                                }}
+                            >
+                                {activeVisit.patient_journeypoints?.map((journeyPoint, index) => (
+                                    <div
+                                        key={journeyPoint.id}
+                                        className="break-inside-avoid mb-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
+                                        style={{ display: 'inline-block', width: '100%' }}
+                                    >
+                                        {/* Card Header */}
+                                        <div className="p-4 border-b border-gray-100">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                        {index + 1}
+                                                    </div>
                                                     <h4 className="text-base font-semibold text-gray-900">
                                                         {journeyPoint.name_mst_journey_point}
                                                     </h4>
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(journeyPoint)}`}>
-                                                        {getStatusText(journeyPoint)}
-                                                    </span>
                                                 </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                                                    <div className="flex items-center space-x-2">
-                                                        <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        <span className="font-medium text-gray-700">Started:</span>
-                                                        <span>{formatDate(journeyPoint?.create_time || '')}</span>
-                                                    </div>
-
-                                                    <div className="flex items-center space-x-2">
-                                                        <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        <span className="font-medium text-gray-700">Updated:</span>
-                                                        <span>{formatRelativeTime(journeyPoint?.create_time || '')}</span>
-                                                    </div>
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(journeyPoint)}`}>
+                                                    {getStatusText(journeyPoint)}
+                                                </span>
+                                            </div>
+                                            
+                                            {/* Meta Information */}
+                                            <div className="space-y-2 text-xs text-gray-500">
+                                                <div className="flex items-center space-x-2">
+                                                    <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>Started {formatDateTime(journeyPoint?.create_time || '')}</span>
                                                 </div>
-
-                                                <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600">
-                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="flex items-center space-x-2">
+                                                    <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                                     </svg>
-                                                    <span className="font-medium text-gray-700">Journey Point ID:</span>
-                                                    <span>{journeyPoint.journey_point_id}</span>
+                                                    <span>ID: {journeyPoint.journey_point_id}</span>
                                                 </div>
                                             </div>
-                                            <div className="flex-1 min-w-0">
+                                        </div>
+                                        
+                                        {/* Comment Box Content */}
+                                        <div className="p-4">
+                                            <div className="bg-gray-50 rounded-lg border border-gray-200 px-2">
                                                 <EditorComponent
                                                     id={`editor-${journeyPoint.id}`}
                                                     data={journeyPoint}
@@ -609,9 +648,16 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientV
                                                 />
                                             </div>
                                         </div>
+                                        
+                                        {/* Card Footer */}
+                                        <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
+                                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                                <span>Last updated {formatRelativeTime(journeyPoint?.create_time || '')}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
