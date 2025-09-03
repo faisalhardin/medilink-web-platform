@@ -106,7 +106,7 @@ export interface PatientVisitDetail {
   notes: Record<string, any>;
   service_point_id?: number;
   contributors?: string;
-  create_time: string;
+  create_time?: string;
 }
 
 export interface InsertPatientVisitPayload {
