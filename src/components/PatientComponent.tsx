@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
-import { InsertPatientVisit, ListPatients, RegisterPatientRequest } from "@requests/patient";
+import { InsertPatientVisit, ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
 import { GetPatientParam, InsertPatientVisitPayload, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { ListVisitsByPatient } from "@requests/patient"
 import AdmitIcon from "assets/icons/AdmitIcon";
@@ -377,27 +377,7 @@ export function PatientListComponent({ journey_board_id, onPatientSelect, isInDr
     )
 }
 
-// New interfaces for the updated data structure
-// interface PatientJourneyPoint {
-//     id: number;
-//     id_trx_patient_visit: number;
-//     name_mst_journey_point: string;
-//     journey_point_id: number;
-//     create_time: string;
-//     update_time: string;
-// }
-
-// interface PatientVisitData {
-//     id: number;
-//     create_time: string;
-//     patient_journeypoints: PatientJourneyPoint[];
-// }
-
-// interface PatientVisitsResponse {
-//     data: PatientVisitData[];
-// }
-
-export const PatientVisitsComponent = ({ patientUUID }: PatientVisitsComponentProps) => {
+export const PatientVisitsComponent = ({ patient_uuid, limit, offset }: PatientVisitsComponentProps) => {
     const [patientVisits, setPatientVisits] = useState<PatientVisitDetailed[]>([]);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -406,7 +386,11 @@ export const PatientVisitsComponent = ({ patientUUID }: PatientVisitsComponentPr
         const fetchVisits = async () => {
             try {
                 setIsLoading(true);
-                const response = await ListVisitsByPatient(patientUUID);
+                const response = await ListVisitsDetailed({
+                    patient_uuid: patient_uuid,
+                    limit: limit,
+                    offset: offset,
+                });
                 // Handle the new API response structure
                 setPatientVisits(response);
                 // Set first visit as active by default
@@ -420,10 +404,10 @@ export const PatientVisitsComponent = ({ patientUUID }: PatientVisitsComponentPr
             }
         };
 
-        if (patientUUID) {
+        if (patient_uuid) {
             fetchVisits();
         }
-    }, [patientUUID]);
+    }, [patient_uuid]);
 
     // Helper function to format date
     const formatDate = (dateString: string): string => {
@@ -451,8 +435,6 @@ export const PatientVisitsComponent = ({ patientUUID }: PatientVisitsComponentPr
 
     // Helper function to get status color
     const getStatusColor = (journeyPoint: PatientVisitDetail): string => {
-        // const createTime = new Date(journeyPoint.create_time);
-        // const updateTime = new Date(journeyPoint.update_time);
         const isCompleted = true;// createTime.getTime() !== updateTime.getTime();
         
         return isCompleted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
@@ -460,9 +442,8 @@ export const PatientVisitsComponent = ({ patientUUID }: PatientVisitsComponentPr
 
     // Helper function to get status text
     const getStatusText = (journeyPoint: PatientVisitDetail): string => {
-        // const createTime = new Date(journeyPoint.create_time);
-        // const updateTime = new Date(journeyPoint.update_time);
-        const isCompleted = true;//createTime.getTime() !== updateTime.getTime();
+
+        const isCompleted = true;
         
         return isCompleted ? 'Completed' : 'In Progress';
     };

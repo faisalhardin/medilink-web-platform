@@ -143,8 +143,7 @@ export interface GetPatientVisitParam extends CommonQueryParams {
   patient_uuid?: string;
 }
 
-export interface PatientVisitsComponentProps {
-  patientUUID: string;
+export interface PatientVisitsComponentProps extends GetPatientVisitParam {
 }
 
 export interface PatientVisitDetailComponentProps {

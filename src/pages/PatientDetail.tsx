@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 const PatientDetail = () => {
     const { uuid } = useParams<{ uuid: string }>();
     return (
-        <PatientVisitsComponent  patientUUID={uuid as string}/>
+        <PatientVisitsComponent  patient_uuid={uuid as string} limit={5} offset={1}/>
     )
 }
 

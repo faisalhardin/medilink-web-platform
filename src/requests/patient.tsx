@@ -71,7 +71,7 @@ export const InsertPatientVisit = async (payload:InsertPatientVisitPayload): Pro
 }
 
 
-export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisitDetailed[]> => {
+export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisit[]> => {
     try {
         const token = getToken();
         const response = await axios.get(
