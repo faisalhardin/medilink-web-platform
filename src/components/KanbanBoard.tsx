@@ -78,6 +78,15 @@ function KanbanBoard() {
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
   const [tasks, setTasks] = useState<PatientVisitTask[]>([]);  
 
+  const fetchVisitsData = async () => {
+    try {
+      const patientVisits = await ListVisitsByParams(queryParams);
+      setTasks(mapPatientVisitsToTasks(patientVisits));
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -105,15 +114,7 @@ function KanbanBoard() {
   }, [boardID]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const patientVisits = await ListVisitsByParams(queryParams);
-        setTasks(mapPatientVisitsToTasks(patientVisits));
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
+    fetchVisitsData();
   }, [queryParams])
 
    const onFilterChange = (filter: Record<string, any>) => {
@@ -261,6 +262,9 @@ function KanbanBoard() {
           journeyPointID: columnId as number
         })}
       </Suspense>,
+      () => {
+        fetchVisitsData();
+      }
     )
   }
 
