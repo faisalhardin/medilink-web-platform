@@ -1,9 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import { useModal } from '../context/ModalContext';
 
-export function Modal() {
+export interface ModalProps {
+    maxWidth?: 'xl' | '2xl';
+}
+
+export function Modal({ maxWidth = '2xl' }: ModalProps) {
     const { isOpen, modalContent, closeModal } = useModal();
     const overlayRef = useRef<HTMLDivElement>(null);
+
+    const maxWidthClasses = {
+        xl: 'max-w-4xl',
+        '2xl': 'max-w-[90vw]',
+      };
 
     useEffect(() => {
         if (isOpen) {
@@ -31,7 +40,7 @@ export function Modal() {
             onClick={handleOverlayClick}
             className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center overflow-y-auto p-4 transition-opacity duration-300 ease-in-out opacity-100"
         >
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-transform duration-300 ease-in-out scale-100">
+            <div className={`bg-white rounded-lg shadow-xl w-full ${maxWidthClasses[maxWidth]} max-h-[90vh] overflow-y-auto transform transition-transform duration-300 ease-in-out scale-100`}>
                 <div className="relative">
                     <button
                         onClick={closeModal}

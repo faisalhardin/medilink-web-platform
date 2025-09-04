@@ -1,12 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
-import { InsertPatientVisit, ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
-import { GetPatientParam, InsertPatientVisitPayload, Patient, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
-import { ListVisitsByPatient } from "@requests/patient"
-import AdmitIcon from "assets/icons/AdmitIcon";
+import { ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
+import { GetPatientParam, Patient, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { useModal } from "context/ModalContext";
-import { PatientVisitlDetailNotes } from "./PatientVisitlDetailNotes";
 import { EditorComponent } from "./EditorComponent";
 
 interface PatientListComponentProps {
@@ -229,14 +226,14 @@ export function PatientListComponent({ journey_board_id, onPatientSelect, isInDr
                                     </div>
                                     
                                     {/* Action Button - Full Width on Mobile */}
-                                    <div className="mt-4">
+                                    <div className="mt-4 flex flex-row gap-2">
                                         {onPatientSelect ? (
                                             <button 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     onPatientSelect(patient);
                                                 }}
-                                                className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                             >
                                                 <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -247,7 +244,7 @@ export function PatientListComponent({ journey_board_id, onPatientSelect, isInDr
                                         ) : (
                                             <a 
                                                 href={`/patient-detail/${patient.uuid}`}
-                                                className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                             >
                                                 <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -255,7 +252,7 @@ export function PatientListComponent({ journey_board_id, onPatientSelect, isInDr
                                                 </svg>
                                                 View Details
                                             </a>
-                                        )}
+                                        )}                                        
                                     </div>
                                 </div>
                                 )}
@@ -376,6 +373,8 @@ export function PatientListComponent({ journey_board_id, onPatientSelect, isInDr
                 )}
             </div>
         </div>
+ 
+        
     )
 }
 
