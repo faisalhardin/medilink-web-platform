@@ -196,7 +196,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
             >
               <div className="flex items-center gap-2">
                 <TrashIcon/>
-                Remove Task
+                Archive Task
               </div>
             </button>
           </MenuItem>

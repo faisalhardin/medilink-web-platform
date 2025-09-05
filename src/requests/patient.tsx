@@ -3,6 +3,7 @@ import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH } from "con
 import { getToken } from "@utils/storage";
 import { GetPatientParam, GetPatientVisitParam, UpsertPatientVisitDetailParam, Patient, PatientVisit, PatientVisitDetail, RegisterPatient, UpdatePatientVisitPayload, GetPatientVisitDetailedResponse, InsertPatientVisitPayload, PatientVisitDetailed } from "@models/patient";
 import { CommonResponse } from "@models/common";
+import { ArchiveJourneyPointRequest } from "@models/journey";
 
 export const RegisterPatientRequest = async (patientForm: RegisterPatient): Promise<CommonResponse<null>> => {
     try {
@@ -236,4 +237,27 @@ export const GetPatientVisitDetailRequest = async (id: number): Promise<CommonRe
             message: "Error fetching data",
           };
       }
+  }
+
+
+export async function ArchiveVisit(params:ArchiveJourneyPointRequest) {
+    try {
+      const token = getToken();
+      const response = await axios.patch(
+          `${PATIENT_VISIT_PATH}/archive`, 
+          params,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+          }
+        );
+  
+      if (response.status >= 400) {
+        throw new Error;
+      }
+    } catch (error) {
+      throw error;
+    }
   }

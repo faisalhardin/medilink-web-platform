@@ -19,7 +19,7 @@ import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
 import { GetJourneyPoints, RenameJourneyPoint, UpdateJourneyPoint } from "@requests/journey";
-import { ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
+import { ArchiveVisit, ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
 import { useParams } from "react-router-dom";
 import { useModal } from "context/ModalContext";
 import React from "react";
@@ -251,9 +251,17 @@ function KanbanBoard() {
     )
   }
 
-  function deleteTask(id: Id) {
-    const newTasks = tasks.filter((task) => task.id !== id);
-    setTasks(newTasks);
+  async function deleteTask(id: Id) {
+    try {
+      await ArchiveVisit({
+        id: id as number,
+      });
+
+      // Remove the deleted task from the local state
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    }
   }
 
   function updateTask(id: Id, content: string) {

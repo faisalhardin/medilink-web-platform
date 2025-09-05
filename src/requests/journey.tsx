@@ -1,4 +1,5 @@
-import { JourneyPoint, JourneyBoard, RenameJourneyPointRequest } from "@models/journey"
+import { JourneyPoint, JourneyBoard, RenameJourneyPointRequest, ArchiveJourneyPointRequest } from "@models/journey"
+import { PatientVisit } from "@models/patient";
 import { getToken } from "@utils/storage"
 import axios from "axios";
 import { JOURNEY_URL_PATH } from "constants/constants";

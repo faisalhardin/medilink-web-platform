@@ -37,3 +37,7 @@ export interface RenameJourneyPointRequest {
     id: number;
     name: string;
 }
+
+export interface ArchiveJourneyPointRequest {
+    id: number;
+}
