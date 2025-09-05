@@ -18,7 +18,7 @@ import {
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
-import { GetJourneyPoints, UpdateJourneyPoint } from "@requests/journey";
+import { GetJourneyPoints, RenameJourneyPoint, UpdateJourneyPoint } from "@requests/journey";
 import { ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
 import { useParams } from "react-router-dom";
 import { useModal } from "context/ModalContext";
@@ -26,13 +26,6 @@ import React from "react";
 import VisitFormComponent from "./VisitForm";
 import FilterBar, { FilterPresetToday } from "./FilterBar";
 import { formatDateTimeWithOffset } from "@utils/common";
-
-// const registrationColumn: JourneyPoint = {
-//   id: 0,
-//   name: "Registration",
-//   position: 0,
-//   board_id: 1,
-// };
 
 // Function to map PatientVisit to PatientVisitTask
 function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
@@ -291,13 +284,25 @@ function KanbanBoard() {
     setTasks(newTasks);
   }
 
-  function updateColumn(id: Id, title: string) {
-    const newColumns = columns.map((col) => {
-      if (col.id !== id) return col;
-      return { ...col, name: title };
-    });
+  async function updateColumn(id: Id, title: string) {
+    try {
+      // Update on server
+      await RenameJourneyPoint({
+        id: id as number,
+        name: title,
+      });
 
-    setColumns(newColumns);
+      // Update locally
+      const newColumns = columns.map((col) => {
+        if (col.id !== id) return col;
+        return { ...col, name: title };
+      });
+
+      setColumns(newColumns);
+    } catch (error) {
+      // Optionally handle error, e.g. show notification
+      console.error("Failed to update column name:", error);
+    }
   }
 
   function onDragStart(event: DragStartEvent) {

@@ -32,3 +32,8 @@ export type PatientVisitTask = {
     column_update_time: number;
   };
   
+
+export interface RenameJourneyPointRequest {
+    id: number;
+    name: string;
+}

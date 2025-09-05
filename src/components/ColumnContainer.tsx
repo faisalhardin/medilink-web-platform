@@ -30,12 +30,18 @@ function ColumnContainer({
   updateTask,
 }: Props) {
   const [editMode, setEditMode] = useState(false);
+  const [editValue, setEditValue] = useState(column.name);
   const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
   
   useEffect(() => {
     const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
     setUserJourneyPoints(_userJourneyPoints);
   }, []);
+
+  // Reset editValue when column name changes
+  useEffect(() => {
+    setEditValue(column.name);
+  }, [column.name]);
   
   const tasksIds = useMemo(() => {
     return tasks.map((task) => task.id);
@@ -143,15 +149,21 @@ function ColumnContainer({
           {editMode && (
             <input
               className="bg-black focus:border-rose-500 border rounded outline-none px-2"
-              value={column.name}
-              onChange={(e) => updateColumn(column.id, e.target.value)}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
               autoFocus
               onBlur={() => {
                 setEditMode(false);
+                if (editValue !== column.name) {
+                  updateColumn(column.id, editValue);
+                }
               }}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
                 setEditMode(false);
+                if (editValue !== column.name) {
+                  updateColumn(column.id, editValue);
+                }
               }}
             />
           )}
