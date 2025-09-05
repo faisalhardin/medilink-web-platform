@@ -2,11 +2,12 @@ import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import TrashIcon from "assets/icons/TrashIcon";
 import { Id } from "../types";
 import { CSS } from "@dnd-kit/utilities";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
 import TaskCard from "./TaskCard";
 import { JourneyPoint, PatientVisitTask } from "@models/journey";
 import { ModalLink } from "./ModalLink";
+import { getStorageUserJourneyPointsIDAsSet } from "@utils/storage";
 
 interface Props {
   column: JourneyPoint;
@@ -29,7 +30,13 @@ function ColumnContainer({
   updateTask,
 }: Props) {
   const [editMode, setEditMode] = useState(false);
-
+  const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
+  
+  useEffect(() => {
+    const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
+    setUserJourneyPoints(_userJourneyPoints);
+  }, []);
+  
   const tasksIds = useMemo(() => {
     return tasks.map((task) => task.id);
   }, [tasks]);
@@ -185,15 +192,15 @@ function ColumnContainer({
         )}
         </SortableContext>
       </div>
-      <div
+      {userJourneyPoints.has(column.id) && <div
         onClick={() => {
           createTask(column.id);
         }}
-        className="flex gap-2 items-center border-primary-1 border-2 rounded-md p-4 border-x-primary-1 hover:bg-primary-3 hover:text-rose-500 active:bg-black"
+        className="flex gap-2 items-center border-primary-1 border-2 rounded-md p-4 border-x-primary-1 hover:bg-primary-3 hover:text-rose-500 active:bg-black cursor-pointer"
       >
           <PlusIcon />
           Add task 
-      </div>
+      </div>}
     </div>
   );
 }
