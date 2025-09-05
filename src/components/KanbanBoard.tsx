@@ -27,12 +27,12 @@ import VisitFormComponent from "./VisitForm";
 import FilterBar, { FilterPresetToday } from "./FilterBar";
 import { formatDateTimeWithOffset } from "@utils/common";
 
-const registrationColumn: JourneyPoint = {
-  id: 0,
-  name: "Registration",
-  position: 0,
-  board_id: 1,
-};
+// const registrationColumn: JourneyPoint = {
+//   id: 0,
+//   name: "Registration",
+//   position: 0,
+//   board_id: 1,
+// };
 
 // Function to map PatientVisit to PatientVisitTask
 function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
@@ -167,16 +167,6 @@ function KanbanBoard() {
         onDragOver={onDragOver}
       >
         <div className="m-auto flex gap-4">
-          <ColumnContainer
-            key={registrationColumn.id}
-            column={registrationColumn}
-            deleteColumn={deleteColumn}
-            updateColumn={updateColumn}
-            createTask={createTask}
-            deleteTask={deleteTask}
-            updateTask={updateTask}
-            tasks={tasks.filter((task) => task.columnId === registrationColumn.id)}
-          />
           <div className="flex gap-4">
             <SortableContext items={columnsId}>
               {columns
