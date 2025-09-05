@@ -102,27 +102,27 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         setMouseIsOver(false);
       }}
     >
+      {/* ModalLink covering the entire card */}
+      <ModalLink to={`/patient-visit/${task.id}`} className="absolute inset-0">
+        <div className="w-full h-full"></div>
+      </ModalLink>
 
-      {/* Task ID Badge */}
-      <div className="flex justify-between items-start w-full mb-2">
+      {/* Task ID Badge - Above ModalLink */}
+      <div className="flex justify-between items-start w-full mb-2 relative">
         <div className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
           #{task.id}
         </div>
-        <div className="relative">
-          <ServicePointDropDown taskId={task.id} deleteTask={deleteTask} />
+        <div className="relative z-5">
+          <TaskCardDropDown taskId={task.id} deleteTask={deleteTask} />
         </div>
       </div>
       
-      {/* Patient Name - Now wrapped with ModalLink */}
-      <div className="flex-1 w-full">
-        <ModalLink to={`/patient-visit/${task.id}`}>
-          <p className="text-sm font-medium text-gray-900 leading-tight hover:text-blue-600 cursor-pointer transition-colors duration-200">
-            {getTitle(task.sex)} {task.patient_name}
-          </p>
-        </ModalLink>
+      {/* Patient Name */}
+      <div className="flex-1 w-full relative">
+        <p className="text-sm font-medium text-gray-900 leading-tight">
+          {getTitle(task.sex)} {task.patient_name}
+        </p>
       </div>
-      
-
       
     </div>
   );
@@ -137,12 +137,12 @@ const getTitle = (sex?: string) => {
 };
 
 
-interface ServicePointDropDownProps {
+interface TaskCardDropDownProps {
   taskId: Id;
   deleteTask: (id: Id) => void;
 }
 
-const ServicePointDropDown = ({ taskId, deleteTask }: ServicePointDropDownProps) => {
+const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
@@ -176,30 +176,13 @@ const ServicePointDropDown = ({ taskId, deleteTask }: ServicePointDropDownProps)
         className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
       >
         <div className="py-1">
-          <MenuItem>
-            <a
-              href="#"
-              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-            >
-              View Details
-            </a>
-          </MenuItem>
-          <MenuItem>
-            <a
-              href="#"
-              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-            >
-              Edit Task
-            </a>
-          </MenuItem>
-          <MenuItem>
-            <a
-              href="#"
-              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-            >
-              Move to Column
-            </a>
-          </MenuItem>
+                      <MenuItem>
+              <div className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden">
+                <ModalLink to={`/patient-visit/${taskId}`} className="block w-full">
+                  Edit Task
+                </ModalLink>
+              </div>
+            </MenuItem>
           <div className="border-t border-gray-100 my-1"></div>
           <MenuItem>
             <button
