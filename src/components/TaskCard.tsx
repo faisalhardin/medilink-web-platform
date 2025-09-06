@@ -50,22 +50,51 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         ref={setNodeRef}
         style={style}
         className="
-        opacity-30
-      bg-primary-3 p-2.5 h-[120px] min-h-[100px] items-center flex text-left rounded-xl border-2 border-rose-500  cursor-grab relative
-      "
+        opacity-40
+        bg-white
+        p-4
+        h-[120px]
+        min-h-[100px]
+        items-center
+        flex
+        text-left
+        rounded-xl
+        border-2
+        border-blue-400
+        shadow-lg
+        cursor-grab
+        relative
+        "
       />
     );
   }
 
   return (
-    <ModalLink to={`/patient-visit/${task.id}`}>
-       <div
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      // onClick={toggleEditMode}
-      className="bg-primary-3 p-2.5 h-[100px] min-h-[120px] items-center flex-row text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task"
+      className="
+      bg-white
+      p-4
+      h-[120px]
+      min-h-[120px]
+      items-center
+      flex-col
+      text-left
+      rounded-xl
+      border
+      border-gray-200
+      shadow-sm
+      hover:shadow-md
+      hover:border-blue-300
+      cursor-grab
+      relative
+      transition-all
+      duration-200
+      group
+      "
       onMouseEnter={() => {
         setMouseIsOver(true);
       }}
@@ -73,34 +102,29 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
         setMouseIsOver(false);
       }}
     >
+      {/* ModalLink covering the entire card */}
+      <ModalLink to={`/patient-visit/${task.id}`} className="absolute inset-0">
+        <div className="w-full h-full"></div>
+      </ModalLink>
 
-      <p className="my-auto w-full text-[min(100%,_calc(1rem_*_N))] overflow-hidden whitespace-pre-wrap">
-        {task.id}
-      </p>
-      <p className="my-auto w-full text-[min(100%,_calc(1rem_*_N))] overflow-hidden whitespace-pre-wrap">
-        {getTitle(task.sex)}
-        {" "}
-        {task.patient_name}
-        {"\n"}
-      </p>
-        <ServicePointDropDown/>
+      {/* Task ID Badge - Above ModalLink */}
+      <div className="flex justify-between items-start w-full mb-2 relative">
+        <div className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
+          #{task.id}
+        </div>
+        <div className="relative z-5">
+          <TaskCardDropDown taskId={task.id} deleteTask={deleteTask} />
+        </div>
+      </div>
       
-
-      {mouseIsOver && (
-        <button
-          onClick={() => {
-            deleteTask(task.id);
-          }}
-          className="stroke-white absolute right-4 top-1/2 -translate-y-1/2 bg-primary-1 p-2 rounded opacity-60 hover:opacity-100"
-        >
-          <TrashIcon />
-        </button>
-      )}
+      {/* Patient Name */}
+      <div className="flex-1 w-full relative">
+        <p className="text-sm font-medium text-gray-900 leading-tight">
+          {getTitle(task.sex)} {task.patient_name}
+        </p>
+      </div>
       
     </div>
-    </ModalLink>
- 
-    
   );
 }
 
@@ -113,55 +137,69 @@ const getTitle = (sex?: string) => {
 };
 
 
-const ServicePointDropDown = () => {
+interface TaskCardDropDownProps {
+  taskId: Id;
+  deleteTask: (id: Id) => void;
+}
+
+const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
   return (
-    <Menu as="div" className="relative -mb-4 inline-block text-left w-20 ">
+    <Menu as="div" className="relative inline-block text-left">
       <div>
-        <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-xs font-semibold text-gray-900 ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50">
-          Options
-          <ChevronDownIcon aria-hidden="true" className="-mr-1 size-5 text-gray-400" />
+        <MenuButton 
+          className="
+          inline-flex 
+          w-full 
+          justify-center 
+          gap-x-1 
+          rounded-lg 
+          bg-gray-100 
+          px-2 
+          py-1 
+          text-xs 
+          font-medium 
+          text-gray-700 
+          hover:bg-gray-200 
+          hover:text-gray-900
+          transition-all
+          duration-200
+          group-hover:bg-blue-100
+          group-hover:text-blue-700
+        ">
+          ⋯
+          <ChevronDownIcon aria-hidden="true" className="-mr-1 size-3 text-gray-400" />
         </MenuButton>
       </div>
 
       <MenuItems
         transition
-        className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+        className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
       >
         <div className="py-1">
-          <MenuItem>
-            <a
-              href="#"
-              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-            >
-              Account settings
-            </a>
-          </MenuItem>
-          <MenuItem>
-            <a
-              href="#"
-              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-            >
-              Support
-            </a>
-          </MenuItem>
-          <MenuItem>
-            <a
-              href="#"
-              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-            >
-              License
-            </a>
-          </MenuItem>
-          <form action="#" method="POST">
-            <MenuItem>
-              <button
-                type="submit"
-                className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-              >
-                Sign out
-              </button>
+                      <MenuItem>
+              <div className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden">
+                <ModalLink to={`/patient-visit/${taskId}`} className="block w-full">
+                  Edit Task
+                </ModalLink>
+              </div>
             </MenuItem>
-          </form>
+          <div className="border-t border-gray-100 my-1"></div>
+          <MenuItem>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteTask(taskId);
+              }}
+              className="block w-full px-4 py-2 text-left text-sm text-red-600 data-focus:bg-red-50 data-focus:text-red-700 data-focus:outline-hidden hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
+            >
+              <div className="flex items-center gap-2">
+                <TrashIcon/>
+                Archive Task
+              </div>
+            </button>
+          </MenuItem>
         </div>
       </MenuItems>
     </Menu>

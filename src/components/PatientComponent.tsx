@@ -383,6 +383,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
     const [internalPatient, setPatient] = useState<Patient | null>(patient || null);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
+    // const [columnCount, setColumnCount] = useState(2);
 
     useEffect(() => {
         const fetchVisits = async () => {
@@ -426,6 +427,9 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
             fetchPatient();
         }
     }, []);
+
+    const activeVisit = patientVisits.find(visit => visit.id === activeTab);
+
 
     // Helper function to format date
     const formatDateTime = (dateString: string): string => {
@@ -507,7 +511,6 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
         );
     }
 
-    const activeVisit = patientVisits.find(visit => visit.id === activeTab);
 
     return (
         <div className="p-6 w-full">
@@ -581,82 +584,70 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
                                 <p className="text-sm text-gray-500">This visit doesn't have any journey points yet.</p>
                             </div>
                         ) : (
-                            <div
-                                className={`w-full ${
-                                    activeVisit.patient_journeypoints?.length === 1
-                                        ? 'max-w-2xl mx-auto'
-                                        : ''
-                                }`}
-                                style={{
-                                    columnCount:
-                                        activeVisit.patient_journeypoints?.length === 1
-                                            ? 1
-                                            : 2,
-                                    columnGap: '1.5rem',
-                                }}
-                            >
-                                {activeVisit.patient_journeypoints?.map((journeyPoint, index) => (
-                                    <div
-                                        key={journeyPoint.id}
-                                        className="break-inside-avoid mb-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
-                                        style={{ display: 'inline-block', width: '100%' }}
-                                    >
-                                        {/* Card Header */}
-                                        <div className="p-4 border-b border-gray-100">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                        {index + 1}
-                                                    </div>
-                                                    <h4 className="text-base font-semibold text-gray-900">
-                                                        {journeyPoint.name_mst_journey_point}
-                                                    </h4>
+                                                    <div
+                            className={`w-full ${
+                                activeVisit.patient_journeypoints?.length === 1
+                                    ? 'max-w-2xl mx-auto'
+                                    : 'columns-1 md:columns-2 gap-6'
+                            }`}
+                        >
+                            {activeVisit.patient_journeypoints?.map((journeyPoint, index) => (
+                                <div
+                                    key={journeyPoint.id}
+                                    className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6 ${
+                                        activeVisit.patient_journeypoints?.length === 1 ? 'w-full' : ''
+                                    }`}
+                                >
+                                    {/* Card Header */}
+                                    <div className="p-4 border-b border-gray-100">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                    {index + 1}
                                                 </div>
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(journeyPoint)}`}>
-                                                    {getStatusText(journeyPoint)}
-                                                </span>
+                                                <h4 className="text-base font-semibold text-gray-900">
+                                                    {journeyPoint.name_mst_journey_point}
+                                                </h4>
                                             </div>
-                                            
-                                            {/* Meta Information */}
-                                            <div className="space-y-2 text-xs text-gray-500">
-                                                <div className="flex items-center space-x-2">
-                                                    <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <span>Started {formatDateTime(journeyPoint?.create_time || '')}</span>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                                    </svg>
-                                                    <span>ID: {journeyPoint.journey_point_id}</span>
-                                                </div>
-                                            </div>
+                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(journeyPoint)}`}>
+                                                {getStatusText(journeyPoint)}
+                                            </span>
                                         </div>
                                         
-                                        {/* Comment Box Content */}
-                                        <div className="p-4">
-                                            <div className="bg-gray-50 rounded-lg border border-gray-200 px-2">
-                                                <EditorComponent
-                                                    id={`editor-${journeyPoint.id}`}
-                                                    data={journeyPoint}
-                                                    onChange={(notes) => {  
-                                                    }}
-                                                    placeHolder="Jot here..."
-                                                    readOnly={true}
-                                                />
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Card Footer */}
-                                        <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
-                                            <div className="flex items-center justify-between text-xs text-gray-500">
-                                                <span>Last updated {formatRelativeTime(journeyPoint?.create_time || '')}</span>
+                                        {/* Meta Information */}
+                                        <div className="space-y-2 text-xs text-gray-500">
+                                            <div className="flex items-center space-x-2">
+                                                <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>Started {formatDateTime(journeyPoint?.create_time || '')}</span>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                    
+                                    {/* Comment Box Content */}
+                                    <div className="p-4">
+                                        <div className="bg-gray-50 rounded-lg border border-gray-200 px-2 min-h-[100px] overflow-y-auto">
+                                            <EditorComponent
+                                                id={`editor-${journeyPoint.id}`}
+                                                data={journeyPoint}
+                                                onChange={(notes) => {  
+                                                }}
+                                                placeHolder="Jot here..."
+                                                readOnly={true}
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Card Footer */}
+                                    <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
+                                        <div className="flex items-center justify-between text-xs text-gray-500">
+                                            <span>Last updated {formatRelativeTime(journeyPoint?.create_time || '')}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                         )}
                     </div>
                 </div>

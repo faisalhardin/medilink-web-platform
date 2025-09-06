@@ -2,11 +2,12 @@ import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import TrashIcon from "assets/icons/TrashIcon";
 import { Id } from "../types";
 import { CSS } from "@dnd-kit/utilities";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
 import TaskCard from "./TaskCard";
 import { JourneyPoint, PatientVisitTask } from "@models/journey";
 import { ModalLink } from "./ModalLink";
+import { getStorageUserJourneyPointsIDAsSet } from "@utils/storage";
 
 interface Props {
   column: JourneyPoint;
@@ -29,7 +30,19 @@ function ColumnContainer({
   updateTask,
 }: Props) {
   const [editMode, setEditMode] = useState(false);
+  const [editValue, setEditValue] = useState(column.name);
+  const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
+  
+  useEffect(() => {
+    const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
+    setUserJourneyPoints(_userJourneyPoints);
+  }, []);
 
+  // Reset editValue when column name changes
+  useEffect(() => {
+    setEditValue(column.name);
+  }, [column.name]);
+  
   const tasksIds = useMemo(() => {
     return tasks.map((task) => task.id);
   }, [tasks]);
@@ -85,13 +98,19 @@ function ColumnContainer({
       ref={setNodeRef}
       style={style}
       className="
-      bg-primary-1
+      bg-white
       w-[350px]
       h-[500px]
       max-h-[500px]
-      rounded-md
+      rounded-xl
       flex
       flex-col
+      shadow-lg
+      border
+      border-gray-200
+      hover:shadow-xl
+      transition-all
+      duration-300
       "
     >
       {/* Column title */}
@@ -102,49 +121,69 @@ function ColumnContainer({
           setEditMode(true);
         }}
         className="
-        bg-primary-3
+        bg-gradient-to-r
+        from-blue-500
+        to-blue-600
+        text-white
         text-md
         h-[60px]
         cursor-grab
-        rounded-md
-        rounded-b-none
-        p-3
-        font-bold
-        border-primary-1
-        border-4
+        rounded-t-xl
+        p-4
+        font-semibold
         flex
         items-center
         justify-between
+        hover:from-blue-600
+        hover:to-blue-700
+        transition-all
+        duration-200
+        shadow-md
         "
       >
-        <div className="flex gap-2">
+        <div className="flex gap-3 items-center">
           <div
             className="
         flex
         justify-center
         items-center
-        bg-primary-1
-        px-2
+        bg-white
+        bg-opacity-20
+        px-3
         py-1
         text-sm
+        font-bold
         rounded-full
+        min-w-[24px]
+        h-6
         "
           >
-            0
+            {tasks.length}
           </div>
-          {!editMode && column.name}
+          {!editMode && (
+            <span className="text-white font-semibold truncate">
+              {column.name}
+            </span>
+          )}
           {editMode && (
             <input
-              className="bg-black focus:border-rose-500 border rounded outline-none px-2"
-              value={column.name}
-              onChange={(e) => updateColumn(column.id, e.target.value)}
+              className="bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 border border-white border-opacity-30 focus:border-white rounded-lg outline-none px-3 py-1 text-sm font-semibold transition-all duration-200"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
               autoFocus
+              placeholder="Enter column name..."
               onBlur={() => {
                 setEditMode(false);
+                if (editValue !== column.name) {
+                  updateColumn(column.id, editValue);
+                }
               }}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
                 setEditMode(false);
+                if (editValue !== column.name) {
+                  updateColumn(column.id, editValue);
+                }
               }}
             />
           )}
@@ -154,12 +193,18 @@ function ColumnContainer({
             deleteColumn(column.id);
           }}
           className="
-        stroke-gray-500
+        stroke-white
+        stroke-opacity-70
         hover:stroke-white
-        hover:bg-primary-1
-        rounded
-        px-1
-        py-2
+        hover:bg-white
+        hover:bg-opacity-20
+        rounded-lg
+        p-2
+        transition-all
+        duration-200
+        hover:scale-105
+        active:scale-95
+        z-5
         "
         >
           <TrashIcon />
@@ -167,7 +212,7 @@ function ColumnContainer({
       </div>
 
       {/* Column task container */}
-      <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
+      <div className="flex flex-grow flex-col gap-3 p-4 overflow-x-hidden overflow-y-auto bg-gray-50">
         {/* <DndContext> */}
 
         <SortableContext items={tasksIds} >
@@ -185,15 +230,36 @@ function ColumnContainer({
         )}
         </SortableContext>
       </div>
-      <div
-        onClick={() => {
-          createTask(column.id);
-        }}
-        className="flex gap-2 items-center border-primary-1 border-2 rounded-md p-4 border-x-primary-1 hover:bg-primary-3 hover:text-rose-500 active:bg-black"
-      >
+      {userJourneyPoints.has(column.id) && (
+        <div
+          onClick={() => {
+            createTask(column.id);
+          }}
+          className="
+          flex 
+          gap-3 
+          items-center 
+          justify-center
+          border-2 
+          border-dashed 
+          border-gray-300 
+          rounded-lg 
+          p-4 
+          m-4
+          hover:border-blue-400 
+          hover:bg-blue-50 
+          hover:text-blue-600 
+          active:bg-blue-100 
+          cursor-pointer
+          transition-all
+          duration-200
+          group
+          "
+        >
           <PlusIcon />
-          Add task 
-      </div>
+          <span className="font-medium text-sm">Add task</span>
+        </div>
+      )}
     </div>
   );
 }
