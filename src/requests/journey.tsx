@@ -23,6 +23,28 @@ export async function CreateJourneyPoint(params:CreateJourneyPointRequest): Prom
   }
 }
 
+export async function ArchiveJourneyPoint(params: ArchiveJourneyPointRequest): Promise<void> {
+  try {
+    const token = getToken();
+    const response = await axios.patch(
+      `${JOURNEY_URL_PATH}/point/archive`,
+      params,
+      {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+      }
+    );
+
+    if (response.status >= 400) {
+      throw new Error;
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function GetJourneyPoints(boardID:number): Promise<JourneyPoint[]> {
   try {
     const token = getToken();

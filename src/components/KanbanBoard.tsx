@@ -18,7 +18,7 @@ import {
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
-import { CreateJourneyPoint, GetJourneyPoints, RenameJourneyPoint, UpdateJourneyPoint } from "@requests/journey";
+import { ArchiveJourneyPoint, CreateJourneyPoint, GetJourneyPoints, RenameJourneyPoint, UpdateJourneyPoint } from "@requests/journey";
 import { ArchiveVisit, ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
 import { useParams } from "react-router-dom";
 import { useModal } from "context/ModalContext";
@@ -399,8 +399,6 @@ function KanbanBoard() {
     setCreateColumnError(null);
 
     try {
-      // Here you would make the API call to create the column
-      // For now, I'll simulate the API call
       const boardIDNumber = Number(boardID);
         if (isNaN(boardIDNumber)) {
           throw new Error('Invalid board ID');
@@ -431,12 +429,24 @@ function KanbanBoard() {
     setCreateColumnError(null);
   }
 
-  function deleteColumn(id: Id) {
-    const filteredColumns = columns.filter((col) => col.id !== id);
-    setColumns(filteredColumns);
+  async function deleteColumn(id: Id) {
+    try {
+      // Archive the column on the server
+      await ArchiveJourneyPoint({
+        id: id as number,
+      });
 
-    const newTasks = tasks.filter((t) => t.columnId !== id);
-    setTasks(newTasks);
+      // Remove the column locally
+      const filteredColumns = columns.filter((col) => col.id !== id);
+      setColumns(filteredColumns);
+
+      // Remove all tasks associated with this column
+      const newTasks = tasks.filter((t) => t.columnId !== id);
+      setTasks(newTasks);
+
+    } catch (error) {
+      console.error("Failed to delete column:", error);
+    }
   }
 
   async function updateColumn(id: Id, title: string) {
