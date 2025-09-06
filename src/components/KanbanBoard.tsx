@@ -301,11 +301,10 @@ function KanbanBoard() {
         min-w-[350px]
         cursor-pointer
         rounded-lg
-        bg-primary-3
+        bg-gradient-to-r
         border-2
         border-primary-1
         p-4
-        ring-rose-500
         hover:ring-2
         flex
         gap-2
@@ -602,11 +601,6 @@ function KanbanBoard() {
       });
     }
   }
-}
-
-function generateId() {
-  /* Generate a random number between 0 and 10000 */
-  return Math.floor(Math.random() * 10001);
 }
 
 export default KanbanBoard;
