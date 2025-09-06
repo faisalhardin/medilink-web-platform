@@ -204,6 +204,7 @@ function ColumnContainer({
         duration-200
         hover:scale-105
         active:scale-95
+        z-5
         "
         >
           <TrashIcon />
