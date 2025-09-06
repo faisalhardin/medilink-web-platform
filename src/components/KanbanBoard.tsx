@@ -1,7 +1,7 @@
 import PlusIcon from "assets/icons/PlusIcon";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Column, Id, Task } from "../types";
-import { JourneyPoint, PatientVisitTask } from "@models/journey";
+import { CreateJourneyPointRequest, JourneyPoint, PatientVisitTask } from "@models/journey";
 import ColumnContainer from "./ColumnContainer";
 import { GetPatientVisitParam, Patient, PatientVisit } from "@models/patient";
 import lodash from 'lodash';
@@ -18,7 +18,7 @@ import {
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import TaskCard from "./TaskCard";
-import { GetJourneyPoints, RenameJourneyPoint, UpdateJourneyPoint } from "@requests/journey";
+import { CreateJourneyPoint, GetJourneyPoints, RenameJourneyPoint, UpdateJourneyPoint } from "@requests/journey";
 import { ArchiveVisit, ListVisitsByParams, UpdatePatientVisit } from "@requests/patient";
 import { useParams } from "react-router-dom";
 import { useModal } from "context/ModalContext";
@@ -69,7 +69,11 @@ function KanbanBoard() {
   const {openModal} = useModal();
 
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
-  const [tasks, setTasks] = useState<PatientVisitTask[]>([]);  
+  const [tasks, setTasks] = useState<PatientVisitTask[]>([]);
+  const [isShowAddColumnPanel, setShowAddColumnPanel] = useState(false);
+  const [newColumnName, setNewColumnName] = useState('');
+  const [isCreatingColumn, setIsCreatingColumn] = useState(false);
+  const [createColumnError, setCreateColumnError] = useState<string | null>(null);  
 
   const fetchVisitsData = async () => {
     try {
@@ -182,29 +186,135 @@ function KanbanBoard() {
                 })}
             </SortableContext>
           </div>
-          <button
-            onClick={() => {
-              createNewColumn();
-            }}
-            className="
-      h-[60px]
-      w-[350px]
-      min-w-[350px]
-      cursor-pointer
-      rounded-lg
-      bg-primary-3
-      border-2
-      border-primary-1
-      p-4
-      ring-rose-500
-      hover:ring-2
-      flex
-      gap-2
-      "
-          >
-            <PlusIcon />
-            Add Column
-          </button>
+          {isShowAddColumnPanel ? (
+            <div className="
+              h-[120px]
+              w-[350px]
+              min-w-[350px]
+              bg-white
+              border-2
+              border-blue-300
+              rounded-lg
+              p-4
+              shadow-lg
+              flex
+              flex-col
+              gap-3
+            ">
+              <input
+                type="text"
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                placeholder="Enter column name..."
+                className="
+                  w-full
+                  px-3
+                  py-2
+                  border
+                  border-gray-300
+                  rounded-lg
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                  focus:border-transparent
+                "
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    createNewColumn();
+                  } else if (e.key === 'Escape') {
+                    cancelAddColumn();
+                  }
+                }}
+              />
+              
+              {createColumnError && (
+                <div className="text-red-600 text-sm">
+                  {createColumnError}
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={createNewColumn}
+                  disabled={isCreatingColumn || !newColumnName.trim()}
+                  className="
+                    flex-1
+                    bg-blue-500
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                    hover:bg-blue-600
+                    disabled:bg-gray-300
+                    disabled:cursor-not-allowed
+                    transition-colors
+                    duration-200
+                    flex
+                    items-center
+                    justify-center
+                    gap-2
+                  "
+                >
+                  {isCreatingColumn ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <PlusIcon />
+                      Add Column
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={cancelAddColumn}
+                  disabled={isCreatingColumn}
+                  className="
+                    px-4
+                    py-2
+                    border
+                    border-gray-300
+                    text-gray-700
+                    rounded-lg
+                    hover:bg-gray-50
+                    disabled:opacity-50
+                    disabled:cursor-not-allowed
+                    transition-colors
+                    duration-200
+                  "
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                ShowAddColumnPanel();
+              }}
+              className="
+        h-[60px]
+        w-[350px]
+        min-w-[350px]
+        cursor-pointer
+        rounded-lg
+        bg-primary-3
+        border-2
+        border-primary-1
+        p-4
+        ring-rose-500
+        hover:ring-2
+        flex
+        gap-2
+        "
+            >
+              <PlusIcon />
+              Add Column
+            </button>
+          )}
         </div>
 
         {createPortal(
@@ -273,15 +383,52 @@ function KanbanBoard() {
     setTasks(newTasks);
   }
 
-  function createNewColumn() {
-    const columnToAdd: JourneyPoint = {
-      id: generateId(),
-      name: `Column ${columns.length + 1}`,
-      board_id: 1,
-      position: 100,
-    };
+  function ShowAddColumnPanel() {
+    setShowAddColumnPanel(true);
+    setNewColumnName('');
+    setCreateColumnError(null);
+  }
 
-    setColumns([...columns, columnToAdd]);
+  async function createNewColumn() {
+    if (!newColumnName.trim()) {
+      setCreateColumnError('Column name is required');
+      return;
+    }
+
+    setIsCreatingColumn(true);
+    setCreateColumnError(null);
+
+    try {
+      // Here you would make the API call to create the column
+      // For now, I'll simulate the API call
+      const boardIDNumber = Number(boardID);
+        if (isNaN(boardIDNumber)) {
+          throw new Error('Invalid board ID');
+        }
+
+      const columnToAdd: CreateJourneyPointRequest = {
+        name: newColumnName.trim(),
+        board_id: boardIDNumber,
+      };
+
+      // Simulate API delay
+      const newJourneyPoint = await CreateJourneyPoint(columnToAdd);
+
+      setColumns([...columns, newJourneyPoint]);
+      setShowAddColumnPanel(false);
+      setNewColumnName('');
+    } catch (error) {
+      console.error('Error creating column:', error);
+      setCreateColumnError('Failed to create column. Please try again.');
+    } finally {
+      setIsCreatingColumn(false);
+    }
+  }
+
+  function cancelAddColumn() {
+    setShowAddColumnPanel(false);
+    setNewColumnName('');
+    setCreateColumnError(null);
   }
 
   function deleteColumn(id: Id) {

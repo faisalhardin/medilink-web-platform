@@ -12,6 +12,11 @@ export type JourneyPoint = {
     board_id: number;
 } 
 
+export type CreateJourneyPointRequest = {
+    name: string;
+    board_id: number;
+}
+
 export type ServicePoints = {
     id: Id;
     name: string;
