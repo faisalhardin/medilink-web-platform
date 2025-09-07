@@ -146,6 +146,7 @@ export interface GetPatientVisitParam extends CommonQueryParams {
 
 export interface PatientVisitsComponentProps extends GetPatientVisitParam {
   patient?: Patient;
+  isInDrawer?: boolean;
 }
 
 export interface PatientVisitDetailComponentProps {

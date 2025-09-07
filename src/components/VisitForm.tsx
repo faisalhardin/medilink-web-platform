@@ -5,7 +5,7 @@ import { Patient as PatientModel, InsertPatientVisitPayload } from "@models/pati
 import { useModal } from "context/ModalContext";
 import Drawer from "./Drawer";
 import { useDrawer } from "hooks/useDrawer";
-import { PatientListComponent, PatientRegistrationComponent } from "./PatientComponent";
+import { PatientListComponent, PatientRegistrationComponent, PatientVisitsComponent } from "./PatientComponent";
 import { EditorComponent } from "./EditorComponent";
 
 interface PatientVisitRegistrationProps {
@@ -26,6 +26,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
   const { closeModal } = useModal();
   const patientDrawer = useDrawer();
   const registerPatientDrawer = useDrawer();
+  const viewPatientRecordDrawer = useDrawer();
 
   useEffect(() => {
     if (selectedPatient !== null) {
@@ -93,6 +94,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                           </svg>
                         </div>
                       </div>
+                      {!selectedPatient && 
                       <button
                         type="button"
                         className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
@@ -103,6 +105,29 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                           <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
                         </svg>
                       </button>
+                      }
+                      {selectedPatient && 
+                      <div className="relative group">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center h-full w-full bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                          onClick={viewPatientRecordDrawer.openDrawer}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                          </svg>
+                        </button>
+                        {/* Custom Tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                          View patient's medical records
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      </div>
+                      }
+
+                      
+                      
                     </div>
                     {errors.patient_uuid && (
                       <p className="mt-1 text-sm text-red-600">{errors.patient_uuid.message}</p>
@@ -198,18 +223,31 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
           }}
         />
       </Drawer>
-        <Drawer
-          isOpen={registerPatientDrawer.isOpen}
-          onClose={registerPatientDrawer.closeDrawer}
-          title="Register Patient"
-          maxWidth="lg"
-          position="right"
-        >
-          <PatientRegistrationComponent isInDrawer={true} onPatientSelect={(patient: PatientModel) => {
-            setSelectedPatient(patient);
-            registerPatientDrawer.closeDrawer();
-          }} />
-        </Drawer>
+      <Drawer
+        isOpen={registerPatientDrawer.isOpen}
+        onClose={registerPatientDrawer.closeDrawer}
+        title="Register Patient"
+        maxWidth="lg"
+        position="right"
+      >
+        <PatientRegistrationComponent isInDrawer={true} onPatientSelect={(patient: PatientModel) => {
+          setSelectedPatient(patient);
+          registerPatientDrawer.closeDrawer();
+        }} />
+      </Drawer>
+      <Drawer
+        isOpen={viewPatientRecordDrawer.isOpen}
+        onClose={viewPatientRecordDrawer.closeDrawer}
+        title="View Patient Record"
+        maxWidth="lg"
+        position="right"
+      >
+        <PatientVisitsComponent patient_uuid={selectedPatient?.uuid || ''} limit={5}
+          offset={0}
+          patient={selectedPatient || undefined}
+          isInDrawer={true}
+        />
+      </Drawer>
     </>
   );
 }

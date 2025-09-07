@@ -378,7 +378,7 @@ export function PatientListComponent({ journey_board_id, onPatientSelect, isInDr
     )
 }
 
-export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }: PatientVisitsComponentProps) => {
+export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, isInDrawer }: PatientVisitsComponentProps) => {
     const [patientVisits, setPatientVisits] = useState<PatientVisitDetailed[]>([]);
     const [internalPatient, setPatient] = useState<Patient | null>(patient || null);
     const [activeTab, setActiveTab] = useState<number>(0);
@@ -419,7 +419,6 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
                 const _patients = await ListPatients({
                     patient_ids: patient_uuid,
                 })
-                console.log("xx",_patients);
                 if (_patients.length == 1) {
                     setPatient(_patients[0]);
                 }
@@ -524,7 +523,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
                 </div>
                 {/* Horizontal Tabs */}
                 <div className="border-b border-gray-200">
-                    <nav className="-mb-px flex space-x-8 overflow-x-auto">
+                    <nav className="-mb-px flex justify-normal overflow-x-auto px-10">
                         {patientVisits.map((visit) => (
                             <button
                                 key={visit.id}
@@ -535,12 +534,12 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                             >
-                                <div className="flex flex-col items-start">
+                                <div className="flex flex-col items-center">
                                     <span className="font-medium">
                                         Visit #{visit.id}
                                     </span>
                                     <span className="text-xs text-gray-400 mt-1">
-                                        {formatDateTime(visit.create_time)}
+                                        {formatDate(visit.create_time)}
                                     </span>
                                 </div>
                             </button>
@@ -588,7 +587,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
                             className={`w-full ${
                                 activeVisit.patient_journeypoints?.length === 1
                                     ? 'max-w-2xl mx-auto'
-                                    : 'columns-1 md:columns-2 gap-6'
+                                    : isInDrawer ? 'columns-1 gap-6' : 'columns-1 md:columns-2 gap-6'
                             }`}
                         >
                             {activeVisit.patient_journeypoints?.map((journeyPoint, index) => (
