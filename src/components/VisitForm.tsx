@@ -198,15 +198,15 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
           }}
         />
       </Drawer>
-      <Drawer
-        isOpen={registerPatientDrawer.isOpen}
-        onClose={registerPatientDrawer.closeDrawer}
-        title="Register Patient"
-        maxWidth="lg"
-        position="right"
-      >
-        <PatientRegistrationComponent />
-      </Drawer>
+        <Drawer
+          isOpen={registerPatientDrawer.isOpen}
+          onClose={registerPatientDrawer.closeDrawer}
+          title="Register Patient"
+          maxWidth="lg"
+          position="right"
+        >
+          <PatientRegistrationComponent isInDrawer={true} />
+        </Drawer>
     </>
   );
 }

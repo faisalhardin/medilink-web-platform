@@ -656,7 +656,11 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
     );
 }
 
-export function PatientRegistrationComponent() {
+interface PatientRegistrationComponentProps {
+    isInDrawer?: boolean;
+}
+
+export function PatientRegistrationComponent({ isInDrawer = false }: PatientRegistrationComponentProps) {
     const { register, handleSubmit, formState: { errors } } = useForm<RegisterPatientModel>();
 
     const onSubmit = async (data: RegisterPatientModel) => {
@@ -668,15 +672,17 @@ export function PatientRegistrationComponent() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-3">
-            <div className="max-w-4xl mx-auto">
+        <div className={`w-full h-full ${isInDrawer ? 'p-3' : 'min-h-screen p-3'}`}>
+            <div className={`${isInDrawer ? '' : 'mx-auto'} bg-white `}>
+
+
                 {/* Form Card */}
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                    <form onSubmit={handleSubmit(onSubmit)} className="p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className={`${isInDrawer ? 'rounded-lg shadow-sm border border-gray-200' : 'rounded-2xl shadow-xl border border-gray-100'}`}>
+                    <form onSubmit={handleSubmit(onSubmit)} className={`${isInDrawer ? 'p-3' : 'p-8'}`}>
+                        <div className={`grid grid-cols-1 ${isInDrawer ? 'gap-4' : 'md:grid-cols-2 gap-6'}`}>
                             {/* Name Field */}
-                            <div className="col-span-1 md:col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            <div className={`${isInDrawer ? '' : 'col-span-1 md:col-span-2'}`}>
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
                                     <span className="flex items-center">
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -686,7 +692,7 @@ export function PatientRegistrationComponent() {
                                 </label>
                                 <input
                                     {...register('name', { required: 'Name is required' })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
                                     placeholder="Enter patient's full name"
                                 />
                                 {errors.name && (
@@ -701,7 +707,7 @@ export function PatientRegistrationComponent() {
 
                             {/* NIK Field */}
                             <div className="w-full">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
                                     <span className="flex items-center">
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
@@ -712,14 +718,14 @@ export function PatientRegistrationComponent() {
                                 <input
                                     type="number"
                                     {...register('nik')}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
                                     placeholder="Enter NIK number"
                                 />
                             </div>
 
                             {/* Sex Field */}
                             <div className="w-full">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
                                     <span className="flex items-center">
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -729,7 +735,7 @@ export function PatientRegistrationComponent() {
                                 </label>
                                 <select 
                                     {...register('sex')} 
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
                                 >
                                     <option value="">Select gender</option>
                                     <option value="male">Male</option>
@@ -740,7 +746,7 @@ export function PatientRegistrationComponent() {
 
                             {/* Religion Field */}
                             <div className="w-full">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
                                     <span className="flex items-center">
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -750,7 +756,7 @@ export function PatientRegistrationComponent() {
                                 </label>
                                 <select 
                                     {...register('religion')} 
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
                                 >
                                     <option value="">Select religion</option>
                                     <option value="islam">Islam</option>
@@ -764,7 +770,7 @@ export function PatientRegistrationComponent() {
 
                             {/* Date of Birth Field */}
                             <div className="w-full">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
                                     <span className="flex items-center">
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -775,7 +781,7 @@ export function PatientRegistrationComponent() {
                                 <input
                                     type="date"
                                     {...register('date_of_birth', { required: true })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
                                 />
                                 {errors.date_of_birth && (
                                     <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -788,8 +794,8 @@ export function PatientRegistrationComponent() {
                             </div>
 
                             {/* Place of Birth Field */}
-                            <div className="col-span-1 md:col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            <div className={`${isInDrawer ? '' : 'col-span-1 md:col-span-2'}`}>
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
                                     <span className="flex items-center">
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -800,15 +806,15 @@ export function PatientRegistrationComponent() {
                                 </label>
                                 <textarea
                                     {...register('place_of_birth')}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
                                     rows={3}
                                     placeholder="Enter place of birth"
                                 />
                             </div>
 
                             {/* Address Field */}
-                            <div className="col-span-1 md:col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            <div className={`${isInDrawer ? '' : 'col-span-1 md:col-span-2'}`}>
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
                                     <span className="flex items-center">
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -818,7 +824,7 @@ export function PatientRegistrationComponent() {
                                 </label>
                                 <textarea
                                     {...register('address')}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
                                     rows={3}
                                     placeholder="Enter complete address"
                                 />
@@ -826,10 +832,10 @@ export function PatientRegistrationComponent() {
                         </div>
 
                         {/* Submit Button */}
-                        <div className="mt-8 flex justify-center">
+                        <div className={`${isInDrawer ? 'mt-6' : 'mt-8'} flex justify-center`}>
                             <button
                                 type="submit"
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center space-x-2"
+                                className={`bg-gradient-to-r from-blue-600 to-indigo-600 text-white ${isInDrawer ? 'px-6 py-3' : 'px-8 py-4'} ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} font-semibold ${isInDrawer ? 'text-base' : 'text-lg'} shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center space-x-2`}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
