@@ -177,7 +177,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
       >
         <div className="py-1">
                       <MenuItem>
-              <div className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden">
+              <div className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden hover:bg-blue-100 hover:text-blue-700">
                 <ModalLink to={`/patient-visit/${taskId}`} className="block w-full">
                   Edit Task
                 </ModalLink>
