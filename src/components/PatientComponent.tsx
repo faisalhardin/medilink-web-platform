@@ -658,14 +658,31 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
 
 interface PatientRegistrationComponentProps {
     isInDrawer?: boolean;
+    onPatientSelect?: (patient: PatientModel) => void;
 }
 
-export function PatientRegistrationComponent({ isInDrawer = false }: PatientRegistrationComponentProps) {
+export function PatientRegistrationComponent({ isInDrawer = false, onPatientSelect }: PatientRegistrationComponentProps) {
     const { register, handleSubmit, formState: { errors } } = useForm<RegisterPatientModel>();
 
     const onSubmit = async (data: RegisterPatientModel) => {
         try {
             const resp = await RegisterPatientRequest(data);
+            onPatientSelect?.({
+                uuid: resp.uuid,
+                nik: resp.nik,
+                name: resp.name,
+                place_of_birth: resp.place_of_birth,
+                date_of_birth: resp.date_of_birth,
+                address: resp.address,
+                sex: resp.sex,
+                religion: resp.religion,
+                phone_number: resp.phone_number,
+                email: resp.email,
+                emergency_contact_name: resp.emergency_contact_name,
+                emergency_contact_phone: resp.emergency_contact_phone,
+                emergency_contact_relationship: resp.emergency_contact_relationship,
+                blood_type: resp.blood_type,
+            });
         } catch (err) {
             console.log(err);
         }

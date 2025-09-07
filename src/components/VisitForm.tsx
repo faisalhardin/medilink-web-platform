@@ -205,7 +205,10 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
           maxWidth="lg"
           position="right"
         >
-          <PatientRegistrationComponent isInDrawer={true} />
+          <PatientRegistrationComponent isInDrawer={true} onPatientSelect={(patient: PatientModel) => {
+            setSelectedPatient(patient);
+            registerPatientDrawer.closeDrawer();
+          }} />
         </Drawer>
     </>
   );

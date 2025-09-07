@@ -5,7 +5,7 @@ import { GetPatientParam, GetPatientVisitParam, UpsertPatientVisitDetailParam, P
 import { CommonResponse } from "@models/common";
 import { ArchiveJourneyPointRequest } from "@models/journey";
 
-export const RegisterPatientRequest = async (patientForm: RegisterPatient): Promise<CommonResponse<null>> => {
+export const RegisterPatientRequest = async (patientForm: RegisterPatient): Promise<Patient> => {
     try {
         const token = getToken();
         const response = await axios.post(
@@ -16,6 +16,10 @@ export const RegisterPatientRequest = async (patientForm: RegisterPatient): Prom
                 },
               }
           );
+
+        if (response.status >= 400) {
+            throw new Error;
+        }
 
         const responseData = await response.data;
         return responseData.data;
