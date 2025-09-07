@@ -656,92 +656,213 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient }:
     );
 }
 
-export function PatientRegistrationComponent() {
+interface PatientRegistrationComponentProps {
+    isInDrawer?: boolean;
+    onPatientSelect?: (patient: PatientModel) => void;
+}
+
+export function PatientRegistrationComponent({ isInDrawer = false, onPatientSelect }: PatientRegistrationComponentProps) {
     const { register, handleSubmit, formState: { errors } } = useForm<RegisterPatientModel>();
 
     const onSubmit = async (data: RegisterPatientModel) => {
         try {
             const resp = await RegisterPatientRequest(data);
+            onPatientSelect?.({
+                uuid: resp.uuid,
+                nik: resp.nik,
+                name: resp.name,
+                place_of_birth: resp.place_of_birth,
+                date_of_birth: resp.date_of_birth,
+                address: resp.address,
+                sex: resp.sex,
+                religion: resp.religion,
+                phone_number: resp.phone_number,
+                email: resp.email,
+                emergency_contact_name: resp.emergency_contact_name,
+                emergency_contact_phone: resp.emergency_contact_phone,
+                emergency_contact_relationship: resp.emergency_contact_relationship,
+                blood_type: resp.blood_type,
+            });
         } catch (err) {
             console.log(err);
         }
     };
 
     return (
-        <div className="p-6 w-full min-h-screen">
-            <h3 className="font-semibold mb-6">Register New Patient</h3>
-            <form onSubmit={handleSubmit(onSubmit)} className="p-6 rounded-lg text-sm shadow w-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                    <div className="col-span-1 md:col-span-2">
-                        <label className="block mb-2 font-medium">Name</label>
-                        <input
-                            {...register('name', { required: 'Name is required' })}
-                            className="w-full p-2 border rounded-lg"
-                        />
-                    </div>
-                    <div className="w-full">
-                        <label className="block mb-2 font-medium">Nomor Induk Kependudukan</label>
-                        <input
-                            type="number"
-                            {...register('nik')}
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                    <div className="w-full">
-                        <label className="block mb-2 font-medium">Sex</label>
-                        <select {...register('sex')} className="w-full p-2 border rounded">
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div className="w-full">
-                        <label className="block mb-2 font-medium">Religion</label>
-                        <select {...register('religion')} className="w-full p-2 border rounded">
-                            <option value="" disabled selected hidden>select</option>
-                            <option value="islam">Islam</option>
-                            <option value="katolik">Katolik</option>
-                            <option value="protestan">Protestan</option>
-                            <option value="budha">Budha</option>
-                            <option value="hindu">Hindu</option>
-                            <option value="other">Lainnya</option>
-                        </select>
-                    </div>
-                    <div className="w-full">
-                        <label className="block mb-2 font-medium">Date of Birth</label>
-                        <input
-                            type="date"
-                            {...register('date_of_birth', { required: true })}
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                        <label className="block mb-2 font-medium">Place of Birth</label>
-                        <textarea
-                            {...register('place_of_birth')}
-                            className="w-full p-2 border rounded"
-                            rows={3}
-                        />
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                        <label className="block mb-2 font-medium">Address</label>
-                        <textarea
-                            {...register('address')}
-                            className="w-full p-2 border rounded"
-                            rows={3}
-                        />
-                    </div>
+        <div className={`w-full h-full ${isInDrawer ? 'p-3' : 'min-h-screen p-3'}`}>
+            <div className={`${isInDrawer ? '' : 'mx-auto'} bg-white `}>
+
+
+                {/* Form Card */}
+                <div className={`${isInDrawer ? 'rounded-lg shadow-sm border border-gray-200' : 'rounded-2xl shadow-xl border border-gray-100'}`}>
+                    <form onSubmit={handleSubmit(onSubmit)} className={`${isInDrawer ? 'p-3' : 'p-8'}`}>
+                        <div className={`grid grid-cols-1 ${isInDrawer ? 'gap-4' : 'md:grid-cols-2 gap-6'}`}>
+                            {/* Name Field */}
+                            <div className={`${isInDrawer ? '' : 'col-span-1 md:col-span-2'}`}>
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Full Name *
+                                    </span>
+                                </label>
+                                <input
+                                    {...register('name', { required: 'Name is required' })}
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
+                                    placeholder="Enter patient's full name"
+                                />
+                                {errors.name && (
+                                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        {errors.name.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* NIK Field */}
+                            <div className="w-full">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                                        </svg>
+                                        NIK (Nomor Induk Kependudukan)
+                                    </span>
+                                </label>
+                                <input
+                                    type="number"
+                                    {...register('nik')}
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
+                                    placeholder="Enter NIK number"
+                                />
+                            </div>
+
+                            {/* Sex Field */}
+                            <div className="w-full">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                        </svg>
+                                        Gender
+                                    </span>
+                                </label>
+                                <select 
+                                    {...register('sex')} 
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
+                                >
+                                    <option value="">Select gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            {/* Religion Field */}
+                            <div className="w-full">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Religion
+                                    </span>
+                                </label>
+                                <select 
+                                    {...register('religion')} 
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
+                                >
+                                    <option value="">Select religion</option>
+                                    <option value="islam">Islam</option>
+                                    <option value="katolik">Katolik</option>
+                                    <option value="protestan">Protestan</option>
+                                    <option value="budha">Budha</option>
+                                    <option value="hindu">Hindu</option>
+                                    <option value="other">Lainnya</option>
+                                </select>
+                            </div>
+
+                            {/* Date of Birth Field */}
+                            <div className="w-full">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Date of Birth *
+                                    </span>
+                                </label>
+                                <input
+                                    type="date"
+                                    {...register('date_of_birth', { required: true })}
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
+                                />
+                                {errors.date_of_birth && (
+                                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        Date of birth is required
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Place of Birth Field */}
+                            <div className={`${isInDrawer ? '' : 'col-span-1 md:col-span-2'}`}>
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Place of Birth
+                                    </span>
+                                </label>
+                                <textarea
+                                    {...register('place_of_birth')}
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
+                                    rows={3}
+                                    placeholder="Enter place of birth"
+                                />
+                            </div>
+
+                            {/* Address Field */}
+                            <div className={`${isInDrawer ? '' : 'col-span-1 md:col-span-2'}`}>
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                        </svg>
+                                        Address
+                                    </span>
+                                </label>
+                                <textarea
+                                    {...register('address')}
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
+                                    rows={3}
+                                    placeholder="Enter complete address"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Submit Button */}
+                        <div className={`${isInDrawer ? 'mt-6' : 'mt-8'} flex justify-center`}>
+                            <button
+                                type="submit"
+                                className={`bg-gradient-to-r from-blue-600 to-indigo-600 text-white ${isInDrawer ? 'px-6 py-3' : 'px-8 py-4'} ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} font-semibold ${isInDrawer ? 'text-base' : 'text-lg'} shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center space-x-2`}
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span>Register Patient</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div className="mt-6">
-                    <button
-                        type="submit"
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                    >
-                        Register Patient
-                    </button>
-                </div>
-                {errors.name && <span className="text-red-500">{errors.name.message}</span>}
-            </form>
+            </div>
         </div>
     );
 }
