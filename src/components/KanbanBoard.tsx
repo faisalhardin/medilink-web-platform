@@ -143,7 +143,7 @@ function KanbanBoard() {
   );
 
   return (
-    <div className="m-auto gap-2 flex flex-col min-h-screen w-full items-center overflow-x-auto overflow-y-hidden p-[40px]">
+    <div className="m-auto gap-2 flex flex-col min-h-screen w-full items-center overflow-x-auto overflow-y-hidden p-6">
     <div className="w-full">
       <FilterBar onFiltersChange={onFilterChange} defaultFilters={FilterPresetToday}/>
     </div>
