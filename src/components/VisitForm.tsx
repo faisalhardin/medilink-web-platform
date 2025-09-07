@@ -5,7 +5,7 @@ import { Patient as PatientModel, InsertPatientVisitPayload } from "@models/pati
 import { useModal } from "context/ModalContext";
 import Drawer from "./Drawer";
 import { useDrawer } from "hooks/useDrawer";
-import { PatientListComponent } from "./PatientComponent";
+import { PatientListComponent, PatientRegistrationComponent } from "./PatientComponent";
 import { EditorComponent } from "./EditorComponent";
 
 interface PatientVisitRegistrationProps {
@@ -25,6 +25,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
   
   const { closeModal } = useModal();
   const patientDrawer = useDrawer();
+  const registerPatientDrawer = useDrawer();
 
   useEffect(() => {
     if (selectedPatient !== null) {
@@ -74,22 +75,34 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Select Patient *
                     </label>
-                    <div className="relative">
-                      <select
-                        {...register('patient_uuid', { required: 'Patient selection is required' })}
-                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                        onClick={patientDrawer.openDrawer}
-                      >
-                        <option value="" disabled hidden>Choose patient from database</option>
-                        {selectedPatient && (
-                          <option value={selectedPatient.uuid}>{selectedPatient.name}</option>
-                        )}
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
+                    <div className="flex gap-3">
+                      <div className="relative flex-1">
+                        <select
+                          {...register('patient_uuid', { required: 'Patient selection is required' })}
+                          className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                          onClick={patientDrawer.openDrawer}
+                        >
+                          <option value="" disabled hidden>Choose patient from database</option>
+                          {selectedPatient && (
+                            <option value={selectedPatient.uuid}>{selectedPatient.name}</option>
+                          )}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                          <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                        title="Add new patient"
+                        onClick={registerPatientDrawer.openDrawer}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-7 h-7">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                        </svg>
+                      </button>
                     </div>
                     {errors.patient_uuid && (
                       <p className="mt-1 text-sm text-red-600">{errors.patient_uuid.message}</p>
@@ -184,6 +197,15 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
             patientDrawer.closeDrawer();
           }}
         />
+      </Drawer>
+      <Drawer
+        isOpen={registerPatientDrawer.isOpen}
+        onClose={registerPatientDrawer.closeDrawer}
+        title="Register Patient"
+        maxWidth="lg"
+        position="right"
+      >
+        <PatientRegistrationComponent />
       </Drawer>
     </>
   );
