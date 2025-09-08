@@ -16,6 +16,7 @@ import { Product } from "@models/product";
 import { InsertProduct, ListProducts } from "@requests/products";
 import { useLocation, useNavigate } from "react-router-dom";
 import { debounce } from "lodash";
+import { formatPrice } from "@utils/common";
 
 
 const InventoryComponent = () => {
@@ -227,8 +228,8 @@ const InventoryComponent = () => {
         <Grid item xs={12} sm={6} md={3}>
         <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
-              <AttachMoney className="text-emerald-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">Rp {inventoryValue.toLocaleString()}</Typography>
+              <AttachMoney fontSize="large" className="text-emerald-600 text-3xl mb-2" />
+              <Typography variant="h5" className="font-bold">{formatPrice(inventoryValue)}</Typography>
               <Typography variant="body2" className="text-gray-600">Total Value</Typography>
             </CardContent>
           </Card>
@@ -331,7 +332,7 @@ const InventoryComponent = () => {
                       <Chip size="small" label="Treatment" className="bg-purple-100 text-purple-800" />
                     )}
                   </TableCell>
-                  <TableCell>${product.price?.toFixed(2) || '0.00'}</TableCell>
+                  <TableCell>{formatPrice(product.price || 0)}</TableCell>
                   <TableCell>{product.quantity}</TableCell>
                   <TableCell>{product.unit_type || '-'}</TableCell>
                   <TableCell>
