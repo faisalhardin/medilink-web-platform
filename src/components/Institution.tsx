@@ -112,8 +112,9 @@ const InstitutionProfileComponent = () => {
   }, []);
 
   const handleManageProducts = () => {
-    console.log("Navigate to products management");
-    // Add navigation logic here
+    if (typeof window !== "undefined") {
+      window.location.href = "/inventory";
+    }
   };
 
   const handleManageStock = () => {
@@ -139,7 +140,7 @@ const InstitutionProfileComponent = () => {
               ID: {institution?.id}
             </Typography>
           </div>
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <Chip
               label={`${stats.systemUptime}% Uptime`}
               color="success"
@@ -151,7 +152,7 @@ const InstitutionProfileComponent = () => {
                 {stats.membershipType} Member
               </Typography>
             </div>
-          </div>
+          </div> */}
         </div>
         
         {/* Action Buttons */}
@@ -172,19 +173,11 @@ const InstitutionProfileComponent = () => {
           >
             Manage Products
           </Button>
-          <Button 
-            variant="outlined" 
-            startIcon={<Inventory />}
-            className="border-blue-600 text-blue-600 hover:bg-blue-50"
-            onClick={handleManageStock}
-          >
-            Manage Stock
-          </Button>
         </div>
       </Card>
 
       {/* Key Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+      {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
         <Paper className="p-6 shadow-md">
           <div className="flex flex-col items-center space-y-3">
             <People className="text-5xl text-blue-600" />
@@ -232,10 +225,10 @@ const InstitutionProfileComponent = () => {
             </Typography>
           </div>
         </Paper>
-      </div>
+      </div> */}
 
       {/* Product & Stock Management Section */}
-      <Card className="p-6 shadow-md mb-6">
+      {/* <Card className="p-6 shadow-md mb-6">
         <div className="flex justify-between items-center mb-4">
           <Typography variant="h6" className="text-xl font-semibold">
             Inventory Overview
@@ -305,10 +298,10 @@ const InstitutionProfileComponent = () => {
             </div>
           </Paper>
         </div>
-      </Card>
+      </Card> */}
 
       {/* Department Statistics & Certifications */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card className="p-6 shadow-md">
           <Typography variant="h6" className="text-xl font-semibold mb-4">
             Department Overview
@@ -369,10 +362,10 @@ const InstitutionProfileComponent = () => {
             </Table>
           </TableContainer>
         </Card>
-      </div>
+      </div> */}
 
       {/* System Integration Status */}
-      <Card className="p-6 shadow-md mb-6">
+      {/* <Card className="p-6 shadow-md mb-6">
         <Typography variant="h6" className="text-xl font-semibold mb-4">
           System Integration Status
         </Typography>
@@ -401,10 +394,10 @@ const InstitutionProfileComponent = () => {
             </Paper>
           ))}
         </div>
-      </Card>
+      </Card> */}
 
       {/* Subscription & Usage */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6 shadow-md">
           <Typography variant="h6" className="text-xl font-semibold mb-4">
             Subscription Details
@@ -489,7 +482,7 @@ const InstitutionProfileComponent = () => {
             </div>
           </div>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 };
