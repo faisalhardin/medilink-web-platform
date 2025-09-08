@@ -7,14 +7,14 @@ import { JourneyBoard } from "@models/journey";
 
 function ColumnNav() {
   return (
-    <div className="bg-white border-r border-gray-200 flex-shrink-0 h-full flex flex-col">
+    <div className="bg-white border-r border-gray-200 flex-shrink-0 h-screen w-64 flex flex-col sticky top-0">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100">
+      <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0">
         <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
       </div>
       
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <NavLink 
           to="/institution" 
           className={({ isActive }) => 
@@ -51,7 +51,7 @@ function ColumnNav() {
       </nav>
       
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-gray-100">
+      <div className="px-3 py-4 border-t border-gray-100 flex-shrink-0">
         <Login />
       </div>
     </div>

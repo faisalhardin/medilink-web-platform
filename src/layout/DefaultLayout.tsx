@@ -13,8 +13,9 @@ import { Routes, Route } from "react-router-dom";
 
 const DefaultLayout = () => {
   return (
-    <main className="grid grid-cols-[200px_1fr] h-screen w-full overflow-x-hidden bg-gray-50">
+    <main className="flex w-full min-h-screen bg-gray-50">
       <ColumnNav/>
+      <div className="flex-1 overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/institution" element={<Institution/>}/>
@@ -25,6 +26,7 @@ const DefaultLayout = () => {
           <Route path="/journey-board/:boardID" element={<JourneyBoard/>} />
           <Route path="/inventory" element={<InventoryPage/>} />
         </Routes>
+      </div>
     </main>
   );
 };
