@@ -1,4 +1,3 @@
-import { Component } from "react"
 import InstitutionProfileComponent from "@components/Institution"
 
 const Institution = () => {

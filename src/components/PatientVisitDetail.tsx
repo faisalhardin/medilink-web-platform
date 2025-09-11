@@ -1,10 +1,10 @@
 // Modified PatientVisitDetail.tsx
-import { useEffect, useMemo, useState } from 'react'
-import { GetPatientVisitDetailedByID, UpdatePatientVisit, UpsertPatientVisitDetailRequest } from '@requests/patient';
+import { useEffect, useState } from 'react'
+import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
-import { CheckoutProduct, Product, ProductPanelProps, TrxVisitProduct,  } from '@models/product';
+import { CheckoutProduct, TrxVisitProduct,  } from '@models/product';
 import { ListOrderedProduct, OrderProduct } from '@requests/products';
 import { convertProductsToCheckoutProducts} from '@utils/common'
 
@@ -111,17 +111,6 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
 
         fetchData();
     }, [patientVisitId])
-
-    async function fetchVisit() {
-        try {
-            const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
-            if (patientVisit !== undefined) {
-                setPatientVisit(patientVisit);
-            }
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        }
-    } 
 
     /**
      * Upserts (creates or updates) a patient visit detail record

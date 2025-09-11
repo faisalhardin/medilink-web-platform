@@ -3,106 +3,16 @@ import { GetInsitution } from "@requests/institution";
 import { Institution as InstitutionModel } from "@models/institution";
 import {
   Card,
-  Grid,
   Typography,
-  Box,
-  Divider,
-  Stack,
-  Paper,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  LinearProgress,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Button,
 } from "@mui/material";
 import {
-  Business,
-  People,
-  LocalHospital,
-  CalendarMonth,
-  Badge,
-  LocationOn,
-  Phone,
-  Email,
-  AccessTime,
-  VerifiedUser,
-  Healing,
-  AttachMoney,
-  TrendingUp,
-  Security,
-  IntegrationInstructions,
-  Inventory,
   ShoppingCart,
   Edit,
 } from "@mui/icons-material";
 
-interface InstitutionStats {
-  totalStaff: number;
-  totalPatients: number;
-  monthlyVisits: number;
-  membershipType: string;
-  patientSatisfaction: number;
-  systemUptime: number;
-}
-
-interface Department {
-  name: string;
-  staffCount: number;
-  utilizationRate: number;
-}
-
-interface Certification {
-  name: string;
-  issuer: string;
-  validUntil: string;
-  status: string;
-}
-
-// Mock data - replace with actual API data
-const mockStats: InstitutionStats = {
-  totalStaff: 150,
-  totalPatients: 5000,
-  monthlyVisits: 1200,
-  membershipType: "Premium",
-  patientSatisfaction: 92,
-  systemUptime: 99.9,
-};
-
-const mockDepartments: Department[] = [
-  { name: "Emergency", staffCount: 45, utilizationRate: 85 },
-  { name: "Pediatrics", staffCount: 30, utilizationRate: 75 },
-  { name: "Surgery", staffCount: 25, utilizationRate: 90 },
-  { name: "Cardiology", staffCount: 20, utilizationRate: 80 },
-];
-
-const mockCertifications: Certification[] = [
-  {
-    name: "HIPAA Compliance",
-    issuer: "Healthcare Compliance Board",
-    validUntil: "2024-12-31",
-    status: "Active",
-  },
-  {
-    name: "ISO 27001",
-    issuer: "International Standards Organization",
-    validUntil: "2025-06-30",
-    status: "Active",
-  },
-];
-
 const InstitutionProfileComponent = () => {
   const [institution, setInstitution] = useState<InstitutionModel | null>(null);
-  const [stats, setStats] = useState<InstitutionStats>(mockStats);
-  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
-  const [certifications, setCertifications] = useState<Certification[]>(mockCertifications);
 
   useEffect(() => {
     GetInsitution()
@@ -115,11 +25,6 @@ const InstitutionProfileComponent = () => {
     if (typeof window !== "undefined") {
       window.location.href = "/inventory";
     }
-  };
-
-  const handleManageStock = () => {
-    console.log("Navigate to stock management");
-    // Add navigation logic here
   };
 
   const handleEditInstitution = () => {

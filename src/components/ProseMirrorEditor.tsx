@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useReducer } from "react";
+import { useEffect, useRef } from "react";
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { Schema, DOMParser } from "prosemirror-model";
@@ -7,26 +7,13 @@ import { keymap } from "prosemirror-keymap";
 import { baseKeymap } from "prosemirror-commands";
 import { addListNodes } from "prosemirror-schema-list";
 import { exampleSetup } from "prosemirror-example-setup";
-import autocomplete, { Options } from 'prosemirror-autocomplete';
 
 const ProseMirrorEditor = () => {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
 
   useEffect(() => {
-    if (!editorRef.current) return; // Ensure editor div exists
-
-    // const options: Options = {
-    //   triggers: [
-    //     { name: 'hashtag', trigger: '#' },
-    //     { name: 'mention', trigger: '@' },
-    //   ],
-    //   onOpen: ({ view, range, trigger, type }) => handleOpen(),
-    //   onArrow: ({ view, kind }) => handleArrow(kind),
-    //   onFilter: ({ view, filter }) => handleFilter(),
-    //   onEnter: ({ view }) => handleSelect(),
-    //   onClose: ({ view }) => handleClose(),
-    // };
+    if (!editorRef.current) return;
 
     const mySchema = new Schema({
       nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),

@@ -13,9 +13,9 @@ interface patientVisitProps {
     updateVisitFunc: (params: UpdatePatientVisitRequest) => void;
 }
 
-export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc, updateVisitFunc }: patientVisitProps) => {
+export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc }: patientVisitProps) => {
     const [myVisitDetails, setMyVisitDetails] = useState<VisitDetail[]>([]);
-    const [otherVisitDetails, setOtherVisitDetails] = useState<VisitDetail[]>([]);
+    const [_, setOtherVisitDetails] = useState<VisitDetail[]>([]);
     const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set());
     const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
     const [isChanged, setIsChanged] = useState(false);

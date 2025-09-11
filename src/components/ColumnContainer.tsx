@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
 import TaskCard from "./TaskCard";
 import { JourneyPoint, PatientVisitTask } from "@models/journey";
-import { ModalLink } from "./ModalLink";
 import { getStorageUserJourneyPointsIDAsSet } from "@utils/storage";
 
 interface Props {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { InsertPatientVisit } from "@requests/patient";
 import { Patient as PatientModel, InsertPatientVisitPayload } from "@models/patient";
 import { useModal } from "context/ModalContext";
@@ -13,7 +13,7 @@ interface PatientVisitRegistrationProps {
 }
 
 export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationProps) {
-  const { register, handleSubmit, formState: { errors }, watch, setValue, reset, control } = useForm<InsertPatientVisitPayload>({
+  const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm<InsertPatientVisitPayload>({
     defaultValues: {
       journey_point_id: journeyPointID,
     }
@@ -21,7 +21,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
 
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<PatientModel | null>(null);
-  const [activeSection, setActiveSection] = useState<string>('patient');
+  const [activeSection, _] = useState<string>('patient');
   
   const { closeModal } = useModal();
   const patientDrawer = useDrawer();

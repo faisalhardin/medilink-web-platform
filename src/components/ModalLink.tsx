@@ -3,7 +3,6 @@ import React, { Suspense } from 'react';
 import { useModal } from '../context/ModalContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { findComponentForPath, ModalComponentProps } from '../modalRegistry';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 interface ModalLinkProps {
     to: string;

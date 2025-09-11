@@ -1,9 +1,9 @@
 import PlusIcon from "assets/icons/PlusIcon";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Column, Id, Task } from "../types";
+import { Id } from "../types";
 import { CreateJourneyPointRequest, JourneyPoint, PatientVisitTask } from "@models/journey";
 import ColumnContainer from "./ColumnContainer";
-import { GetPatientVisitParam, Patient, PatientVisit } from "@models/patient";
+import { GetPatientVisitParam, PatientVisit } from "@models/patient";
 import lodash from 'lodash';
 import {
   DndContext,
@@ -511,8 +511,8 @@ function KanbanBoard() {
         try {
           if (!(typeof tasks[activeIndex].id === 'number' && typeof tasks[activeIndex].columnId === 'number')) return;
           UpdatePatientVisit({
-            id: tasks[activeIndex].id,
-            journey_point_id: tasks[activeIndex].columnId,
+            id: tasks[activeIndex].id as number,
+            journey_point_id: tasks[activeIndex].columnId as number,
           });
 
         } catch (error) {

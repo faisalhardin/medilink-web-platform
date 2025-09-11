@@ -1,5 +1,5 @@
 // src/pages/Inventory.tsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Button, TextField, IconButton, Typography, Box, FormControl, InputLabel,
@@ -15,7 +15,6 @@ import InventoryForm from "../components/InventoryForm";
 import { Product } from "@models/product";
 import { InsertProduct, ListProducts } from "@requests/products";
 import { useLocation, useNavigate } from "react-router-dom";
-import { debounce } from "lodash";
 import { formatPrice } from "@utils/common";
 
 
@@ -43,21 +42,6 @@ const InventoryComponent = () => {
       limit: parseInt(queryParams.get("limit") || "9", 10), // Default to 9 if not in URL
     };
   });
-
-  // Create a debounced version of the search handler
-  const debouncedUpdateSearchQuery = useCallback(
-    debounce((value: string) => {
-      // Update URL with search parameter
-      const params = new URLSearchParams(location.search);
-      if (value) {
-        params.set('name', value);
-      } else {
-        params.delete('name');
-      }
-      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
-    }, 300), // 300ms delay
-    [location.search, navigate]
-  );
   
   // Effect to sync state to URL and fetch data whenever state changes
   useEffect(() => {
@@ -176,7 +160,6 @@ const InventoryComponent = () => {
   const totalProducts = products?.length || 0;
   const lowStockCount = products?.filter(p => p.quantity <= 10).length || 0;
   const totalItems = products?.filter(p => p.is_item).length || 0;
-  const totalTreatments = products?.filter(p => p.is_treatment).length || 0;
   const inventoryValue = products?.reduce((sum, p) => sum + (p.price || 0) * p.quantity, 0) || 0;
   
   return (

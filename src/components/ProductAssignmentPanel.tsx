@@ -1,8 +1,8 @@
 // Modified ProductAssignmentPanel.tsx with improved search panel functionality
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { PatientVisit, PatientVisitDetail } from '@models/patient';
+import { PatientVisit } from '@models/patient';
 import { ListProducts } from '@requests/products';
-import { Product, AssignedProductRequest, CheckoutProduct, TrxVisitProduct, ProductPanelProps, ProductOrderConfirmationProps } from '@models/product';
+import { Product, CheckoutProduct, TrxVisitProduct, ProductPanelProps, ProductOrderConfirmationProps } from '@models/product';
 import { debounce } from 'lodash';
 import { UpdatePatientVisit } from '@requests/patient';
 import { convertProductToCheckoutProduct, formatPrice} from '@utils/common'
@@ -38,8 +38,7 @@ interface ProductListProps {
 const ProductQuantityPanel = ({ 
   name, 
   unitType, 
-  cartQuantity, 
-  price, 
+  cartQuantity,
   adjustedPrice,
   orderedQuantity,
   panelClass, 
@@ -157,10 +156,8 @@ export const ProductAssignmentPanel = ({
   patientVisit,
   cartProducts,
   orderedProducts,
-  journeyPointId,
   updateSelectedProducts,
   onAssignProduct,
-  updatedOrderedProduct,
 }: ProductAssignmentPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -170,7 +167,7 @@ export const ProductAssignmentPanel = ({
   const cartDrawer = useDrawer();
   
   const updateVisitCart = async (patientVisit: PatientVisit, productsCart: CheckoutProduct[]) => {
-      const resp = await UpdatePatientVisit({
+      await UpdatePatientVisit({
         id: patientVisit.id,
         product_cart: productsCart
       });
@@ -521,11 +518,8 @@ export const ProductAssignmentPanel = ({
 };
 
 const ProductOrderConfirmation = ({
-  visitID,
   products,
   subTotal,
-  onClose,
-  updateSelectedProducts,
   onMakeOrder,
   incrementQuantity,
   decrementQuantity,

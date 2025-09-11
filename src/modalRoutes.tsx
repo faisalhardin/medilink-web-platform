@@ -14,7 +14,7 @@ export const modalRoutes: Record<string, ModalRoute> = {
   '/patient-visit/:id': {
     // This function should return the result of a dynamic import
     // Adjust the path './pages/patient-visit/[id]' to your actual component file location
-    component: () => import('./pages/patient-visit/[id]'),
+    component: () => import('./pages/PatientVisitDetail'),
   },
   // Add other modal routes here
   // '/another-modal-path/:someParam': {

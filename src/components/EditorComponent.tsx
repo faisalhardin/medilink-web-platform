@@ -1,7 +1,7 @@
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import EditorjsList from '@editorjs/list';
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface EditorComponentProps {
   id: string; // Unique ID for the editor instance
@@ -59,19 +59,6 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
       }
     };
   }, [id, readOnly, data]);
-
-  const saveEditorContent = async () => {
-    if (!editorInstance.current) return;
-    try {
-      const outputData = await editorInstance.current.save();
-      
-      if (onChange) {
-        onChange(outputData); // Call the custom save function if provided
-      }
-    } catch (error) {
-      console.error("Saving failed:", error);
-    }
-  };
       
   return (
     <div >

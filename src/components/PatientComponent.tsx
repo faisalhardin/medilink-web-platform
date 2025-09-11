@@ -2,8 +2,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
 import { ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
-import { GetPatientParam, Patient, Patient as PatientModel, PatientPageProps, PatientVisit, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
-import { useModal } from "context/ModalContext";
+import { GetPatientParam, Patient, Patient as PatientModel, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { EditorComponent } from "./EditorComponent";
 
 interface PatientListComponentProps {
@@ -12,11 +11,10 @@ interface PatientListComponentProps {
     isInDrawer?: boolean;
 }
 
-export function PatientListComponent({ journey_board_id, onPatientSelect, isInDrawer = false }: PatientListComponentProps): JSX.Element {
+export function PatientListComponent({ onPatientSelect, isInDrawer = false }: PatientListComponentProps): JSX.Element {
     const [patients, setPatients] = useState<PatientModel[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const { closeModal } = useModal();
-    const { register, handleSubmit, formState: { errors } } = useForm<GetPatientParam>();
+    const { register, handleSubmit } = useForm<GetPatientParam>();
 
     const onSubmit = async (params: GetPatientParam) => {
         try {
@@ -464,14 +462,14 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
     };
 
     // Helper function to get status color
-    const getStatusColor = (journeyPoint: PatientVisitDetail): string => {
+    const getStatusColor = (_: PatientVisitDetail): string => {
         const isCompleted = true;// createTime.getTime() !== updateTime.getTime();
         
         return isCompleted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
     };
 
     // Helper function to get status text
-    const getStatusText = (journeyPoint: PatientVisitDetail): string => {
+    const getStatusText = (_: PatientVisitDetail): string => {
 
         const isCompleted = true;
         
@@ -630,7 +628,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                             <EditorComponent
                                                 id={`editor-${journeyPoint.id}`}
                                                 data={journeyPoint}
-                                                onChange={(notes) => {  
+                                                onChange={(_) => {  
                                                 }}
                                                 placeHolder="Jot here..."
                                                 readOnly={true}
