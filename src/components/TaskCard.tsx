@@ -97,7 +97,7 @@ function TaskCard({ task, deleteTask }: Props) {
       }}
     >
       {/* ModalLink covering the entire card */}
-      <ModalLink to={`/patient-visit/${task.id}`} className="absolute inset-0">
+      <ModalLink to={`/patient-visit/${task.id}`} className="absolute inset-0 z-10">
         <div className="w-full h-full"></div>
       </ModalLink>
 
@@ -106,7 +106,7 @@ function TaskCard({ task, deleteTask }: Props) {
         <div className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
           #{task.id}
         </div>
-        <div className="relative z-5">
+        <div className="relative z-20">
           <TaskCardDropDown taskId={task.id} deleteTask={deleteTask} />
         </div>
       </div>
@@ -167,7 +167,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
 
       <MenuItems
         transition
-        className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+        className="absolute right-0 z-30 mt-2 w-48 origin-top-right rounded-lg bg-white ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
       >
         <div className="py-1">
                       <MenuItem>
