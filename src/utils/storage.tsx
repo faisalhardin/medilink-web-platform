@@ -14,7 +14,7 @@ export const getToken = (): string | null => {
 };
 
 export const getStorageJourneyPoints = (): JourneyPoint[] => {
-    const userPayload = sessionStorage.getItem(MEDILINK_USER) || "";
+    const userPayload = sessionStorage.getItem(MEDILINK_USER);
     if (userPayload) {
         try {
             const user: JwtClaims = JSON.parse(userPayload);
@@ -41,7 +41,7 @@ export const getStorageServicePoints = (): ServicePoints[] => {
 
 export const getStorageUserJourneyPointsIDAsSet = (): Set<Id> => {
     const userJourneyPointsArray = getStorageJourneyPoints();
-    const userJourneyPointsSet = new Set(userJourneyPointsArray.map((journeyPoint) => {
+    const userJourneyPointsSet = new Set(userJourneyPointsArray?.map((journeyPoint) => {
         return journeyPoint.id;
     } ));
     return userJourneyPointsSet;

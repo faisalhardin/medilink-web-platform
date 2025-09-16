@@ -46,8 +46,8 @@ function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
       column_update_time: visit.column_update_time,
     };
 
-    if (columnId === undefined || columnId === null || columnId <= 0) {
-      patientVisitTask.columnId = 0;
+    if (columnId === undefined || columnId === null ) {
+      patientVisitTask.columnId = '';
     }
 
     return patientVisitTask;
@@ -509,10 +509,10 @@ function KanbanBoard() {
         };
 
         try {
-          if (!(typeof tasks[activeIndex].id === 'number' && typeof tasks[activeIndex].columnId === 'number')) return;
+          if (!(typeof tasks[activeIndex].id === 'number' && typeof tasks[activeIndex].columnId === 'string')) return;
           UpdatePatientVisit({
-            id: tasks[activeIndex].id as number,
-            journey_point_id: tasks[activeIndex].columnId as number,
+            id: tasks[activeIndex].id,
+            journey_point_id: tasks[activeIndex].columnId,
           });
 
         } catch (error) {
