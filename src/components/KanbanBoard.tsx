@@ -511,8 +511,8 @@ function KanbanBoard() {
         try {
           if (!(typeof tasks[activeIndex].id === 'number' && typeof tasks[activeIndex].columnId === 'string')) return;
           UpdatePatientVisit({
-            id: tasks[activeIndex].id,
-            journey_point_id: tasks[activeIndex].columnId,
+            id: tasks[activeIndex].id as number,
+            journey_point_id: tasks[activeIndex].columnId as string,
           });
 
         } catch (error) {
