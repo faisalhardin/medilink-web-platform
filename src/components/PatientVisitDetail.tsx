@@ -10,7 +10,7 @@ import { convertProductsToCheckoutProducts} from '@utils/common'
 
 
 export interface journeyTab {
-    id: number,
+    id: string,
     name: string,
     servicePointID?: number
 }

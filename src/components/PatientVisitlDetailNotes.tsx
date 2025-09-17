@@ -97,7 +97,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
                         readOnly={false}
                         placeHolder="Jot here..."
                         onChange={(notes:Record<string, any>) =>{
-                            var journeyPointID:number = activeTab.id;
+                            var journeyPointID:string = activeTab.id;
 
                             var detail:VisitDetail = {
                                 notes: notes,

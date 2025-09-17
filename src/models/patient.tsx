@@ -47,7 +47,7 @@ export interface GetPatientVisitDetailedResponse {
   sex: string;
   id_mst_institution: number;
   id_mst_journey_board: number;
-  journey_point_id: number;
+  journey_point_id: string;
   create_time: string;
   update_time: string;
   service_point_name: string;
@@ -68,7 +68,7 @@ export interface PatientVisit {
   sex: string;
   id_mst_institution: number;
   id_mst_journey_board: number;
-  journey_point_id: number;
+  journey_point_id: string;
   create_time: string;
   update_time: string;
   service_point_name: string;
@@ -102,7 +102,7 @@ export interface PatientVisitDetail {
   id?: number;
   id_trx_patient_visit?: number;
   name_mst_journey_point?: string;
-  journey_point_id: number;
+  journey_point_id: string;
   id_patient_visit: number;
   notes: Record<string, any>;
   service_point_id?: number;
@@ -158,7 +158,7 @@ export interface UpsertPatientVisitDetailParam {
   id_trx_patient_visit: number;
   touchpoint_name?: string;
   name_mst_journey_point?: string;
-  id_mst_journey_point: number;
+  id_mst_journey_point: string;
   notes?: Record<string, any>;
   service_point_id?: number;
 }

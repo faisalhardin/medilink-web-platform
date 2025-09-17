@@ -12,7 +12,7 @@ import CloseIcon from 'assets/icons/CloseIcon';
 
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
-  journeyPointId: number;
+  journeyPointId: string;
   cartProducts: CheckoutProduct[];
   orderedProducts: TrxVisitProduct[];
   updateSelectedProducts: (products: CheckoutProduct[]) => void;
