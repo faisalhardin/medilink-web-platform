@@ -89,6 +89,27 @@ export const formatDateTime = (date: Date): string => {
   return date.toISOString();
 }
 
+export const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+  });
+}
+
+// Helper function to format date
+export const formatDateTimeHHmm = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+  });
+};
+
 // Alternative: If you still want timezone info but in a different format
 export const formatDateTimeWithOffset = (date: Date): string => {
   // Format as: 2025-06-20T00:00:00.000+07:00

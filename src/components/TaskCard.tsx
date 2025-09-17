@@ -7,6 +7,7 @@ import { PatientVisitTask } from "@models/journey";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { ModalLink } from "./ModalLink";
+import { formatDateTimeHHmm } from "@utils/common";
 
 interface Props {
   task: PatientVisitTask;
@@ -115,6 +116,9 @@ function TaskCard({ task, deleteTask }: Props) {
       <div className="flex-1 w-full relative">
         <p className="text-sm font-medium text-gray-900 leading-tight">
           {getTitle(task.sex)} {task.patient_name}
+        </p>
+        <p className="text-xs text-gray-400 mt-1">
+          {task.create_time ? formatDateTimeHHmm(task.create_time) : ''}
         </p>
       </div>
       
