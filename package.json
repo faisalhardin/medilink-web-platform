@@ -12,6 +12,7 @@
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@editorjs/editorjs": "^2.30.8",
     "@editorjs/header": "^2.8.8",
     "@editorjs/list": "^2.0.6",
@@ -52,7 +53,7 @@
   "devDependencies": {
     "@types/lodash": "^4.17.15",
     "@types/lodash.debounce": "^4.0.9",
-    "@types/node": "^24.3.1",
+    "@types/node": "^24.3.3",
     "@types/react": "^18.2.66",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^18.2.22",

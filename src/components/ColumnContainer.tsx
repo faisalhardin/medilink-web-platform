@@ -212,22 +212,20 @@ function ColumnContainer({
 
       {/* Column task container */}
       <div className="flex flex-grow flex-col gap-3 p-4 overflow-x-hidden overflow-y-auto bg-gray-50">
-        {/* <DndContext> */}
-
-        <SortableContext items={tasksIds} >
-          {tasks
-          .sort((a:PatientVisitTask, b:PatientVisitTask) => {
-            return a.column_update_time - b.column_update_time
-          })
-          .map((task) => 
-            ( <TaskCard
-              key={task.id}
-              task={task}
-              deleteTask={deleteTask}
-              updateTask={updateTask}
-            />)
-        )}
-        </SortableContext>
+          <SortableContext items={tasksIds} >
+            {tasks
+              .sort((a: PatientVisitTask, b: PatientVisitTask) => {
+                return a.column_update_time - b.column_update_time
+              })
+              .map((task) =>
+              (<TaskCard
+                key={task.id}
+                task={task}
+                deleteTask={deleteTask}
+                updateTask={updateTask}
+              />)
+              )}
+          </SortableContext>
       </div>
       {userJourneyPoints.has(column.id) && (
         <div

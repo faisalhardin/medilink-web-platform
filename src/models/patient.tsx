@@ -124,7 +124,7 @@ export interface UpdatePatientVisitPayload {
   name?: string;
   sex?: string;
   id_mst_journey_board?: number;
-  journey_point_id?: number;
+  journey_point_id?: string;
   product_cart?: CheckoutProduct[];
 }
 
