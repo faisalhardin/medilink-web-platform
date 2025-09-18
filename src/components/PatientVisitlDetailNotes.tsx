@@ -101,32 +101,42 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
     const isEditingExisting = Boolean(currentNote);
 
     return (
-        <div className='flex w-full'>
-            <div className='pl-8 pr-3 w-full'>
-                {/* Single EditorComponent that handles both existing and new notes */}
+        <div className='w-full max-w-4xl mx-auto'>
+            <div className='space-y-4'>
+                {/* Editor Section */}
                 {(isEditingExisting || shouldShowEditor) && (
-                    <>
+                    <div className='relative group'>
                         <EditorComponent
                             key={isEditingExisting ? `editor-${currentNote?.id}` : 'editorjs'}
                             id={isEditingExisting ? `editor-${currentNote?.id}` : 'editorjs'}
                             readOnly={false}
                             data={isEditingExisting ? currentNote : undefined}
-                            placeHolder="Jot here..."
+                            placeHolder="Write your notes here..."
+                            className="min-h-[300px]"
                             onChange={(notes: Record<string, any>) => {
                                 handleNoteChange(notes, currentNote || undefined);
                             }}
                         />
                         
-                        {/* Single save button for both new and existing notes */}
+                        {/* Save button - appears below editor */}
                         {isChanged && (
-                            <button 
-                                onClick={saveNote}
-                                className="text-white bg-primary-7 hover:bg-primary-5 px-4 py-2 mt-2 rounded"
-                            >
-                                Save
-                            </button>
+                            <div className='flex justify-end mt-4'>
+                                <button 
+                                    onClick={saveNote}
+                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                    Save Notes
+                                </button>
+                            </div>
                         )}
-                    </>
+                    </div>
+                )}
+
+                {/* No access message */}
+                {!isEditingExisting && !shouldShowEditor && (
+                    <div className='text-center py-8 text-gray-500'>
+                        <p>You don't have permission to add notes for this section.</p>
+                    </div>
                 )}
             </div>
         </div>
