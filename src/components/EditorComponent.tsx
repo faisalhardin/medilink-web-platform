@@ -1,6 +1,7 @@
-import EditorJS from '@editorjs/editorjs';
+import EditorJS, { BlockToolConstructable } from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import EditorjsList from '@editorjs/list';
+import Paragraph from '@editorjs/paragraph';
 import { useEffect, useRef } from 'react'
 
 interface EditorComponentProps {
@@ -23,9 +24,16 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
           tools: {
             header: Header,
             list: EditorjsList,
+            paragraph: {
+              class: Paragraph as BlockToolConstructable,
+              inlineToolbar: true,
+              config: {
+                preserveBlank: true,
+              },
+            },
           },
           placeholder: placeHolder,
-          minHeight : 14,
+          minHeight: 14,
           readOnly,
           data: editorData || { blocks: []},
           onReady: () => {

@@ -118,7 +118,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
      * @param visitDetail - The patient visit detail object to create or update
      * @returns Promise<PatientVisitDetail> - The created/updated visit detail from server
      */
-    async function upsertVisitDetail(visitDetail: PatientVisitDetail) {
+    async function upsertVisitDetail(visitDetail: PatientVisitDetail): Promise<PatientVisitDetail> {
         try {
             // First add to the backend and get the response
             // (which might include an ID or other server-generated fields)

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { EditorComponent } from './EditorComponent';
 import { PatientVisit, PatientVisitDetail, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { Id } from 'types';
@@ -19,6 +19,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
     const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set());
     const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
     const [isChanged, setIsChanged] = useState(false);
+    const newNoteRef = useRef<VisitDetail | null>(null);
 
     useEffect(() => {
         const _userServicePoints = getStorageUserServicePointsIDAsSet() || new Set();
@@ -59,56 +60,84 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
             !myVisitDetails.some(detail => detail.journey_point_id === activeTab.id);       //  but does not have any notes currently
     }, [activeTab, myVisitDetails]);
 
+    // Handle note changes (both new and existing)
+    const handleNoteChange = useCallback((notes: Record<string, any>, detail?: VisitDetail) => {
+        if (detail) {
+            // Update existing note
+            detail.notes = notes;
+        } else {
+            // Handle new note
+            if (!newNoteRef.current) {
+                newNoteRef.current = {
+                    notes: notes,
+                    journey_point_id: activeTab.id,
+                    id_patient_visit: patientVisit.id,
+                    service_point_id: patientVisit.service_point_id,
+                };
+            } else {
+                newNoteRef.current.notes = notes;
+            }
+        }
+        setIsChanged(true);
+    }, [activeTab.id, patientVisit.id, patientVisit.service_point_id]);
 
+    // Unified save function for both new and existing notes
+    const saveNote = useCallback(() => {
+        const currentNote = myVisitDetails.find(detail => detail.journey_point_id === activeTab.id);
+        
+        if (currentNote) {
+            // Save existing note
+            upsertVisitDetailFunc(currentNote);
+        } else if (newNoteRef.current) {
+            // Save new note
+            upsertVisitDetailFunc(newNoteRef.current);
+        }
+        
+        setIsChanged(false);
+    }, [myVisitDetails, activeTab.id, upsertVisitDetailFunc]);
+
+    // Get the current note for this journey point
+    const currentNote = useMemo(() => myVisitDetails.find(detail => detail.journey_point_id === activeTab.id), [myVisitDetails, activeTab.id]);
+    const isEditingExisting = Boolean(currentNote);
 
     return (
-        <div className='flex w-full'>
-            <div className=' pl-8 pr-3'>
-                {myVisitDetails.length > 0 && myVisitDetails.filter((detail: VisitDetail) => {
-                    return detail.journey_point_id === activeTab.id
-                }).map((detail: VisitDetail) => (
-                    <>
+        <div className='w-full max-w-4xl mx-auto'>
+            <div className='space-y-4'>
+                {/* Editor Section */}
+                {(isEditingExisting || shouldShowEditor) && (
+                    <div className='relative group'>
                         <EditorComponent
-                            key={detail.id}
-                            id={`editor-${detail.id}`}
+                            key={isEditingExisting ? `editor-${currentNote?.id}` : 'editorjs'}
+                            id={isEditingExisting ? `editor-${currentNote?.id}` : 'editorjs'}
                             readOnly={false}
-                            data={detail}
-                            placeHolder="Jot here..."
+                            data={isEditingExisting ? currentNote : undefined}
+                            placeHolder="Write your notes here..."
+                            className="min-h-[300px]"
                             onChange={(notes: Record<string, any>) => {
-                                detail.notes = notes;
-                                setIsChanged(true);
+                                handleNoteChange(notes, currentNote || undefined);
                             }}
                         />
-                        <button 
-                            onClick={() => {
-                                upsertVisitDetailFunc(detail);
-                                setIsChanged(false)
-                            }}
-                            className={`${isChanged ? '' : 'hidden'} text-white bg-primary-7 hover:bg-primary-5 px-4 py-2 mt-2 rounded`}
-                        >
-                            Save
-                        </button>
-                    </>
                         
-                ))
-                }
-                { shouldShowEditor && <EditorComponent
-                        id='editorjs'
-                        readOnly={false}
-                        placeHolder="Jot here..."
-                        onChange={(notes:Record<string, any>) =>{
-                            var journeyPointID:string = activeTab.id;
+                        {/* Save button - appears below editor */}
+                        {isChanged && (
+                            <div className='flex justify-end mt-4'>
+                                <button 
+                                    onClick={saveNote}
+                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                    Save Notes
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                            var detail:VisitDetail = {
-                                notes: notes,
-                                journey_point_id: journeyPointID,
-                                id_patient_visit: patientVisit.id,
-                                service_point_id: patientVisit.service_point_id,
-                            }
-                            upsertVisitDetailFunc(detail);
-                            
-                        }}  />
-                        }
+                {/* No access message */}
+                {!isEditingExisting && !shouldShowEditor && (
+                    <div className='text-center py-8 text-gray-500'>
+                        <p>You don't have permission to add notes for this section.</p>
+                    </div>
+                )}
             </div>
         </div>
     )
