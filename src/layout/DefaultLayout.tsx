@@ -7,6 +7,7 @@ import PatientPage from "@pages/Patient";
 import PatientDetail from "@pages/PatientDetail";
 import PatientRegistrationPage from "@pages/PatientRegistration";
 import PatientVisitDetailPage from "@pages/PatientVisitDetail";
+import GoogleLogin from "@pages/GoogleLogin";
 import { Routes, Route } from "react-router-dom";
 // import PatieVisitReg
 
@@ -18,6 +19,7 @@ const DefaultLayout = () => {
       <div className="flex-1 overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Home/>}/>
+          <Route path="/login" element={<GoogleLogin/>}/>
           <Route path="/institution" element={<Institution/>}/>
           <Route path="/patient" element={<PatientPage/>}/>
           <Route path="/patient-detail/:uuid" element={<PatientDetail/>}/>
