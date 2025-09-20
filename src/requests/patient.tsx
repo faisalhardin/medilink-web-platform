@@ -1,12 +1,15 @@
 import axios from "axios";
 import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
+import { checkTokenBeforeRequest } from "@utils/requestHelper";
 import { GetPatientParam, GetPatientVisitParam, UpsertPatientVisitDetailParam, Patient, PatientVisit, PatientVisitDetail, RegisterPatient, UpdatePatientVisitPayload, GetPatientVisitDetailedResponse, InsertPatientVisitPayload, PatientVisitDetailed } from "@models/patient";
 import { CommonResponse } from "@models/common";
 import { ArchiveJourneyPointRequest } from "@models/journey";
 
 export const RegisterPatientRequest = async (patientForm: RegisterPatient): Promise<Patient> => {
     try {
+        checkTokenBeforeRequest();
+        
         const token = getToken();
         const response = await axios.post(
             `${PATIENT_PATH}`, patientForm, {
