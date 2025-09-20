@@ -1,10 +1,14 @@
 import axios from "axios";
 import { INSTITUTION_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
+import { checkTokenBeforeRequest } from "@utils/requestHelper";
 
 
 export const GetInsitution = async () => {
     try {
+
+        checkTokenBeforeRequest();
+        
         const token = getToken();
         const response = await axios.get(
             `${INSTITUTION_PATH}`, {

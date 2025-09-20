@@ -35,7 +35,6 @@ export const cleanAllAuthStorage = (): void => {
         }
         sessionStorageKeysToRemove.forEach(key => sessionStorage.removeItem(key));
         
-        console.log("All authentication storage cleaned successfully");
     } catch (error) {
         console.error("Error cleaning authentication storage:", error);
         throw error;
