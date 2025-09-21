@@ -15,7 +15,6 @@ export const isTokenExpired = (token: string): boolean => {
     try {
         const decoded = jwtDecode<JwtPayload>(token);
         const currentTime = Date.now() / 1000; // Convert to seconds
-        console.log("🔍 Decoded token expiration:", decoded.exp, currentTime);
         return decoded.exp < currentTime;
     } catch (error) {
         console.error("Error decoding token:", error);
