@@ -85,8 +85,6 @@ const InventoryComponent = () => {
         params.page = filterOptions.page;
         params.limit = filterOptions.limit;
 
-        console.log("Fetching with params:", params); // Debug log
-
         const productResponse = await ListProducts(params);
         setProducts(productResponse as Product[]);
       } catch (error) {
