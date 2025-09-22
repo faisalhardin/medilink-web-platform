@@ -37,7 +37,7 @@ const InventoryComponent = () => {
     const queryParams = new URLSearchParams(location.search);
     return {
       showLowStock: queryParams.get("lowStock") === "true",
-      type: queryParams.get("type") || "item", // "all", "item", "treatment"
+      type: queryParams.get("type") || "all", // "all", "item", "treatment"
       page: parseInt(queryParams.get("page") || "1", 10),
       limit: parseInt(queryParams.get("limit") || "9", 10), // Default to 9 if not in URL
     };
@@ -314,13 +314,17 @@ const InventoryComponent = () => {
                     )}
                   </TableCell>
                   <TableCell>{formatPrice(product.price || 0)}</TableCell>
-                  <TableCell>{product.quantity}</TableCell>
+                  <TableCell>{product.is_item ? product.quantity : '-'}</TableCell>
                   <TableCell>{product.unit_type || '-'}</TableCell>
                   <TableCell>
-                    {product.quantity <= 10 ? (
+                    {product.is_item && product.quantity <= 10 ? (
                       <Chip size="small" label="Low Stock" color="warning" />
-                    ) : (
+                    ) : product.is_item ? (
                       <Chip size="small" label="In Stock" color="success" />
+                    ) : product.is_treatment && product.quantity > 0 ? (
+                      <Chip size="small" label="Available" color="success" />
+                    ) : (
+                      <Chip size="small" label="Not Available" color="warning" />
                     )}
                   </TableCell>
                   <TableCell>

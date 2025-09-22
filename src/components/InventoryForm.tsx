@@ -1,12 +1,8 @@
 // src/components/AddInventoryForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   TextField,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   FormControlLabel,
   Checkbox,
   InputAdornment,
@@ -14,10 +10,27 @@ import {
   Grid,
   Divider,
   Box,
-  FormHelperText,
-  SelectChangeEvent
+  Paper,
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material';
 import { useModal } from '../context/ModalContext';
+
+const UNIT_TYPE_OPTIONS = [
+  { value: 'piece', label: 'Piece' },
+  { value: 'box', label: 'Box' },
+  { value: 'bottle', label: 'Bottle' },
+  { value: 'pack', label: 'Pack' },
+  { value: 'vial', label: 'Vial' },
+  { value: 'ampule', label: 'Ampule' },
+  { value: 'tablet', label: 'Tablet' },
+  { value: 'capsule', label: 'Capsule' },
+  { value: 'ml', label: 'Milliliter (ml)' },
+  { value: 'l', label: 'Liter (L)' },
+  { value: 'g', label: 'Gram (g)' },
+  { value: 'kg', label: 'Kilogram (kg)' }
+];
 
 interface InventoryFormProps {
   onSubmit: (product: any) => void;
@@ -36,6 +49,9 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [filteredOptions, setFilteredOptions] = useState(UNIT_TYPE_OPTIONS);
+  const inputRef = useRef<HTMLDivElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
     const { name, value } = e.target;
@@ -49,19 +65,54 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
     }
   };
 
-  const handleSelectChange = (e: SelectChangeEvent<string>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name as string]: value }));
-    
-    // Clear error when field is edited
-    if (name && errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const handleUnitTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, unit_type: value }));
+    
+    // Filter options based on input
+    const filtered = UNIT_TYPE_OPTIONS.filter(option => 
+      option.label.toLowerCase().includes(value.toLowerCase()) ||
+      option.value.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredOptions(filtered);
+    setShowRecommendations(value.length > 0 && filtered.length > 0);
+    
+    // Clear error when field is edited
+    if (errors.unit_type) {
+      setErrors((prev) => ({ ...prev, unit_type: '' }));
+    }
+  };
+
+  const handleRecommendationClick = (option: { value: string; label: string }) => {
+    setFormData((prev) => ({ ...prev, unit_type: option.value }));
+    setShowRecommendations(false);
+  };
+
+  const handleUnitTypeFocus = () => {
+    if (formData.unit_type.length > 0) {
+      const filtered = UNIT_TYPE_OPTIONS.filter(option => 
+        option.label.toLowerCase().includes(formData.unit_type.toLowerCase()) ||
+        option.value.toLowerCase().includes(formData.unit_type.toLowerCase())
+      );
+      setFilteredOptions(filtered);
+      setShowRecommendations(filtered.length > 0);
+    } else {
+      setFilteredOptions(UNIT_TYPE_OPTIONS);
+      setShowRecommendations(true);
+    }
+  };
+
+  const handleUnitTypeBlur = () => {
+    // Delay hiding recommendations to allow clicks on items
+    setTimeout(() => {
+      setShowRecommendations(false);
+    }, 200);
   };
 
   const validateForm = () => {
@@ -75,10 +126,12 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
       newErrors.price = 'Price must be a number';
     }
     
-    if (!formData.quantity.trim()) {
-      newErrors.quantity = 'Quantity is required';
-    } else if (isNaN(Number(formData.quantity)) || Number(formData.quantity) < 0) {
-      newErrors.quantity = 'Quantity must be a positive number';
+    if (formData.is_item) {
+      if (!formData.quantity.trim()) {
+        newErrors.quantity = 'Quantity is required for items';
+      } else if (isNaN(Number(formData.quantity)) || Number(formData.quantity) < 0) {
+        newErrors.quantity = 'Quantity must be a positive number';
+      }
     }
     
     if (!formData.unit_type.trim() && formData.is_item) {
@@ -146,6 +199,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
             />
           </Grid>
           
+          {formData.is_item && (
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
@@ -154,39 +208,62 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
               value={formData.quantity}
               onChange={handleChange}
               type="number"
-              required
+              required={formData.is_item}
               error={!!errors.quantity}
               helperText={errors.quantity}
+              disabled={!formData.is_item}
             />
           </Grid>
+          )}
           
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth error={!!errors.unit_type}>
-              <InputLabel id="unit-type-label">Unit Type</InputLabel>
-              <Select
-                labelId="unit-type-label"
+            <Box position="relative">
+              <TextField
+                fullWidth
+                label="Unit Type"
                 name="unit_type"
                 value={formData.unit_type}
-                label="Unit Type"
-                onChange={handleSelectChange}
-                disabled={!formData.is_item}
-              >
-                <MenuItem value="">None</MenuItem>
-                <MenuItem value="piece">Piece</MenuItem>
-                <MenuItem value="box">Box</MenuItem>
-                <MenuItem value="bottle">Bottle</MenuItem>
-                <MenuItem value="pack">Pack</MenuItem>
-                <MenuItem value="vial">Vial</MenuItem>
-                <MenuItem value="ampule">Ampule</MenuItem>
-                <MenuItem value="tablet">Tablet</MenuItem>
-                <MenuItem value="capsule">Capsule</MenuItem>
-                <MenuItem value="ml">Milliliter (ml)</MenuItem>
-                <MenuItem value="l">Liter (L)</MenuItem>
-                <MenuItem value="g">Gram (g)</MenuItem>
-                <MenuItem value="kg">Kilogram (kg)</MenuItem>
-              </Select>
-              {errors.unit_type && <FormHelperText>{errors.unit_type}</FormHelperText>}
-            </FormControl>
+                onChange={handleUnitTypeChange}
+                onFocus={handleUnitTypeFocus}
+                onBlur={handleUnitTypeBlur}
+                error={!!errors.unit_type}
+                helperText={errors.unit_type}
+                placeholder="Type unit type"
+                ref={inputRef}
+              />
+              {showRecommendations && (
+                <Paper
+                  elevation={3}
+                  sx={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 1000,
+                    maxHeight: 200,
+                    overflow: 'auto',
+                    mt: 1,
+                  }}
+                >
+                  <List dense>
+                    {filteredOptions.map((option, index) => (
+                      <ListItem
+                        key={index}
+                        button
+                        onClick={() => handleRecommendationClick(option)}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
+                        }}
+                      >
+                        <ListItemText primary={option.label} />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              )}
+            </Box>
           </Grid>
           
           <Grid item xs={12} sm={6}>
