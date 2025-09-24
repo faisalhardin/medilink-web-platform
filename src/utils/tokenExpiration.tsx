@@ -1,6 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 import { cleanAllAuthStorage } from "./authCleanup";
-import { JWT_TOKEN_KEY } from "constants/constants";
+import { JWT_TOKEN_KEY, REFRESH_TOKEN } from "constants/constants";
+import { RefreshToken } from "@requests/login";
 
 interface JwtPayload {
     exp: number;
@@ -71,10 +72,41 @@ export const redirectToTokenExpired = (): void => {
 };
 
 /**
+ * Attempt to refresh the JWT token using the refresh token.
+ * Returns true if refresh was successful, false otherwise.
+ */
+export const refreshAccessToken = async (): Promise<boolean> => {
+    const refreshToken = sessionStorage.getItem(REFRESH_TOKEN);
+    // console.log(refreshToken);
+    if (!refreshToken) {
+        return false;
+    }
+
+    try {
+       const response = await RefreshToken(refreshToken);
+        console.log(response);
+        const data = response;
+        if (data && data.access_token) {
+            // Store new token and (optionally) new refresh token
+            sessionStorage.setItem(JWT_TOKEN_KEY, data.access_token);
+            if (data.refresh_token) {
+                sessionStorage.setItem(REFRESH_TOKEN, data.refresh_token);
+            }
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error("Failed to refresh token:", error);
+        return false;
+    }
+};
+
+
+/**
  * Handle token expiration with proper cleanup and redirect
  */
 export const handleTokenExpiration = (): void => {
-    redirectToTokenExpired();
+    refreshAccessToken();
 };
 
 /**

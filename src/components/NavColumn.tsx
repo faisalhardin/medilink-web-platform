@@ -3,6 +3,8 @@ import Login from "./Login";
 import { NavList, NavListItem } from "./NavList";
 import { GetJourneyBoards } from "@requests/journey";
 import { JourneyBoard } from "@models/journey";
+import { isUserAuthenticated } from "@utils/authCleanup";
+import UserComponent from "./UserComponent";
 
 
 function ColumnNav() {
@@ -52,7 +54,7 @@ function ColumnNav() {
       
       {/* Footer */}
       <div className="px-3 py-4 border-t border-gray-100 flex-shrink-0">
-        <Login />
+        {isUserAuthenticated() ? <UserComponent/> : <Login /> }
       </div>
     </div>
   );

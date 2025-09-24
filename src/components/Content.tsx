@@ -1,11 +1,11 @@
 
-import LoginPage from "@components/Login";
+import LoginButton from "@components/Login";
 import UserComponent from "./UserComponent";
 
 const Content = () => {
     return (
         <div className="overflow-y-auto">
-            <LoginPage/>
+            <LoginButton/>
             <UserComponent/>
         </div>
     )
