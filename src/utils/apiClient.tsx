@@ -3,7 +3,7 @@ import { setupAxiosTokenExpirationInterceptor } from './tokenExpiration';
 import { JWT_TOKEN_KEY } from "constants/constants";
 
 // Create axios instance
-const apiClient = axios.create({
+export const apiClient = axios.create({
     baseURL: import.meta.env.VITE_MEDILINK_API_BASE_URL,
     timeout: 10000,
 });

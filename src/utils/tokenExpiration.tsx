@@ -1,5 +1,5 @@
 import { jwtDecode } from "jwt-decode";
-import { cleanAllAuthStorage } from "./authCleanup";
+import { cleanSpecificAuthStorage } from "./authCleanup";
 import { JWT_TOKEN_KEY, REFRESH_TOKEN } from "constants/constants";
 import { RefreshToken } from "@requests/login";
 
@@ -65,7 +65,7 @@ export const getTimeUntilExpiration = (token: string): number => {
  */
 export const redirectToTokenExpired = (): void => {
     // Clean storage before redirect
-    cleanAllAuthStorage();
+    cleanSpecificAuthStorage();
     
     // Redirect to token expired page
     window.location.href = '/token-expired';
@@ -84,7 +84,6 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 
     try {
        const response = await RefreshToken(refreshToken);
-        console.log(response);
         const data = response;
         if (data && data.access_token) {
             // Store new token and (optionally) new refresh token
@@ -101,12 +100,16 @@ export const refreshAccessToken = async (): Promise<boolean> => {
     }
 };
 
+export const handleNotAuthenticated = (): void => {
+    redirectToTokenExpired();
+};
+
 
 /**
  * Handle token expiration with proper cleanup and redirect
  */
-export const handleTokenExpiration = (): void => {
-    refreshAccessToken();
+export const handleTokenExpiration = async (): Promise<void> => {
+    await refreshAccessToken();
 };
 
 /**

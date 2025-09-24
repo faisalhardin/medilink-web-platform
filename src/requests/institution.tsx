@@ -1,17 +1,13 @@
-import axios from "axios";
-import { INSTITUTION_PATH } from "constants/constants";
 import { getToken } from "@utils/storage";
-import { checkTokenBeforeRequest } from "@utils/requestHelper";
+import apiClient from "@utils/apiClient";
 
 
 export const GetInsitution = async () => {
     try {
-
-        checkTokenBeforeRequest();
         
         const token = getToken();
-        const response = await axios.get(
-            `${INSTITUTION_PATH}`, {
+        const response = await apiClient.get(
+            `/v1/institution`, {
                 withCredentials: true,
                 headers: {
                   Authorization: `Bearer ${token}`,

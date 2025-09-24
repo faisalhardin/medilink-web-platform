@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { isCurrentTokenExpired, setupTokenExpirationChecker } from "@utils/tokenExpiration";
+import { handleNotAuthenticated, handleTokenExpiration, isCurrentTokenExpired, setupTokenExpirationChecker } from "@utils/tokenExpiration";
 import { getAuthStatus } from "@utils/authCleanup";
 
 interface ProtectedRouteProps {
@@ -14,15 +14,17 @@ const ProtectedRoute = ({ children, fallback }: ProtectedRouteProps) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const checkAuthentication = () => {
+        const checkAuthentication = async () => {
             const authStatus = getAuthStatus();
-            
-            if (!authStatus.isAuthenticated || isCurrentTokenExpired()) {
-                // Token is expired or user is not authenticated
-                navigate('/token-expired', { replace: true });
+            if (!authStatus.isAuthenticated) {
+                handleNotAuthenticated();
                 return;
             }
+            if (authStatus.isAuthenticated && isCurrentTokenExpired()) {
+                await handleTokenExpiration();
+            }
             
+
             setIsAuthenticated(true);
             setIsChecking(false);
         };

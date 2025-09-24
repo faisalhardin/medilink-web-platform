@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { cleanAllAuthStorage, getAuthStatus } from "@utils/authCleanup";
+import { getAuthStatus } from "@utils/authCleanup";
 
 const TokenExpired = () => {
     const [countdown, setCountdown] = useState(5);
@@ -8,8 +8,6 @@ const TokenExpired = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Clean all authentication storage immediately
-        cleanAllAuthStorage();
 
         // Start countdown timer
         const timer = setInterval(() => {

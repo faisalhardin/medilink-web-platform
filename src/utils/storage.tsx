@@ -1,5 +1,5 @@
 import {jwtDecode} from "jwt-decode";
-import { JWT_TOKEN_KEY, MEDILINK_USER } from "constants/constants";
+import { JWT_TOKEN_KEY, MEDILINK_USER, REFRESH_TOKEN } from "constants/constants";
 import { JourneyPoint, ServicePoints } from "@models/journey";
 import { Id } from "types";
 
@@ -72,4 +72,12 @@ export const storeAuthentication = (token: string) : void => {
     } catch (error) {
         console.error("Failed to decode JWT:", error);
     }
+}
+
+export const storeRefreshToken = (refreshToken: string) : void => {
+    sessionStorage.setItem(REFRESH_TOKEN, refreshToken);
+}
+
+export const getRefreshToken = (): string | null => {
+    return sessionStorage.getItem(REFRESH_TOKEN);
 }
