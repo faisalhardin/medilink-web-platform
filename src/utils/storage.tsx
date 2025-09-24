@@ -13,6 +13,14 @@ export const getToken = (): string | null => {
     return sessionStorage.getItem(JWT_TOKEN_KEY);
 };
 
+export const getStorageUser = (): JwtClaims | null => {
+    const userPayload = sessionStorage.getItem(MEDILINK_USER);
+    if (userPayload) {
+        return JSON.parse(userPayload);
+    }
+    return null;
+}
+
 export const getStorageJourneyPoints = (): JourneyPoint[] => {
     const userPayload = sessionStorage.getItem(MEDILINK_USER);
     if (userPayload) {
