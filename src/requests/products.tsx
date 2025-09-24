@@ -2,8 +2,6 @@ import { CommonResponse } from "@models/common";
 import { ListOrderProductRequest, OrderProductRequest } from "@models/patient";
 import { AssignedProductRequest, InsertProductRequest, ListProductParams, Product } from "@models/product";
 import authedClient from "@utils/apiClient";
-import { getToken } from "@utils/storage"
-import axios from "axios";
 import { PATIENT_PATH, PATIENT_VISIT_PATH, PATIENT_VISIT_PRODUCT_ORDER_PATH, PRODUCT_URL_PATH } from "constants/constants";
 
 export async function InsertProduct(payload: InsertProductRequest): Promise<CommonResponse<Product>> {
