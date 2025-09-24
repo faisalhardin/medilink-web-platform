@@ -2,6 +2,7 @@ import { jwtDecode } from "jwt-decode";
 import { cleanSpecificAuthStorage } from "./authCleanup";
 import { JWT_TOKEN_KEY, REFRESH_TOKEN } from "constants/constants";
 import { RefreshToken } from "@requests/login";
+import { notifyAuthStateChanged } from "hooks/useAuthCallback";
 
 interface JwtPayload {
     exp: number;
@@ -91,6 +92,10 @@ export const refreshAccessToken = async (): Promise<boolean> => {
             if (data.refresh_token) {
                 sessionStorage.setItem(REFRESH_TOKEN, data.refresh_token);
             }
+            
+            // Notify all components that authentication state has changed
+            notifyAuthStateChanged();
+            
             return true;
         }
         return false;

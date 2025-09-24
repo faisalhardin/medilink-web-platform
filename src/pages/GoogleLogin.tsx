@@ -1,6 +1,7 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import { storeAuthentication, storeRefreshToken } from "@utils/storage";
 import { cleanSpecificAuthStorage } from "@utils/authCleanup";
+import { notifyAuthStateChanged } from "hooks/useAuthCallback";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +28,9 @@ const GoogleLogin = () => {
                     cleanSpecificAuthStorage();
                     storeAuthentication(tokenResponse.data.data.access_token);
                     storeRefreshToken(tokenResponse.data.data.refresh_token);
+                    
+                    // Notify all components that authentication state has changed
+                    notifyAuthStateChanged();
                     
                     // Redirect to home page after successful login
                     navigate('/');
