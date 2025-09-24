@@ -1,17 +1,11 @@
-import { getToken } from "@utils/storage";
-import apiClient from "@utils/apiClient";
+import authedClient from "@utils/apiClient";
 
 
 export const GetInsitution = async () => {
     try {
-        
-        const token = getToken();
-        const response = await apiClient.get(
+        const response = await authedClient.get(
             `/v1/institution`, {
                 withCredentials: true,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
               }
           );
 

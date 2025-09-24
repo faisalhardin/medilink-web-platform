@@ -77,7 +77,7 @@ export const redirectToTokenExpired = (): void => {
  */
 export const refreshAccessToken = async (): Promise<boolean> => {
     const refreshToken = sessionStorage.getItem(REFRESH_TOKEN);
-    // console.log(refreshToken);
+
     if (!refreshToken) {
         return false;
     }
@@ -125,36 +125,6 @@ export const setupTokenExpirationChecker = (): (() => void) => {
 
     // Return cleanup function
     return () => clearInterval(checkInterval);
-};
-
-/**
- * Enhanced fetch function that handles token expiration
- */
-export const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    // Check if token is expired before making request
-    if (isCurrentTokenExpired()) {
-        handleTokenExpiration();
-        throw new Error("Token expired");
-    }
-
-    const token = sessionStorage.getItem("jwtToken");
-    
-    const response = await fetch(url, {
-        ...options,
-        headers: {
-            ...options.headers,
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-    });
-
-    // Check if response indicates token expiration
-    if (response.status === 401) {
-        handleTokenExpiration();
-        throw new Error("Token expired - redirected to login");
-    }
-
-    return response;
 };
 
 /**

@@ -1,12 +1,11 @@
 import { RefreshTokenResponse } from "@models/login";
-import { getRefreshToken, getToken } from "@utils/storage";
 import axios from "axios";
-import { AUTH_URL_PATH } from "constants/constants";
+import { AUTH_URL } from "constants/constants";
 
 export async function RefreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
     try {
       const response = await axios.post(
-          `${AUTH_URL_PATH}/refresh`, 
+          `${AUTH_URL}/refresh`, 
           {
             refresh_token: refreshToken
           },

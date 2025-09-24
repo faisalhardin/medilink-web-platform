@@ -1,19 +1,14 @@
 import { JourneyPoint, JourneyBoard, RenameJourneyPointRequest, ArchiveJourneyPointRequest, CreateJourneyPointRequest } from "@models/journey"
-import { getToken } from "@utils/storage"
-import axios from "axios";
+import authedClient from "@utils/apiClient";
 import { JOURNEY_URL_PATH } from "constants/constants";
 
 export async function CreateJourneyPoint(params:CreateJourneyPointRequest): Promise<JourneyPoint> {
   try {
-    const token = getToken();
-    const response = await axios.post(
+    const response = await authedClient.post(
         `${JOURNEY_URL_PATH}/point`, 
         params,
         {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
         }
       );
     return await response.data.data;
@@ -24,15 +19,11 @@ export async function CreateJourneyPoint(params:CreateJourneyPointRequest): Prom
 
 export async function ArchiveJourneyPoint(params: ArchiveJourneyPointRequest): Promise<void> {
   try {
-    const token = getToken();
-    const response = await axios.patch(
+    const response = await authedClient.patch(
       `${JOURNEY_URL_PATH}/point/archive`,
       params,
       {
         withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
       }
     );
 
@@ -46,13 +37,9 @@ export async function ArchiveJourneyPoint(params: ArchiveJourneyPointRequest): P
 
 export async function GetJourneyPoints(boardID:number): Promise<JourneyPoint[]> {
   try {
-    const token = getToken();
-    const response = await axios.get(
+    const response = await authedClient.get(
         `${JOURNEY_URL_PATH}/board/${boardID}`, {
             withCredentials: true,
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
         }
     );
     return await response.data.data.journey_points;
@@ -63,16 +50,11 @@ export async function GetJourneyPoints(boardID:number): Promise<JourneyPoint[]> 
 
 export async function UpdateJourneyPoint(params:JourneyPoint): Promise<JourneyPoint> {
     try {
-      const token = getToken();
-      const response = await axios.patch(
+      const response = await authedClient.patch(
           `${JOURNEY_URL_PATH}/point/${params.id}`, 
           params,
           {
               withCredentials: true,
-              headers: {
-                  Authorization: `Bearer ${token}`
-              },
-              
           }
       );
       return await response.data.data.journey_points;
@@ -83,16 +65,11 @@ export async function UpdateJourneyPoint(params:JourneyPoint): Promise<JourneyPo
   
   export async function UpdateServicePoint(params:JourneyPoint): Promise<JourneyPoint> {
     try {
-      const token = getToken();
-      const response = await axios.patch(
-          `${JOURNEY_URL_PATH}/point/${params.id}`, 
+      const response = await authedClient.patch(
+        `${JOURNEY_URL_PATH}/point/${params.id}`, 
           params,
           {
-              withCredentials: true,
-              headers: {
-                  Authorization: `Bearer ${token}`
-              },
-              
+              withCredentials: true,     
           }
       );
       return await response.data.data.journey_points;
@@ -103,15 +80,10 @@ export async function UpdateJourneyPoint(params:JourneyPoint): Promise<JourneyPo
 
 export async function GetJourneyBoards(): Promise<JourneyBoard[]> {
   try {
-    const token = getToken();
-    const response = await axios.get(
-        `${JOURNEY_URL_PATH}/board`, 
+    const response = await authedClient.get(
+      `${JOURNEY_URL_PATH}/board`, 
         {
-            withCredentials: true,
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-            
+            withCredentials: true,            
         }
     );
     return await response.data.data;
@@ -122,15 +94,11 @@ export async function GetJourneyBoards(): Promise<JourneyBoard[]> {
 
 export async function RenameJourneyPoint(params:RenameJourneyPointRequest): Promise<RenameJourneyPointRequest> {
   try {
-    const token = getToken();
-    const response = await axios.patch(
+    const response = await authedClient.patch(
         `${JOURNEY_URL_PATH}/point/rename`, 
         params,
         {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
         }
       );
 
