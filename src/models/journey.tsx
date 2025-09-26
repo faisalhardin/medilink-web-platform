@@ -10,7 +10,8 @@ export type JourneyPoint = {
     name: string;
     position: number;
     board_id: number;
-} 
+    is_owned?: boolean;
+}
 
 export type CreateJourneyPointRequest = {
     name: string;
