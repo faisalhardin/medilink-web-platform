@@ -1,4 +1,4 @@
-import { JWT_TOKEN_KEY, MEDILINK_USER } from "constants/constants";
+import { JWT_TOKEN_KEY, MEDILINK_USER, REFRESH_TOKEN } from "constants/constants";
 
 /**
  * Comprehensive function to clean all authentication-related storage
@@ -7,13 +7,8 @@ import { JWT_TOKEN_KEY, MEDILINK_USER } from "constants/constants";
 export const cleanAllAuthStorage = (): void => {
     try {
         // Clean sessionStorage
-        sessionStorage.removeItem(JWT_TOKEN_KEY);
-        sessionStorage.removeItem(MEDILINK_USER);
+        cleanSpecificAuthStorage();
         
-        // Clean localStorage
-        localStorage.removeItem("jwtToken");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
         
         // Clean any other auth-related keys from localStorage
         const localStorageKeysToRemove = [];
@@ -63,9 +58,8 @@ export const cleanSpecificAuthStorage = (): void => {
         // Remove only the main auth keys
         sessionStorage.removeItem(JWT_TOKEN_KEY);
         sessionStorage.removeItem(MEDILINK_USER);
-        localStorage.removeItem("jwtToken");
-        
-        console.log("Specific authentication storage cleaned");
+        sessionStorage.removeItem(REFRESH_TOKEN);
+
     } catch (error) {
         console.error("Error cleaning specific authentication storage:", error);
         throw error;
@@ -78,8 +72,9 @@ export const cleanSpecificAuthStorage = (): void => {
 export const isUserAuthenticated = (): boolean => {
     const token = sessionStorage.getItem(JWT_TOKEN_KEY);
     const user = sessionStorage.getItem(MEDILINK_USER);
+    const refreshToken = sessionStorage.getItem(REFRESH_TOKEN);
     
-    return !!(token && user);
+    return !!(token && user && refreshToken);
 };
 
 /**

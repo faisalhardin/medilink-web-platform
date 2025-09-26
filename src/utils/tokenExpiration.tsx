@@ -1,6 +1,8 @@
 import { jwtDecode } from "jwt-decode";
-import { cleanAllAuthStorage } from "./authCleanup";
-import { JWT_TOKEN_KEY } from "constants/constants";
+import { cleanSpecificAuthStorage } from "./authCleanup";
+import { JWT_TOKEN_KEY, REFRESH_TOKEN } from "constants/constants";
+import { RefreshToken } from "@requests/login";
+import { notifyAuthStateChanged } from "hooks/useAuthCallback";
 
 interface JwtPayload {
     exp: number;
@@ -64,17 +66,55 @@ export const getTimeUntilExpiration = (token: string): number => {
  */
 export const redirectToTokenExpired = (): void => {
     // Clean storage before redirect
-    cleanAllAuthStorage();
+    cleanSpecificAuthStorage();
     
     // Redirect to token expired page
     window.location.href = '/token-expired';
 };
 
 /**
+ * Attempt to refresh the JWT token using the refresh token.
+ * Returns true if refresh was successful, false otherwise.
+ */
+export const refreshAccessToken = async (): Promise<boolean> => {
+    const refreshToken = sessionStorage.getItem(REFRESH_TOKEN);
+
+    if (!refreshToken) {
+        return false;
+    }
+
+    try {
+       const response = await RefreshToken(refreshToken);
+        const data = response;
+        if (data && data.access_token) {
+            // Store new token and (optionally) new refresh token
+            sessionStorage.setItem(JWT_TOKEN_KEY, data.access_token);
+            if (data.refresh_token) {
+                sessionStorage.setItem(REFRESH_TOKEN, data.refresh_token);
+            }
+            
+            // Notify all components that authentication state has changed
+            notifyAuthStateChanged();
+            
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error("Failed to refresh token:", error);
+        return false;
+    }
+};
+
+export const handleNotAuthenticated = (): void => {
+    redirectToTokenExpired();
+};
+
+
+/**
  * Handle token expiration with proper cleanup and redirect
  */
-export const handleTokenExpiration = (): void => {
-    redirectToTokenExpired();
+export const handleTokenExpiration = async (): Promise<void> => {
+    await refreshAccessToken();
 };
 
 /**
@@ -90,36 +130,6 @@ export const setupTokenExpirationChecker = (): (() => void) => {
 
     // Return cleanup function
     return () => clearInterval(checkInterval);
-};
-
-/**
- * Enhanced fetch function that handles token expiration
- */
-export const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    // Check if token is expired before making request
-    if (isCurrentTokenExpired()) {
-        handleTokenExpiration();
-        throw new Error("Token expired");
-    }
-
-    const token = sessionStorage.getItem("jwtToken");
-    
-    const response = await fetch(url, {
-        ...options,
-        headers: {
-            ...options.headers,
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-    });
-
-    // Check if response indicates token expiration
-    if (response.status === 401) {
-        handleTokenExpiration();
-        throw new Error("Token expired - redirected to login");
-    }
-
-    return response;
 };
 
 /**

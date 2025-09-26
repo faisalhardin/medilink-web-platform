@@ -3,9 +3,13 @@ import Login from "./Login";
 import { NavList, NavListItem } from "./NavList";
 import { GetJourneyBoards } from "@requests/journey";
 import { JourneyBoard } from "@models/journey";
+import { useAuthState } from "hooks/useAuthCallback";
+import UserComponent from "./UserComponent";
 
 
 function ColumnNav() {
+  const { isAuthenticated, isLoading } = useAuthState();
+
   return (
     <div className="bg-white border-r border-gray-200 flex-shrink-0 h-screen w-64 flex flex-col sticky top-0">
       {/* Header */}
@@ -52,7 +56,15 @@ function ColumnNav() {
       
       {/* Footer */}
       <div className="px-3 py-4 border-t border-gray-100 flex-shrink-0">
-        <Login />
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+          </div>
+        ) : isAuthenticated ? (
+          <UserComponent />
+        ) : (
+          <Login />
+        )}
       </div>
     </div>
   );

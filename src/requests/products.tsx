@@ -1,21 +1,16 @@
 import { CommonResponse } from "@models/common";
 import { ListOrderProductRequest, OrderProductRequest } from "@models/patient";
 import { AssignedProductRequest, InsertProductRequest, ListProductParams, Product } from "@models/product";
-import { getToken } from "@utils/storage"
-import axios from "axios";
+import authedClient from "@utils/apiClient";
 import { PATIENT_PATH, PATIENT_VISIT_PATH, PATIENT_VISIT_PRODUCT_ORDER_PATH, PRODUCT_URL_PATH } from "constants/constants";
 
 export async function InsertProduct(payload: InsertProductRequest): Promise<CommonResponse<Product>> {
     try {
-        const token = getToken();
-        const response = await axios.post(
+        const response = await authedClient.post(
             `${PRODUCT_URL_PATH}`,
             payload,
             {
                 withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
             }
         );
         const responseData = await response.data;
@@ -28,14 +23,10 @@ export async function InsertProduct(payload: InsertProductRequest): Promise<Comm
 
 export async function ListProducts(params?: ListProductParams): Promise<CommonResponse<Product[]>> {
     try {
-      const token = getToken();
-      const response = await axios.get(
+      const response = await authedClient.get(
           `${PRODUCT_URL_PATH}`, 
           {
               withCredentials: true,
-              headers: {
-                  Authorization: `Bearer ${token}`,
-              },
               params: params
           }
       );
@@ -51,13 +42,9 @@ export async function ListProducts(params?: ListProductParams): Promise<CommonRe
 
 export async function GetAssignedProducts(param: number) {
     try {
-        const token = getToken();
-        const response = await axios.get(
+        const response = await authedClient.get(
             `${PATIENT_PATH}`, {
                 withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
                 params: param,
             }
         );
@@ -73,15 +60,11 @@ export async function GetAssignedProducts(param: number) {
 
 export async function AssignProductToVisit(payload: AssignedProductRequest, id_dtl_patient_visit : number) {
     try {
-        const token = getToken();
-        const response = await axios.post(
+        const response = await authedClient.post(
             `${PATIENT_VISIT_PATH}/${id_dtl_patient_visit}/product`,
             payload,
             {
                 withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
             }
         );
         if (response.status >= 400) {
@@ -96,13 +79,9 @@ export async function AssignProductToVisit(payload: AssignedProductRequest, id_d
 
 export async function RemoveAssignedProduct(param: number) {
     try {
-        const token = getToken();
-        const response = await axios.get(
+        const response = await authedClient.get(
             `${PATIENT_PATH}`, {
                 withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
                 params: param,
             }
         );
@@ -118,15 +97,11 @@ export async function RemoveAssignedProduct(param: number) {
 
 export async function OrderProduct(payload: OrderProductRequest): Promise<CommonResponse<Product>> {
     try {
-        const token = getToken();
-        const response = await axios.post(
+        const response = await authedClient.post(
             `${PATIENT_VISIT_PRODUCT_ORDER_PATH}`,
             payload,
             {
                 withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
             }
         );
         const responseData = await response.data;
@@ -141,13 +116,9 @@ export async function OrderProduct(payload: OrderProductRequest): Promise<Common
 
 export async function ListOrderedProduct(param: ListOrderProductRequest) {
     try {
-        const token = getToken();
-        const response = await axios.get(
+        const response = await authedClient.get(
             `${PATIENT_VISIT_PRODUCT_ORDER_PATH}`, {
                 withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
                 params: param,
             }
         );

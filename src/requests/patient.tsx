@@ -1,22 +1,14 @@
-import axios from "axios";
 import { PATIENT_PATH, PATIENT_VISIT_DETAIL_PATH, PATIENT_VISIT_PATH } from "constants/constants";
-import { getToken } from "@utils/storage";
-import { checkTokenBeforeRequest } from "@utils/requestHelper";
 import { GetPatientParam, GetPatientVisitParam, UpsertPatientVisitDetailParam, Patient, PatientVisit, PatientVisitDetail, RegisterPatient, UpdatePatientVisitPayload, GetPatientVisitDetailedResponse, InsertPatientVisitPayload, PatientVisitDetailed } from "@models/patient";
 import { CommonResponse } from "@models/common";
 import { ArchiveJourneyPointRequest } from "@models/journey";
+import authedClient from "@utils/apiClient";
 
 export const RegisterPatientRequest = async (patientForm: RegisterPatient): Promise<Patient> => {
-    try {
-        checkTokenBeforeRequest();
-        
-        const token = getToken();
-        const response = await axios.post(
+    try {    
+        const response = await authedClient.post(
             `${PATIENT_PATH}`, patientForm, {
                 withCredentials: true,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
               }
           );
 
@@ -35,13 +27,9 @@ export const RegisterPatientRequest = async (patientForm: RegisterPatient): Prom
 
 export const ListPatients = async (param:GetPatientParam | null): Promise<Patient[]> => {
     try {
-        const token = getToken();
-        const response = await axios.get(
+        const response = await authedClient.get(
             `${PATIENT_PATH}`, {
                 withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
                 params: param,
             }
         );
@@ -60,13 +48,9 @@ export const ListPatients = async (param:GetPatientParam | null): Promise<Patien
 
 export const InsertPatientVisit = async (payload:InsertPatientVisitPayload): Promise<CommonResponse<null>> => {
     try {
-        const token = getToken();
-        const response = await axios.post(
+        const response = await authedClient.post(
             `${PATIENT_VISIT_PATH}`, payload, {
                 withCredentials: true,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
               }
           );
         const responseData = await response.data;
@@ -81,13 +65,9 @@ export const InsertPatientVisit = async (payload:InsertPatientVisitPayload): Pro
 
 export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisit[]> => {
     try {
-        const token = getToken();
-        const response = await axios.get(
+        const response = await authedClient.get(
             `${PATIENT_PATH}/${patientID}/visit`, {
                 withCredentials: true,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
               }
           );
 
@@ -106,13 +86,9 @@ export const ListVisitsByPatient = async (patientID:string): Promise<PatientVisi
 
 export const ListVisitsDetailed = async (params :GetPatientVisitParam): Promise<PatientVisitDetailed[]> => {
     try {
-        const token = getToken();
-        const response = await axios.get(
+        const response = await authedClient.get(
             `${PATIENT_VISIT_PATH}/detailed`, {
                 withCredentials: true,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
                 params: params,
               },
           );
@@ -132,16 +108,11 @@ export const ListVisitsDetailed = async (params :GetPatientVisitParam): Promise<
 
 export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Promise<PatientVisit> {
     try {
-      const token = getToken();
-      const response = await axios.patch(
+      const response = await authedClient.patch(
           `${PATIENT_VISIT_PATH}/${params.id}`, 
           params,
           {
               withCredentials: true,
-              headers: {
-                  Authorization: `Bearer ${token}`
-              },
-              
           }
       );
 
@@ -156,15 +127,10 @@ export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Prom
 
   export async function GetPatientVisitDetailedByID(patientVisitID:number): Promise<GetPatientVisitDetailedResponse> {
     try {
-      const token = getToken();
-      const response = await axios.get(
+      const response = await authedClient.get(
           `${PATIENT_VISIT_PATH}/${patientVisitID}`, 
           {
-              withCredentials: true,
-              headers: {
-                  Authorization: `Bearer ${token}`
-              },
-              
+              withCredentials: true,              
           }
       );
       if (response.status >= 400) {
@@ -178,13 +144,9 @@ export async function UpdatePatientVisit(params:UpdatePatientVisitPayload): Prom
 
 export const ListVisitsByParams = async (params:GetPatientVisitParam): Promise<PatientVisit[]> => {
     try {
-        const token = getToken();
-        const response = await axios.get(
+        const response = await authedClient.get(
             `${PATIENT_VISIT_PATH}`, {
                 withCredentials: true,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
                 params: params,
               }
           );
@@ -205,13 +167,9 @@ export const ListVisitsByParams = async (params:GetPatientVisitParam): Promise<P
 
 export const UpsertPatientVisitDetailRequest = async (patientVisitDetail: UpsertPatientVisitDetailParam): Promise<CommonResponse<PatientVisitDetail>> => {
     try {
-        const token = getToken();
-        const response = await axios.post(
+        const response = await authedClient.post(
             `${PATIENT_VISIT_DETAIL_PATH}`, patientVisitDetail, {
                 withCredentials: true,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
               }
           );
         const responseData = await response.data;
@@ -225,13 +183,9 @@ export const UpsertPatientVisitDetailRequest = async (patientVisitDetail: Upsert
 
 export const GetPatientVisitDetailRequest = async (id: number): Promise<CommonResponse<PatientVisitDetail[]>> => {
     try {
-        const token = getToken();
-        const response = await axios.get(
+        const response = await authedClient.get(
             `${PATIENT_VISIT_PATH}/${id}/detail`, {
                 withCredentials: true,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
               }
           );
           const responseData = response.data;
@@ -249,15 +203,11 @@ export const GetPatientVisitDetailRequest = async (id: number): Promise<CommonRe
 
 export async function ArchiveVisit(params:ArchiveJourneyPointRequest) {
     try {
-      const token = getToken();
-      const response = await axios.patch(
+      const response = await authedClient.patch(
           `${PATIENT_VISIT_PATH}/archive`, 
           params,
           {
             withCredentials: true,
-            headers: {
-              Authorization: `Bearer ${token}`
-            },
           }
         );
   

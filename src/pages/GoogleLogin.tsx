@@ -1,6 +1,7 @@
 import { useGoogleLogin } from "@react-oauth/google";
-import { storeAuthentication } from "@utils/storage";
-import { cleanAllAuthStorage } from "@utils/authCleanup";
+import { storeAuthentication, storeRefreshToken } from "@utils/storage";
+import { cleanSpecificAuthStorage } from "@utils/authCleanup";
+import { notifyAuthStateChanged } from "hooks/useAuthCallback";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,15 +19,18 @@ const GoogleLogin = () => {
             setError(null);
             
             try {
-                // Clean existing authentication before new login
-                cleanAllAuthStorage();
                 
                 const tokenResponse = await axios.get(
                     `${medilinkAPIURL}/v1/auth/google/callback?code=${codeResponse.code}`
                 );
                 
-                if (tokenResponse.data.data.token) {
-                    storeAuthentication(tokenResponse.data.data.token);
+                if (tokenResponse.data.data.access_token) {
+                    cleanSpecificAuthStorage();
+                    storeAuthentication(tokenResponse.data.data.access_token);
+                    storeRefreshToken(tokenResponse.data.data.refresh_token);
+                    
+                    // Notify all components that authentication state has changed
+                    notifyAuthStateChanged();
                     
                     // Redirect to home page after successful login
                     navigate('/');
@@ -49,8 +53,6 @@ const GoogleLogin = () => {
     });
 
     const handleLogin = () => {
-        // Clean storage before attempting login
-        cleanAllAuthStorage();
         googleLogin();
     };
 

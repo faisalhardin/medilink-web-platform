@@ -3,16 +3,16 @@ import { setupAxiosTokenExpirationInterceptor } from './tokenExpiration';
 import { JWT_TOKEN_KEY } from "constants/constants";
 
 // Create axios instance
-const apiClient = axios.create({
+export const authedClient = axios.create({
     baseURL: import.meta.env.VITE_MEDILINK_API_BASE_URL,
     timeout: 10000,
 });
 
 // Set up token expiration interceptor
-setupAxiosTokenExpirationInterceptor(apiClient);
+setupAxiosTokenExpirationInterceptor(authedClient);
 
 // Request interceptor to add token
-apiClient.interceptors.request.use(
+authedClient.interceptors.request.use(
     (config) => {
         const token = sessionStorage.getItem(JWT_TOKEN_KEY);
         
@@ -25,7 +25,7 @@ apiClient.interceptors.request.use(
 );
 
 // Response interceptor for error handling
-apiClient.interceptors.response.use(
+authedClient.interceptors.response.use(
     (response) => response,
     (error) => {
         // Handle network errors
@@ -52,4 +52,4 @@ apiClient.interceptors.response.use(
     }
 );
 
-export default apiClient;
+export default authedClient;
