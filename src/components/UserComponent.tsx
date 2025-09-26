@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { cleanAllAuthStorage } from '@utils/authCleanup';
 import { getStorageUser } from '@utils/storage';
 import { notifyAuthStateChanged } from 'hooks/useAuthCallback';
-import { Logout } from '@requests/login';
+import { Logout } from '@requests/authentication';
 
 const UserComponent = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -30,9 +30,9 @@ const UserComponent = () => {
     }, []);
 
     const handleLogout = async () => {
+        Logout();
         try {
-            await Logout();
-
+            
             cleanAllAuthStorage();
             // Notify all components that authentication state has changed
             notifyAuthStateChanged();
@@ -40,6 +40,7 @@ const UserComponent = () => {
         } catch (error) {
             console.error('Error logging out:', error);
         }
+       
 
     };
 
