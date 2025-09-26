@@ -1,7 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 import { cleanSpecificAuthStorage } from "./authCleanup";
 import { JWT_TOKEN_KEY, REFRESH_TOKEN } from "constants/constants";
-import { RefreshToken } from "@requests/login";
+import { RefreshToken } from "@requests/authentication";
 import { notifyAuthStateChanged } from "hooks/useAuthCallback";
 
 interface JwtPayload {
@@ -89,9 +89,7 @@ export const refreshAccessToken = async (): Promise<boolean> => {
         if (data && data.access_token) {
             // Store new token and (optionally) new refresh token
             sessionStorage.setItem(JWT_TOKEN_KEY, data.access_token);
-            if (data.refresh_token) {
-                sessionStorage.setItem(REFRESH_TOKEN, data.refresh_token);
-            }
+            sessionStorage.setItem(REFRESH_TOKEN, data.refresh_token);
             
             // Notify all components that authentication state has changed
             notifyAuthStateChanged();
@@ -141,7 +139,6 @@ export const setupAxiosTokenExpirationInterceptor = (axiosInstance: any): void =
         (config: any) => {
             if (isCurrentTokenExpired()) {
                 handleTokenExpiration();
-                return Promise.reject(new Error("Token expired"));
             }
             return config;
         },

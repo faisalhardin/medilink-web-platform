@@ -1,7 +1,6 @@
 import { RefreshTokenResponse } from "@models/login";
-import authedClient from "@utils/apiClient";
 import axios from "axios";
-import { AUTH_URL } from "constants/constants";
+import { AUTH_URL, JWT_TOKEN_KEY } from "constants/constants";
 
 export async function RefreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
     try {
@@ -19,9 +18,15 @@ export async function RefreshToken(refreshToken: string): Promise<RefreshTokenRe
 
   export async function Logout(): Promise<RefreshTokenResponse> {
     try {
-      const response = await authedClient.post(
+      const token = sessionStorage.getItem(JWT_TOKEN_KEY);
+      const response = await axios.post(
           `${AUTH_URL}/logout`, 
           {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
       return await response.data.data;
     } catch (error) {
