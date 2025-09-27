@@ -30,12 +30,6 @@ function ColumnContainer({
 }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [editValue, setEditValue] = useState(column.name);
-  const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
-  
-  useEffect(() => {
-    const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
-    setUserJourneyPoints(_userJourneyPoints);
-  }, []);
 
   // Reset editValue when column name changes
   useEffect(() => {
@@ -116,9 +110,7 @@ function ColumnContainer({
       <div
         {...attributes}
         {...listeners}
-        onClick={() => {
-          setEditMode(true);
-        }}
+        
         className="
         bg-gradient-to-r
         from-blue-500
@@ -160,7 +152,9 @@ function ColumnContainer({
             {tasks.length}
           </div>
           {!editMode && (
-            <span className="text-white font-semibold truncate">
+            <span  onClick={() => {
+              setEditMode(true);
+            }} className="w-full text-white font-semibold truncate">
               {column.name}
             </span>
           )}
@@ -227,7 +221,7 @@ function ColumnContainer({
               )}
           </SortableContext>
       </div>
-      {userJourneyPoints.has(column.id) && (
+      {column.is_owned && (
         <div
           onClick={() => {
             createTask(column.id);

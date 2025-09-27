@@ -7,16 +7,22 @@ import { ProductAssignmentPanel } from './ProductAssignmentPanel';
 import { CheckoutProduct, TrxVisitProduct,  } from '@models/product';
 import { ListOrderedProduct, OrderProduct } from '@requests/products';
 import { convertProductsToCheckoutProducts} from '@utils/common'
+import { GetJourneyPoints } from '@requests/journey';
+import { JourneyPoint } from '@models/journey';
+import { Id } from 'types';
 
 
 export interface journeyTab {
     id: string,
     name: string,
+    position: number,
     servicePointID?: number
+    is_owned: boolean,
 }
 
 export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComponentProps) => {
     const [journeyPointTab, setJourneyPointTab] = useState<journeyTab[]>([]);
+    const [boardJourneyPoints, setBoardJourneyPoints] = useState<JourneyPoint[]>([]);
     const [activeTab, setActiveTab] = useState<journeyTab>({} as journeyTab);
     const [visitDetails, setVisitDetails] = useState<VisitDetail[]>([]);
     const [patientVisit, setPatientVisit] = useState<PatientVisit>({} as PatientVisit);
@@ -50,12 +56,18 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         setActiveTab(tab);
     }
 
-    const GenerateVisitTab = (_patientVisit: GetPatientVisitDetailedResponse) => {
+    const GenerateVisitTab = async (_patientVisit: GetPatientVisitDetailedResponse, journeyPoints: JourneyPoint[] ) => {
         var setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
+        const journeyPointMap = new Map<Id, JourneyPoint>();
+        for (const jp of journeyPoints) {
+            journeyPointMap.set(jp.id, jp);
+        }
         var _activeTab: journeyTab = {
             id: _patientVisit.journey_point_id,
             name: _patientVisit.journey_point.name,
-            servicePointID: _patientVisit.service_point_id
+            position: journeyPointMap.get(_patientVisit.journey_point.id)?.position || 0,
+            servicePointID: _patientVisit.service_point_id,
+            is_owned: journeyPointMap.get(_patientVisit.journey_point.id)?.is_owned || false,
         }
         updateActiveTab(_activeTab);
         var journeyPointTabs: journeyTab[] = [
@@ -66,7 +78,9 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 setOfJourneyPointID.add(patientVisitJourneyPoint.journey_point_id);
                 journeyPointTabs.push({
                     id: patientVisitJourneyPoint.journey_point_id,
-                    name: patientVisitJourneyPoint.name_mst_journey_point
+                    name: patientVisitJourneyPoint.name_mst_journey_point,
+                    position: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.position || 0,
+                    is_owned: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.is_owned || false
                 } as journeyTab);
             }
         }
@@ -87,6 +101,16 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
     }
 
+    async function fetchBoardJourneyPoints(journeyBoardID: number): Promise<JourneyPoint[]> {
+        try {
+            const journeyPoints = await GetJourneyPoints(journeyBoardID);
+            return journeyPoints;
+        } catch (error) {
+            console.error("Error fetching board journey points:", error);
+            return [];
+        }
+    }
+
     useEffect(() => {
         fetchProducts();
     },[])
@@ -97,8 +121,10 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
                 if (patientVisit !== undefined) {
                     setPatientVisit(patientVisit);
-                    GenerateVisitTab(patientVisit);
-                    setVisitDetails(patientVisit.patient_journeypoints)
+                    const journeyPoints = await fetchBoardJourneyPoints(patientVisit.board_id);
+                    setBoardJourneyPoints(journeyPoints);
+                    GenerateVisitTab(patientVisit, journeyPoints);
+                    setVisitDetails(patientVisit.patient_journeypoints);
                     setPatient(patientVisit.patient);
                     setSelectedProducts(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
                 }
@@ -193,12 +219,12 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 </div>
                 <div className='border-b border-gray-200 mb-6 pb-2'>
                     <ul className='flex'>
-                        {journeyPointTab.map((item, idx) => {
+                        {journeyPointTab.sort((a, b) => a.position - b.position).map((item, idx) => {
                             return (
                                 <li onClick={() => {
                                     updateActiveTab(item)
                                 }} className='mr-6' key={idx}>
-                                    <a className={`pb-2 border-b-2 cursor-pointer ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-blue-600'}`}>
+                                    <a className={`pb-2 border-b-2 cursor-pointer ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-grey-8'}`}>
                                         {item.name}
                                     </a>
                                 </li>
@@ -213,6 +239,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             visitDetails={visitDetails}
                             activeTab={activeTab}
                             patientVisit={patientVisit}
+                            journeyPoints={boardJourneyPoints}
                             upsertVisitDetailFunc={upsertVisitDetail}
                             updateVisitFunc={updateProductOrder}
                         />

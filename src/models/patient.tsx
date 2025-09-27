@@ -46,7 +46,7 @@ export interface GetPatientVisitDetailedResponse {
   name: string;
   sex: string;
   id_mst_institution: number;
-  id_mst_journey_board: number;
+  board_id: number;
   journey_point_id: string;
   create_time: string;
   update_time: string;
@@ -66,8 +66,8 @@ export interface PatientVisit {
   notes: string;
   name: string;
   sex: string;
+  board_id: number;
   id_mst_institution: number;
-  id_mst_journey_board: number;
   journey_point_id: string;
   create_time: string;
   update_time: string;
