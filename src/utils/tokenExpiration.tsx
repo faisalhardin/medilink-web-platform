@@ -4,18 +4,13 @@ import { JWT_TOKEN_KEY, REFRESH_TOKEN } from "constants/constants";
 import { RefreshToken } from "@requests/authentication";
 import { notifyAuthStateChanged } from "hooks/useAuthCallback";
 
-interface JwtPayload {
-    exp: number;
-    iat: number;
-    [key: string]: any;
-}
 
 /**
  * Check if a JWT token is expired
  */
 export const isTokenExpired = (token: string): boolean => {
     try {
-        const decoded = jwtDecode<JwtPayload>(token);
+        const decoded = jwtDecode<JwtClaims>(token);
         const currentTime = Date.now() / 1000; // Convert to seconds
         return decoded.exp < currentTime;
     } catch (error) {
@@ -42,7 +37,7 @@ export const isCurrentTokenExpired = (): boolean => {
  */
 export const getTokenExpirationTime = (token: string): number | null => {
     try {
-        const decoded = jwtDecode<JwtPayload>(token);
+        const decoded = jwtDecode<JwtClaims>(token);
         return decoded.exp * 1000; // Convert to milliseconds
     } catch (error) {
         console.error("Error decoding token:", error);
@@ -97,8 +92,12 @@ export const refreshAccessToken = async (): Promise<boolean> => {
             return true;
         }
         return false;
-    } catch (error) {
-        console.error("Failed to refresh token:", error);
+    } catch (error: any) {
+
+        const redirectTo = error.response?.headers?.get?.('X-Redirect-To');
+        if (redirectTo) {
+            window.location.href = redirectTo;
+        }
         return false;
     }
 };
