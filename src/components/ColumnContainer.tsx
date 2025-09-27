@@ -30,12 +30,6 @@ function ColumnContainer({
 }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [editValue, setEditValue] = useState(column.name);
-  const [userJourneyPoints, setUserJourneyPoints] = useState<Set<Id>>(new Set());
-  
-  useEffect(() => {
-    const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
-    setUserJourneyPoints(_userJourneyPoints);
-  }, []);
 
   // Reset editValue when column name changes
   useEffect(() => {

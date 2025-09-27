@@ -4,16 +4,18 @@ import { PatientVisit, PatientVisitDetail, UpdatePatientVisitRequest, PatientVis
 import { Id } from 'types';
 import { getStorageUserJourneyPointsIDAsSet, getStorageUserServicePointsIDAsSet } from '@utils/storage';
 import { journeyTab } from './PatientVisitDetail';
+import { JourneyPoint } from '@models/journey';
 
 interface patientVisitProps {
     patientVisit: PatientVisit,
     visitDetails?: VisitDetail[],
     activeTab: journeyTab,
+    journeyPoints: JourneyPoint[],
     upsertVisitDetailFunc: (param: PatientVisitDetail) => void;
     updateVisitFunc: (params: UpdatePatientVisitRequest) => void;
 }
 
-export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, upsertVisitDetailFunc }: patientVisitProps) => {
+export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab, journeyPoints, upsertVisitDetailFunc  }: patientVisitProps) => {
     const [myVisitDetails, setMyVisitDetails] = useState<VisitDetail[]>([]);
     const [_, setOtherVisitDetails] = useState<VisitDetail[]>([]);
     const [userServicePoints, setUserServicePoints] = useState<Set<Id>>(new Set());
@@ -25,8 +27,8 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
         const _userServicePoints = getStorageUserServicePointsIDAsSet() || new Set();
         setUserServicePoints(_userServicePoints);
 
-        const _userJourneyPoints = getStorageUserJourneyPointsIDAsSet() || new Set();
-        setUserJourneyPoints(_userJourneyPoints);
+        const _userJourneyPoints = () => new Set(journeyPoints.filter(jp => jp.is_owned).map(jp => jp.id));
+        setUserJourneyPoints(_userJourneyPoints());
         const details = visitDetails == undefined? [] as VisitDetail[] : visitDetails;
         if (details.length === 0) {
             setMyVisitDetails([]);
