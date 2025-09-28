@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { handleNotAuthenticated, handleTokenExpiration, isCurrentTokenExpired, setupTokenExpirationChecker } from "@utils/tokenExpiration";
+import { handleNotAuthenticated, handleTokenExpiration, isCurrentTokenExpired } from "@utils/tokenExpiration";
 import { getAuthStatus } from "@utils/authCleanup";
 
 interface ProtectedRouteProps {

@@ -135,9 +135,10 @@ export const setupTokenExpirationChecker = (): (() => void) => {
 export const setupAxiosTokenExpirationInterceptor = (axiosInstance: any): void => {
     // Request interceptor
     axiosInstance.interceptors.request.use(
-        (config: any) => {
+        async (config: any) => {
             if (isCurrentTokenExpired()) {
-                handleTokenExpiration();
+                await handleTokenExpiration();
+                config.headers.Authorization = `Bearer ${sessionStorage.getItem(JWT_TOKEN_KEY)}`;
             }
             return config;
         },
