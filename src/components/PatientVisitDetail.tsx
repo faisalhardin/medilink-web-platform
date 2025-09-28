@@ -13,7 +13,7 @@ import { Id } from 'types';
 
 
 export interface journeyTab {
-    id: string,
+    id: Id,
     name: string,
     position: number,
     servicePointID?: number
@@ -247,7 +247,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     <div className='w-3/12'>
                         <ProductAssignmentPanel
                             patientVisit={patientVisit}
-                            journeyPointId={activeTab.id}
+                            journeyPointId={activeTab.id as string}
                             cartProducts={selectedProducts}
                             orderedProducts={trxProduct}
                             updateSelectedProducts={updateSelectedProducts}

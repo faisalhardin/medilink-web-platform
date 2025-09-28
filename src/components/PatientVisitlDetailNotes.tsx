@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { EditorComponent } from './EditorComponent';
 import { PatientVisit, PatientVisitDetail, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { Id } from 'types';
-import { getStorageUserJourneyPointsIDAsSet, getStorageUserServicePointsIDAsSet } from '@utils/storage';
+import { getStorageUserServicePointsIDAsSet } from '@utils/storage';
 import { journeyTab } from './PatientVisitDetail';
 import { JourneyPoint } from '@models/journey';
 
@@ -72,7 +72,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetails, activeTab
             if (!newNoteRef.current) {
                 newNoteRef.current = {
                     notes: notes,
-                    journey_point_id: activeTab.id,
+                    journey_point_id: activeTab.id as string,
                     id_patient_visit: patientVisit.id,
                     service_point_id: patientVisit.service_point_id,
                 };

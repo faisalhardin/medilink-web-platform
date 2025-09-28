@@ -32,12 +32,6 @@ const ProtectedRoute = ({ children, fallback }: ProtectedRouteProps) => {
         // Initial check
         checkAuthentication();
 
-        // Set up periodic token expiration checking
-        const cleanup = setupTokenExpirationChecker();
-
-        return () => {
-            cleanup();
-        };
     }, [navigate]);
 
     // Show loading state while checking
