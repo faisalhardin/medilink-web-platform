@@ -103,3 +103,12 @@ export interface CheckoutProductX {
 export interface CartItem extends CheckoutProductX {
   quantity: number;
 }
+
+export interface ResupplyProductItem {
+  product_id: number;
+  quantity: number;
+}
+
+export interface ResupplyProductRequest {
+  products: ResupplyProductItem[];
+}
