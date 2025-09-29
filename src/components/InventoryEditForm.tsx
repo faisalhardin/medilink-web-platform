@@ -1,4 +1,4 @@
-// src/components/AddInventoryForm.tsx
+// src/components/InventoryEditForm.tsx
 import React, { useState, useRef } from 'react';
 import {
   TextField,
@@ -19,29 +19,33 @@ import {
   ListItemText
 } from '@mui/material';
 import { useModal } from '../context/ModalContext';
+import { Product } from '@models/product';
 import { UNIT_TYPE_OPTIONS } from 'constants/constants';
 
-interface InventoryFormProps {
-  onSubmit: (product: any) => void;
+interface InventoryEditFormProps {
+  product: Product;
+  onSubmit: (product: Partial<Product>) => void;
   onCancel: () => void;
 }
 
-const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => {
+const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit, onCancel }) => {
   const { closeModal } = useModal();
   const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    is_item: true,
-    is_treatment: false,
-    quantity: '',
-    unit_type: '',
+    id: product.id || 0,
+    name: product.name || '',
+    price: product.price?.toString() || '',
+    is_item: product.is_item || false,
+    is_treatment: product.is_treatment || false,
+    unit_type: product.unit_type || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showRecommendations, setShowRecommendations] = useState(false);
-  const [filteredOptions, setFilteredOptions] = useState(
-    UNIT_TYPE_OPTIONS.filter(option => option.type === 'item')
-  );
+  const [filteredOptions, setFilteredOptions] = useState(() => {
+    return UNIT_TYPE_OPTIONS.filter(option => 
+      option.type === (product.is_item ? 'item' : 'treatment')
+    );
+  });
   const inputRef = useRef<HTMLDivElement>(null);
 
   // Get the appropriate unit options based on product type
@@ -80,9 +84,6 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
     if (errors.unit_type) {
       setErrors((prev) => ({ ...prev, unit_type: '' }));
     }
-    if (errors.quantity) {
-      setErrors((prev) => ({ ...prev, quantity: '' }));
-    }
   };
 
   const handleUnitTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,11 +111,12 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
   };
 
   const handleUnitTypeFocus = () => {
-    if (formData.unit_type.length > 0) {
+    const unitType = formData.unit_type ?? '';
+    if (unitType.length > 0) {
       const currentOptions = getUnitOptions();
       const filtered = currentOptions.filter(option => 
-        option.label.toLowerCase().includes(formData.unit_type.toLowerCase()) ||
-        option.value.toLowerCase().includes(formData.unit_type.toLowerCase())
+        option.label.toLowerCase().includes(unitType.toLowerCase()) ||
+        option.value.toLowerCase().includes(unitType.toLowerCase())
       );
       setFilteredOptions(filtered);
       setShowRecommendations(filtered.length > 0);
@@ -134,24 +136,16 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
-    if (!formData.name.trim()) {
+
+    if (!formData.name || !formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
-    if (formData.price && isNaN(Number(formData.price))) {
+
+    if (formData.price && isNaN(parseFloat(formData.price))) {
       newErrors.price = 'Price must be a number';
     }
     
-    if (formData.is_item) {
-      if (!formData.quantity.trim()) {
-        newErrors.quantity = 'Quantity is required for items';
-      } else if (isNaN(Number(formData.quantity)) || Number(formData.quantity) < 0) {
-        newErrors.quantity = 'Quantity must be a positive number';
-      }
-    }
-    
-    if (!formData.unit_type.trim()) {
+    if (!formData.unit_type || !formData.unit_type.trim()) {
       newErrors.unit_type = 'Unit type is required';
     }
     
@@ -163,13 +157,15 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
     e.preventDefault();
     
     if (validateForm()) {
-      const product = {
-        ...formData,
-        price: formData.price ? parseFloat(formData.price) : 0,
-        quantity: parseInt(formData.quantity, 10),
+      const updatedProduct = {
+        id: formData.id,
+        name: formData.name,
+        price: parseFloat(formData.price) || 0,
+        is_item: formData.is_item,
+        is_treatment: formData.is_treatment,
+        unit_type: formData.unit_type,
       };
-      onSubmit(product);
-
+      onSubmit(updatedProduct);
       closeModal();
     }
   };
@@ -180,12 +176,12 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
   };
 
   // Determine the selected radio value
-  const selectedType = formData.is_item ? 'item' : formData.is_treatment ? 'treatment' : 'item';
+  const selectedType = formData.is_item ? 'item' : formData.is_treatment ? 'treatment' : '';
 
   return (
     <div className="p-2">
       <Typography variant="h6" className="mb-4 font-semibold">
-        Add New Inventory Item
+        Edit Product Information
       </Typography>
       <Divider className="mb-4" />
       
@@ -218,23 +214,6 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
               helperText={errors.price}
             />
           </Grid>
-          
-          {formData.is_item && (
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Quantity"
-              name="quantity"
-              value={formData.quantity}
-              onChange={handleChange}
-              type="number"
-              required={formData.is_item}
-              error={!!errors.quantity}
-              helperText={errors.quantity}
-              disabled={!formData.is_item}
-            />
-          </Grid>
-          )}
           
           <Grid item xs={12} sm={6}>
             <Box position="relative">
@@ -328,7 +307,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
             variant="contained" 
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            Add Product
+            Update Product
           </Button>
         </Box>
       </form>
@@ -336,4 +315,4 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
   );
 };
 
-export default InventoryForm;
+export default InventoryEditForm;
