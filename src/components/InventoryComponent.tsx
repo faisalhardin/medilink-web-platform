@@ -131,7 +131,7 @@ const InventoryComponent = () => {
     setLoading(true);
     try {
       const productResponse = await ListProducts(params);
-      setProducts(productResponse.data as Product[]);
+      setProducts(productResponse as Product[]);
     } catch (error) {
       console.error("Error refetching products:", error);
       setError("Failed to refresh products");
