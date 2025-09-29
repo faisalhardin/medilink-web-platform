@@ -2,6 +2,7 @@ import ColumnNav from "@components/NavColumn";
 import Home from "@pages/Home";
 import Institution from "@pages/Institution";
 import InventoryPage from "@pages/Inventory";
+import ProductReplenishmentPage from "@pages/ProductReplenishment";
 import JourneyBoard from "@pages/JourneyBoard";
 import PatientPage from "@pages/Patient";
 import PatientDetail from "@pages/PatientDetail";
@@ -63,6 +64,11 @@ const DefaultLayout = () => {
           <Route path="/inventory" element={
             <ProtectedRoute>
               <InventoryPage/>
+            </ProtectedRoute>
+          } />
+          <Route path="/product-replenishment" element={
+            <ProtectedRoute>
+              <ProductReplenishmentPage/>
             </ProtectedRoute>
           } />
         </Routes>
