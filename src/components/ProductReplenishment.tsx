@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -24,6 +24,7 @@ import {
 import { Product } from '@models/product';
 import { ListProducts } from '@requests/products';
 import { formatPrice } from '@utils/common';
+import { ResupplyProduct } from '@requests/institution';
 
 interface ReplenishmentItem {
   id: number;
@@ -117,7 +118,7 @@ const ProductReplenishment = () => {
     setReplenishmentItems(prev => 
       prev.map(item => 
         item.id === productId 
-          ? { ...item, replenishmentQuantity: Math.max(0, quantity) }
+          ? { ...item, replenishmentQuantity: Math.max(-item.currentQuantity, quantity) }
           : item
       )
     );
@@ -139,15 +140,15 @@ const ProductReplenishment = () => {
     setReplenishmentItems(prev => 
       prev.map(item => 
         item.id === productId 
-          ? { ...item, replenishmentQuantity: Math.max(0, item.replenishmentQuantity - 1) }
+          ? { ...item, replenishmentQuantity: Math.max(-item.currentQuantity, item.replenishmentQuantity - 1) }
           : item
       )
     );
   };
 
   // Handle order submission
-  const handleMakeOrder = () => {
-    const itemsToOrder = replenishmentItems.filter(item => item.replenishmentQuantity > 0);
+  const handleMakeOrder = async () => {
+    const itemsToOrder = replenishmentItems.filter(item => item.replenishmentQuantity !== 0);
     
     if (itemsToOrder.length === 0) {
       alert('Please add items to replenish');
@@ -155,17 +156,12 @@ const ProductReplenishment = () => {
     }
     
     // Here you would typically call an API to process the replenishment order
-    console.log('Replenishment order:', itemsToOrder);
-    alert(`Order placed for ${itemsToOrder.length} items`);
+    await ResupplyProduct({products: itemsToOrder.map(item => ({product_id: item.id, quantity: item.replenishmentQuantity}))});
     
     // Clear the replenishment list after successful order
     setReplenishmentItems([]);
+    fetchProducts();
   };
-
-  // Calculate total value
-  const totalValue = replenishmentItems.reduce((sum, item) => 
-    sum + (item.price * item.replenishmentQuantity), 0
-  );
 
   return (
     <div className="p-6 w-full">
@@ -223,7 +219,11 @@ const ProductReplenishment = () => {
                     No products found
                   </Typography>
                 ) : (
-                  availableProducts.map((product) => (
+                  availableProducts
+                  .filter(product => {
+                    return !replenishmentItems.some(item => item.id === product.id);
+                  })
+                  .map((product) => (
                     <ProductCard
                       key={product.id}
                       product={product}
@@ -271,16 +271,7 @@ const ProductReplenishment = () => {
               {replenishmentItems.length > 0 && (
                 <>
                   <Divider className="mb-4" />
-                  <Box className="space-y-2">
-                    <Box className="flex justify-between items-center">
-                      <Typography variant="h6" className="font-semibold">
-                        Total Value:
-                      </Typography>
-                      <Typography variant="h6" className="font-bold text-blue-600">
-                        {formatPrice(totalValue)}
-                      </Typography>
-                    </Box>
-                    
+                  <Box className="space-y-2">                    
                     <Button
                       fullWidth
                       variant="contained"
@@ -289,7 +280,7 @@ const ProductReplenishment = () => {
                       onClick={handleMakeOrder}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
-                      Make Replenishment Order
+                      Resupply Order
                     </Button>
                   </Box>
                 </>
@@ -372,9 +363,12 @@ const ReplenishmentItemCard: React.FC<ReplenishmentItemCardProps> = ({
   }, [item.replenishmentQuantity, isEditingQuantity]);
 
   const handleQuantityChange = (value: string) => {
-    if (/^\d*$/.test(value)) {
+    // Allow negative and positive integers (including empty string)
+    if (/^-?\d*$/.test(value)) {
       setQuantityDisplayValue(value);
-      const numericValue = parseInt(value) || 0;
+      // parseInt handles negative numbers, fallback to 0 if NaN or empty
+      const numericValue = value === '' || value === '-' ? 0 : parseInt(value, 10) || 0;
+      console.log(numericValue);
       onUpdateQuantity(item.id, numericValue);
     }
   };
@@ -397,9 +391,6 @@ const ReplenishmentItemCard: React.FC<ReplenishmentItemCardProps> = ({
           <Typography variant="body2" className="text-gray-600">
             Current Stock: {item.currentQuantity} {item.unitType}
           </Typography>
-          <Typography variant="body2" className="text-gray-500">
-            {formatPrice(item.price)} per {item.unitType}
-          </Typography>
         </Box>
         
         <IconButton
@@ -415,14 +406,14 @@ const ReplenishmentItemCard: React.FC<ReplenishmentItemCardProps> = ({
       {/* Quantity Controls */}
       <Box className="flex items-center gap-2">
         <Typography variant="body2" className="text-gray-700 min-w-0">
-          Replenishment Qty:
+          Order Qty:
         </Typography>
         
         <Box className="flex items-center border rounded">
           <IconButton
             size="small"
             onClick={() => onDecrement(item.id)}
-            disabled={item.replenishmentQuantity <= 0}
+            disabled={item.replenishmentQuantity <= -item.currentQuantity}
           >
             <Remove fontSize="small" />
           </IconButton>
@@ -452,13 +443,6 @@ const ReplenishmentItemCard: React.FC<ReplenishmentItemCardProps> = ({
           {item.unitType}
         </Typography>
       </Box>
-
-      {/* Total Price */}
-      {item.replenishmentQuantity > 0 && (
-        <Typography variant="body2" className="text-blue-600 font-medium mt-2">
-          Total: {formatPrice(item.price * item.replenishmentQuantity)}
-        </Typography>
-      )}
     </Box>
   );
 };
