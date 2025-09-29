@@ -12,8 +12,9 @@ import {
 } from "@mui/icons-material";
 import { useModal } from "../context/ModalContext";
 import InventoryForm from "../components/InventoryForm";
+import InventoryEditForm from "../components/InventoryEditForm";
 import { Product } from "@models/product";
-import { InsertProduct, ListProducts } from "@requests/products";
+import { InsertProduct, ListProducts, UpdateProduct } from "@requests/products";
 import { useLocation, useNavigate } from "react-router-dom";
 import { formatPrice } from "@utils/common";
 
@@ -39,7 +40,7 @@ const InventoryComponent = () => {
       showLowStock: queryParams.get("lowStock") === "true",
       type: queryParams.get("type") || "all", // "all", "item", "treatment"
       page: parseInt(queryParams.get("page") || "1", 10),
-      limit: parseInt(queryParams.get("limit") || "9", 10), // Default to 9 if not in URL
+      limit: parseInt(queryParams.get("limit") || "10", 10), // Default to 10 if not in URL
     };
   });
   
@@ -103,10 +104,18 @@ const InventoryComponent = () => {
   const handleAddProduct = async (newProduct: Omit<Product, "id">) => {
     await InsertProduct(newProduct);
     // After adding, refetch products based on current filters
-    // The useEffect will handle the fetch when state changes, but we need to trigger a state change or refetch manually
-    // A simple way is to refetch directly after adding
-    // Alternatively, if the API returns the new product, you could add it to the state
-    // For simplicity, let's refetch all based on current filters
+    await fetchProducts();
+  };
+
+  // Handle updating a product
+  const handleUpdateProduct = async (updatedProduct: Partial<Product>) => {
+    await UpdateProduct(updatedProduct);
+    //refetch products based on current filters
+    await fetchProducts();
+  };
+
+  // Refetch products based on current filters
+  const fetchProducts = async () => {
     const params: Record<string, any> = {};
     if (searchQuery) params.name = searchQuery;
     if (filterOptions.showLowStock) params.lowStock = "true";
@@ -124,8 +133,8 @@ const InventoryComponent = () => {
       const productResponse = await ListProducts(params);
       setProducts(productResponse.data as Product[]);
     } catch (error) {
-      console.error("Error refetching products after add:", error);
-      setError("Failed to refresh products after adding");
+      console.error("Error refetching products:", error);
+      setError("Failed to refresh products");
     } finally {
       setLoading(false);
     }
@@ -136,6 +145,19 @@ const InventoryComponent = () => {
     openModal(
       <InventoryForm 
         onSubmit={handleAddProduct}
+        onCancel={() => {
+          // This will be handled by the form
+        }}
+      />
+    );
+  };
+
+  // Open the edit product modal
+  const openEditProductModal = (product: Product) => {
+    openModal(
+      <InventoryEditForm 
+        product={product}
+        onSubmit={(updatedProduct) => handleUpdateProduct(updatedProduct)}
         onCancel={() => {
           // This will be handled by the form
         }}
@@ -329,10 +351,15 @@ const InventoryComponent = () => {
                   </TableCell>
                   <TableCell>
                     <Box className="flex gap-2">
-                      <IconButton size="small" color="primary">
+                      <IconButton 
+                        size="small" 
+                        color="primary"
+                        onClick={() => openEditProductModal(product)}
+                        title="Edit Product"
+                      >
                         <Edit fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" color="error">
+                      <IconButton size="small" color="error" title="Delete Product">
                         <Delete fontSize="small" />
                       </IconButton>
                     </Box>

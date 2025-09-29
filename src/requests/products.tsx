@@ -20,6 +20,22 @@ export async function InsertProduct(payload: InsertProductRequest): Promise<Comm
     }
 }
 
+export async function UpdateProduct(payload: Partial<InsertProductRequest>): Promise<CommonResponse<any>> {
+    try {
+        const response = await authedClient.patch(
+            `${PRODUCT_URL_PATH}`,
+            payload,
+            {
+                withCredentials: true,
+            }
+        );
+        const responseData = await response.data;
+        return responseData;
+    } catch (error) {
+        throw error;
+    }
+}
+
 
 export async function ListProducts(params?: ListProductParams): Promise<CommonResponse<Product[]>> {
     try {
