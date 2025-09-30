@@ -15,7 +15,6 @@ interface EditorComponentProps {
 
 export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChange, className }: EditorComponentProps) => {
   const editorInstance = useRef<EditorJS | null>(null);
-  
   useEffect(() => {
     const initEditor = async (editorData?: any) => {
       if (!editorInstance.current) {
@@ -50,8 +49,8 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
     };
 
     const initialize = async () => {
-      if (data && data.notes) {
-        await initEditor(data.notes);
+      if (data) {
+        await initEditor(data);
       } else {
         await initEditor();
       }
@@ -66,7 +65,7 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
         editorInstance.current = null;
       }
     };
-  }, [id, readOnly, data]);
+  }, [id, readOnly]);
       
   return (
     <div >

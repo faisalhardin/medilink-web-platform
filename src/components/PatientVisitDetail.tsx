@@ -236,7 +236,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 <div className="flex">
                     <div className="w-9/12 pr-4">
                         <PatientVisitlDetailNotes
-                            visitDetails={visitDetails}
+                            visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
                             activeTab={activeTab}
                             patientVisit={patientVisit}
                             journeyPoints={boardJourneyPoints}
