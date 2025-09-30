@@ -631,7 +631,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                             <div className="bg-gray-50 rounded-lg border border-gray-200 px-2 min-h-[100px] overflow-y-auto">
                                                 <EditorComponent
                                                     id={`editor-${journeyPoint.id}`}
-                                                    data={journeyPoint}
+                                                    data={journeyPoint.notes}
                                                     onChange={(_) => {
                                                     }}
                                                     placeHolder="Jot here..."
