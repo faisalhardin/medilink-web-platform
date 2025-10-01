@@ -34,6 +34,10 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000
   },
   define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+    // Domain configuration for build-time
+    'import.meta.env.VITE_APP_DOMAIN': JSON.stringify('medianne.id'),
+    'import.meta.env.VITE_APP_WWW_DOMAIN': JSON.stringify('www.medianne.id'),
+    'import.meta.env.VITE_APP_FIREBASE_URL': JSON.stringify('medianne-web.web.app')
   }
 })
