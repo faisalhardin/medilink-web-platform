@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDownIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, XMarkIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { formatDateTimeWithOffset } from '@utils/common';
 
 
@@ -59,11 +59,24 @@ export const FilterPresetToday = {
 export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [dateRangeState, setDateRangeState] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+    isSelectingStart: boolean;
+    tempStartDate: string | null;
+  }>({
+    startDate: null,
+    endDate: null,
+    isSelectingStart: true,
+    tempStartDate: null
+  });
   const filterBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (defaultFilters) {
-      handleTimePresetSelect(defaultFilters)
+      // Apply default filters without closing dropdown
+      setActiveFilters(defaultFilters);
+      onFiltersChange?.(defaultFilters);
     }
   }, [])
 
@@ -143,19 +156,19 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (filterBarRef.current && !filterBarRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
+    // const handleClickOutside = (event: MouseEvent) => {
+    //   if (filterBarRef.current && !filterBarRef.current.contains(event.target as Node)) {
+    //     setOpenDropdown(null);
+    //   }
+    // };
 
-    if (openDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    // if (openDropdown) {
+    //   document.addEventListener('mousedown', handleClickOutside);
+    // }
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    // return () => {
+    //   document.removeEventListener('mousedown', handleClickOutside);
+    // };
   }, [openDropdown]);
 
   const handleTimePresetSelect = (preset: any) => {
@@ -172,26 +185,41 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
     handleFilterChange('timeRange', timeRange);
   };
 
-  const handleCustomDateChange = (field: 'startDate' | 'endDate', value: string) => {
-    const currentRange = activeFilters.timeRange || {};
-    const newRange: TimeRange = {
-      ...currentRange,
-      [field]: value,
-      preset: undefined, // Clear preset when using custom dates
-      label: undefined
-    };
-
-    // Generate label for custom range
-    if (newRange.startDate && newRange.endDate) {
-      newRange.label = `${newRange.startDate} to ${newRange.endDate}`;
-    } else if (newRange.startDate) {
-      newRange.label = `From ${newRange.startDate}`;
-    } else if (newRange.endDate) {
-      newRange.label = `Until ${newRange.endDate}`;
+  const handleCalendarDateClick = (selectedDate: string) => {
+    console.log('Calendar date clicked:', selectedDate, 'isSelectingStart:', dateRangeState.isSelectingStart);
+    
+    if (dateRangeState.isSelectingStart) {
+      // First click: Set start date and wait for end date
+      setDateRangeState(prev => ({
+        ...prev,
+        startDate: selectedDate,
+        tempStartDate: selectedDate,
+        isSelectingStart: false
+      }));
+    } else {
+      // Second click: Set end date and complete the range
+      const finalRange: TimeRange = {
+        startDate: dateRangeState.startDate || dateRangeState.tempStartDate || '',
+        endDate: selectedDate,
+        preset: undefined,
+        label: `${dateRangeState.startDate || dateRangeState.tempStartDate} to ${selectedDate}`
+      };
+      
+      // Apply the filter and close dropdown
+      setActiveFilters(prev => ({ ...prev, timeRange: finalRange }));
+      onFiltersChange?.({ ...activeFilters, timeRange: finalRange });
+      setOpenDropdown(null);
+      
+      // Reset state for next selection
+      setDateRangeState({
+        startDate: null,
+        endDate: null,
+        isSelectingStart: true,
+        tempStartDate: null
+      });
     }
-
-    handleFilterChange('timeRange', newRange);
   };
+
 
   const handleFilterChange = (key: string, value: any) => {
     const newFilters = { ...activeFilters, [key]: value };
@@ -214,6 +242,152 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
 
   const toggleDropdown = (key: string) => {
     setOpenDropdown(openDropdown === key ? null : key);
+  };
+
+  // Calendar component for date range selection
+  const CalendarComponent = () => {
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    
+    const getDaysInMonth = (date: Date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startingDayOfWeek = firstDay.getDay();
+      
+      const days = [];
+      
+      // Add empty cells for days before the first day of the month
+      for (let i = 0; i < startingDayOfWeek; i++) {
+        days.push(null);
+      }
+      
+      // Add days of the month
+      for (let day = 1; day <= daysInMonth; day++) {
+        days.push(day);
+      }
+      
+      return days;
+    };
+
+    const formatDateForComparison = (date: Date) => {
+      return date.toISOString().split('T')[0];
+    };
+
+    const isDateSelected = (day: number) => {
+      if (!day) return false;
+      const dateStr = formatDateForComparison(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
+      return dateRangeState.startDate === dateStr || dateRangeState.endDate === dateStr;
+    };
+
+    const isDateInRange = (day: number) => {
+      if (!day || !dateRangeState.startDate) return false;
+      const dateStr = formatDateForComparison(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
+      const startDate = new Date(dateRangeState.startDate);
+      const endDate = dateRangeState.endDate ? new Date(dateRangeState.endDate) : null;
+      const currentDate = new Date(dateStr);
+      
+      if (endDate) {
+        return currentDate >= startDate && currentDate <= endDate;
+      }
+      return false;
+    };
+
+    const handleDateClick = (day: number) => {
+      if (!day) return;
+      const dateStr = formatDateForComparison(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
+      handleCalendarDateClick(dateStr);
+    };
+
+    const navigateMonth = (direction: 'prev' | 'next') => {
+      setCurrentMonth(prev => {
+        const newMonth = new Date(prev);
+        if (direction === 'prev') {
+          newMonth.setMonth(prev.getMonth() - 1);
+        } else {
+          newMonth.setMonth(prev.getMonth() + 1);
+        }
+        return newMonth;
+      });
+    };
+
+    const days = getDaysInMonth(currentMonth);
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return (
+      <div className="w-full">
+        {/* Calendar Header */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => navigateMonth('prev')}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <ChevronLeftIcon className="h-4 w-4" />
+          </button>
+          <h3 className="text-sm font-medium">
+            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+          </h3>
+          <button
+            onClick={() => navigateMonth('next')}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <ChevronRightIcon className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Day Headers */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {dayNames.map(day => (
+            <div key={day} className="text-xs text-gray-500 text-center py-1">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar Days */}
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day, index) => (
+            <button
+              key={index}
+              onClick={() => handleDateClick(day || 0)}
+              disabled={!day}
+              className={`
+                h-8 w-8 text-xs rounded-md transition-colors
+                ${!day ? 'invisible' : ''}
+                ${isDateSelected(day || 0) 
+                  ? 'bg-blue-500 text-white font-medium' 
+                  : isDateInRange(day || 0)
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'hover:bg-gray-100 text-gray-700'
+                }
+                ${dateRangeState.isSelectingStart && day 
+                  ? 'hover:bg-blue-50' 
+                  : !dateRangeState.isSelectingStart && day
+                  ? 'hover:bg-blue-50'
+                  : ''
+                }
+              `}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
+
+        {/* Status indicator */}
+        <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
+          {dateRangeState.isSelectingStart ? (
+            <span className="text-blue-600">📅 Click to select start date</span>
+          ) : (
+            <span className="text-orange-600">📅 Click to select end date</span>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const formatFilterValue = (key: string, value: any) => {
@@ -257,55 +431,28 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
 
                 {/* Dropdown Menu */}
                 {openDropdown === config.key && (
-                  <div className="absolute top-full left-0 mt-1 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                    <div className="p-3">
+                  <div className="absolute top-full left-0 mt-1 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <div className="p-4">
                       {config.type === 'timeRange' ? (
-                        <div className="space-y-3">
-                          {(
-                            /* Custom Date Range */
-                            <div className="space-y-3">                              
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                                    Start Date
-                                  </label>
-                                  <input
-                                    type="date"
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    onChange={(e) => handleCustomDateChange('startDate', e.target.value)}
-                                    value={activeFilters.timeRange?.startDate || ''}
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                                    End Date
-                                  </label>
-                                  <input
-                                    type="date"
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    onChange={(e) => handleCustomDateChange('endDate', e.target.value)}
-                                    value={activeFilters.timeRange?.endDate || ''}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Quick preset shortcuts in custom mode */}
-                              <div className="pt-2 border-t border-gray-100">
-                                <div className="text-xs text-gray-500 mb-2">Quick Select:</div>
-                                <div className="flex flex-wrap gap-1">
-                                  {timePresets.map((preset) => (
-                                    <button
-                                      key={preset.value}
-                                      onClick={() => handleTimePresetSelect(preset)}
-                                      className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                                    >
-                                      {preset.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
+                        <div className="space-y-4">
+                          {/* Calendar Component */}
+                          <CalendarComponent />
+                          
+                          {/* Quick preset shortcuts */}
+                          <div className="pt-3 border-t border-gray-100">
+                            <div className="text-xs text-gray-500 mb-2">Quick Select:</div>
+                            <div className="flex flex-wrap gap-1">
+                              {timePresets.map((preset) => (
+                                <button
+                                  key={preset.value}
+                                  onClick={() => handleTimePresetSelect(preset)}
+                                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
                             </div>
-                          )}
+                          </div>
                         </div>
                       ) : (
                         /* Regular select options */
