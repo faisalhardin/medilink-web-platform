@@ -14,8 +14,8 @@ interface TimePreset {
   label: string;
   value: string;
   icon: string;
-  startDate: () => Date;
-  endDate: () => Date;
+  startDate: () => Date | null;
+  endDate: () => Date | null;
 }
 
 interface FilterOption {
@@ -37,7 +37,7 @@ interface FilterConfig {
 
 interface FilterBarProps {
   onFiltersChange?: (filters: Record<string, any>) => void;
-  defaultFilters?: Record<string, any>;
+  defaultFilters?: TimePreset;
 }
 
 export const FilterPresetToday = {
@@ -63,19 +63,16 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
     startDate: string | null;
     endDate: string | null;
     isSelectingStart: boolean;
-    tempStartDate: string | null;
   }>({
     startDate: null,
     endDate: null,
-    isSelectingStart: true,
-    tempStartDate: null
+    isSelectingStart: true
   });
   const filterBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (defaultFilters) {
-      // Apply default filters without closing dropdown
-      setActiveFilters(defaultFilters);
+      handleTimePresetSelect(defaultFilters as TimePreset);
       onFiltersChange?.(defaultFilters);
     }
   }, [])
@@ -171,9 +168,16 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
     // };
   }, [openDropdown]);
 
-  const handleTimePresetSelect = (preset: any) => {
-    const startDate = formatDateTimeWithOffset(preset.startDate());
-    const endDate = formatDateTimeWithOffset(preset.endDate());
+  const handleTimePresetSelect = (preset: TimePreset) => {
+    const startDateValue = preset.startDate();
+    const endDateValue = preset.endDate();
+    
+    if (!startDateValue || !endDateValue) {
+      return;
+    }
+    
+    const startDate = formatDateTimeWithOffset(startDateValue);
+    const endDate = formatDateTimeWithOffset(endDateValue);
     
     const timeRange: TimeRange = {
       preset: preset.value,
@@ -193,16 +197,24 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
       setDateRangeState(prev => ({
         ...prev,
         startDate: selectedDate,
-        tempStartDate: selectedDate,
         isSelectingStart: false
       }));
     } else {
+      console.log('Second click: Set end date and complete the range');
       // Second click: Set end date and complete the range
+      const startDate = new Date(dateRangeState.startDate!);
+      const endDate = new Date(selectedDate);
+      
+      // Ensure start date is before end date
+      const [rangeStart, rangeEnd] = startDate.getTime() < endDate.getTime()
+        ? [startDate, endDate]
+        : [endDate, startDate];
+      
       const finalRange: TimeRange = {
-        startDate: dateRangeState.startDate || dateRangeState.tempStartDate || '',
-        endDate: selectedDate,
+        startDate: rangeStart.toISOString().split('T')[0],
+        endDate: rangeEnd.toISOString().split('T')[0],
         preset: undefined,
-        label: `${dateRangeState.startDate || dateRangeState.tempStartDate} to ${selectedDate}`
+        label: `${rangeStart.toISOString().split('T')[0]} to ${rangeEnd.toISOString().split('T')[0]}`
       };
       
       // Apply the filter and close dropdown
@@ -214,8 +226,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
       setDateRangeState({
         startDate: null,
         endDate: null,
-        isSelectingStart: true,
-        tempStartDate: null
+        isSelectingStart: true
       });
     }
   };
@@ -376,15 +387,6 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
               {day}
             </button>
           ))}
-        </div>
-
-        {/* Status indicator */}
-        <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
-          {dateRangeState.isSelectingStart ? (
-            <span className="text-blue-600">📅 Click to select start date</span>
-          ) : (
-            <span className="text-orange-600">📅 Click to select end date</span>
-          )}
         </div>
       </div>
     );
