@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDownIcon, XMarkIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { formatDateTimeWithOffset } from '@utils/common';
 
 
 interface TimeRange {
@@ -176,13 +175,18 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
       return;
     }
     
-    const startDate = formatDateTimeWithOffset(startDateValue);
-    const endDate = formatDateTimeWithOffset(endDateValue);
+    // Format dates consistently for storage
+    const formatDateForStorage = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
     
     const timeRange: TimeRange = {
       preset: preset.value,
-      startDate,
-      endDate,
+      startDate: formatDateForStorage(startDateValue),
+      endDate: formatDateForStorage(endDateValue),
       label: preset.label
     };
 
@@ -211,10 +215,10 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
         : [endDate, startDate];
       
       const finalRange: TimeRange = {
-        startDate: rangeStart.toISOString().split('T')[0],
-        endDate: rangeEnd.toISOString().split('T')[0],
+        startDate: formatDateForStorage(rangeStart),
+        endDate: formatDateForStorage(rangeEnd),
         preset: undefined,
-        label: `${rangeStart.toISOString().split('T')[0]} to ${rangeEnd.toISOString().split('T')[0]}`
+        label: `${formatDateForStorage(rangeStart)} to ${formatDateForStorage(rangeEnd)}`
       };
       
       // Apply the filter and close dropdown
@@ -255,6 +259,14 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
     setOpenDropdown(openDropdown === key ? null : key);
   };
 
+  const formatDateForStorage = (date: Date) => {
+    // Format date for storage/API - use local date but in ISO format
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Calendar component for date range selection
   const CalendarComponent = () => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -283,26 +295,66 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
     };
 
     const formatDateForComparison = (date: Date) => {
-      return date.toISOString().split('T')[0];
+      // Create date in local timezone to avoid timezone shifts
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     };
+
+    const normalizeDateForComparison = (dateStr: string) => {
+      // Handle both formats: "2024-01-15" and "2024-01-15T00:00:00+07:00"
+      return dateStr.split('T')[0];
+    };
+
 
     const isDateSelected = (day: number) => {
       if (!day) return false;
       const dateStr = formatDateForComparison(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
+      
+      // Check activeFilters first (for when calendar is reopened)
+      const activeTimeRange = activeFilters.timeRange;
+      if (activeTimeRange?.startDate && activeTimeRange?.endDate) {
+        return normalizeDateForComparison(activeTimeRange.startDate) === dateStr || 
+               normalizeDateForComparison(activeTimeRange.endDate) === dateStr;
+      }
+      
+      // Check dateRangeState (for during selection)
       return dateRangeState.startDate === dateStr || dateRangeState.endDate === dateStr;
     };
 
-    const isDateInRange = (day: number) => {
-      if (!day || !dateRangeState.startDate) return false;
+
+    const getRangePosition = (day: number) => {
+      if (!day) return null;
       const dateStr = formatDateForComparison(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
-      const startDate = new Date(dateRangeState.startDate);
-      const endDate = dateRangeState.endDate ? new Date(dateRangeState.endDate) : null;
       const currentDate = new Date(dateStr);
       
-      if (endDate) {
-        return currentDate >= startDate && currentDate <= endDate;
+      // Check activeFilters first
+      const activeTimeRange = activeFilters.timeRange;
+      if (activeTimeRange?.startDate && activeTimeRange?.endDate) {
+        const startDate = new Date(activeTimeRange.startDate);
+        const endDate = new Date(activeTimeRange.endDate);
+        
+        if (currentDate >= startDate && currentDate <= endDate) {
+          if (normalizeDateForComparison(activeTimeRange.startDate) === dateStr) return 'start';
+          if (normalizeDateForComparison(activeTimeRange.endDate) === dateStr) return 'end';
+          return 'middle';
+        }
       }
-      return false;
+      
+      // Check dateRangeState
+      if (dateRangeState.startDate && dateRangeState.endDate) {
+        const startDate = new Date(dateRangeState.startDate);
+        const endDate = new Date(dateRangeState.endDate);
+        
+        if (currentDate >= startDate && currentDate <= endDate) {
+          if (dateStr === dateRangeState.startDate) return 'start';
+          if (dateStr === dateRangeState.endDate) return 'end';
+          return 'middle';
+        }
+      }
+      
+      return null;
     };
 
     const handleDateClick = (day: number) => {
@@ -361,24 +413,33 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
         </div>
 
         {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0">
           {days.map((day, index) => (
             <button
               key={index}
               onClick={() => handleDateClick(day || 0)}
               disabled={!day}
               className={`
-                h-8 w-8 text-xs rounded-md transition-colors
+                h-8 w-full text-xs transition-colors relative
                 ${!day ? 'invisible' : ''}
-                ${isDateSelected(day || 0) 
-                  ? 'bg-blue-500 text-white font-medium' 
-                  : isDateInRange(day || 0)
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'hover:bg-gray-100 text-gray-700'
-                }
-                ${dateRangeState.isSelectingStart && day 
-                  ? 'hover:bg-blue-50' 
-                  : !dateRangeState.isSelectingStart && day
+                ${(() => {
+                  const rangePosition = getRangePosition(day || 0);
+                  const isSelected = isDateSelected(day || 0);
+                  let selectedStyle = '';
+                  if (isSelected) {
+                    selectedStyle = 'bg-blue-500 text-white font-medium z-10';
+                  } 
+                  if (rangePosition === 'start') {
+                    return `${selectedStyle} rounded-r-none`;
+                  } else if (rangePosition === 'end') {
+                    return `${selectedStyle} rounded-l-none`;
+                  } else if (rangePosition === 'middle') {
+                    return 'bg-blue-100 text-blue-700 rounded-l-none rounded-r-none';
+                  } else {
+                    return 'hover:bg-gray-100 text-gray-700';
+                  }
+                })()}
+                ${!dateRangeState.isSelectingStart && day && dateRangeState.startDate
                   ? 'hover:bg-blue-50'
                   : ''
                 }
@@ -387,6 +448,17 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
               {day}
             </button>
           ))}
+        </div>
+
+        {/* Status indicator */}
+        <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
+          {activeFilters.timeRange?.startDate && activeFilters.timeRange?.endDate ? (
+            <span className="text-green-600">📅 Range selected: {activeFilters.timeRange.label}</span>
+          ) : dateRangeState.isSelectingStart ? (
+            <span className="text-blue-600">📅 Click to select start date</span>
+          ) : (
+            <span className="text-orange-600">📅 Click to select end date</span>
+          )}
         </div>
       </div>
     );
@@ -433,7 +505,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
 
                 {/* Dropdown Menu */}
                 {openDropdown === config.key && (
-                  <div className="absolute top-full left-0 mt-1 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  <div className="absolute top-full left-0 mt-1 w-96 bg-white border border-gray-200 shadow-lg z-50">
                     <div className="p-4">
                       {config.type === 'timeRange' ? (
                         <div className="space-y-4">
