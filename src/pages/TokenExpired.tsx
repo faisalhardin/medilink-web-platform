@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuthStatus } from "@utils/authCleanup";
 
@@ -6,17 +6,15 @@ const TokenExpired = () => {
     const [countdown, setCountdown] = useState(5);
     const [isRedirecting, setIsRedirecting] = useState(false);
     const navigate = useNavigate();
+    const hasNavigated = useRef(false);
 
     useEffect(() => {
-
         // Start countdown timer
         const timer = setInterval(() => {
             setCountdown((prev) => {
                 if (prev <= 1) {
                     setIsRedirecting(true);
                     clearInterval(timer);
-                    // Redirect to login page
-                    navigate('/login', { replace: true });
                     return 0;
                 }
                 return prev - 1;
@@ -24,21 +22,37 @@ const TokenExpired = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [navigate]);
+    }, []);
+
+    // Handle navigation when countdown reaches 0
+    useEffect(() => {
+        if (countdown === 0 && !hasNavigated.current) {
+            hasNavigated.current = true;
+            setIsRedirecting(true);
+            navigate('/login', { replace: true });
+        }
+    }, [countdown, navigate]);
 
     const handleRedirectNow = () => {
-        setIsRedirecting(true);
-        navigate('/login', { replace: true });
+        if (!hasNavigated.current) {
+            hasNavigated.current = true;
+            setIsRedirecting(true);
+            navigate('/login', { replace: true });
+        }
     };
 
     const handleRetry = () => {
+        if (hasNavigated.current) return;
+        
         // Check if there's still a valid token
         const authStatus = getAuthStatus();
         if (authStatus.isAuthenticated) {
             // Token might have been refreshed, go back to previous page
+            hasNavigated.current = true;
             navigate(-1);
         } else {
             // Still no valid token, go to login
+            hasNavigated.current = true;
             navigate('/login', { replace: true });
         }
     };

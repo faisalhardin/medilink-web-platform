@@ -97,6 +97,7 @@ export const refreshAccessToken = async (): Promise<boolean> => {
         const redirectTo = error.response?.headers?.get?.('X-Redirect-To');
         if (redirectTo) {
             window.location.href = redirectTo;
+            cleanSpecificAuthStorage();
         }
         return false;
     }
