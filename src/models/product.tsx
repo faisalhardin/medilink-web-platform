@@ -38,6 +38,7 @@ export interface AssignedProductRequest {
   products: CheckoutProduct[];
 }
 
+// for snapshot product purchased
 export interface CheckoutProduct {
   id: number;
   quantity: number;
