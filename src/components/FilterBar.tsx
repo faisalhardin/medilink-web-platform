@@ -202,7 +202,6 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
         isSelectingStart: false
       }));
     } else {
-      console.log('Second click: Set end date and complete the range');
       // Second click: Set end date and complete the range
       const startDate = new Date(dateRangeState.startDate!);
       const endDate = new Date(selectedDate);
