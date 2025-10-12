@@ -80,6 +80,7 @@ export interface PatientVisit {
 
 export interface PatientVisitDetailed extends PatientVisit {
   patient_journeypoints: PatientVisitDetail[];
+  products: CheckoutProduct[];
 }
 
 export interface UpdatePatientVisitRequest {

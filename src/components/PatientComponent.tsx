@@ -473,6 +473,16 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
         return isCompleted ? 'Completed' : 'In Progress';
     };
 
+    // Helper function to format currency
+    const formatCurrency = (amount: number): string => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount);
+    };
+
     if (isLoading) {
         return (
             <div className="p-6 w-full">
@@ -583,6 +593,65 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                         : isInDrawer ? 'columns-1 gap-6' : 'columns-1 md:columns-2 gap-6'
                                     }`}
                             >
+                                {/* Products Card - Show first if products exist */}
+                                {activeVisit.products && activeVisit.products.length > 0 && (
+                                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6">
+                                        {/* Card Header */}
+                                        <div className="p-4 border-b border-gray-100">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="h-8 w-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2.5 5h13a1 1 0 001-1V6H6" />
+                                                            <circle cx="9" cy="20" r="1" stroke="currentColor" strokeWidth={2} fill="none"/>
+                                                            <circle cx="17" cy="20" r="1" stroke="currentColor" strokeWidth={2} fill="none"/>
+                                                        </svg>
+                                                    </div>
+                                                    <h4 className="text-base font-semibold text-gray-900">
+                                                        Products Ordered
+                                                    </h4>
+                                                </div>
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                    {activeVisit.products.length} item{activeVisit.products.length !== 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Products List */}
+                                        <div className="p-4">
+                                            <div className="space-y-3">
+                                                {activeVisit.products.map((product) => (
+                                                    <div key={product.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                                {product.name}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {product.quantity} {product.unit_type}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm font-semibold text-gray-900">
+                                                                {formatCurrency(product.total_price)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Card Footer - Grand Total */}
+                                        <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-semibold text-gray-900">Total</span>
+                                                <span className="text-lg font-bold text-gray-900">
+                                                    {formatCurrency(activeVisit.products.reduce((sum, product) => sum + product.total_price, 0))}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {activeVisit.patient_journeypoints == undefined ? (
                                     <div className="text-center py-8">
                                         <div className="inline-flex items-center px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-500">
