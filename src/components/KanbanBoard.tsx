@@ -25,7 +25,7 @@ import { useModal } from "context/ModalContext";
 import React from "react";
 import VisitFormComponent from "./VisitForm";
 import FilterBar, { FilterPresetToday } from "./FilterBar";
-import { formatDateTimeWithOffset } from "@utils/common";
+import { formatDateForAPI, formatDateTimeWithOffset } from "@utils/common";
 
 // Function to map PatientVisit to PatientVisitTask
 function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
@@ -119,8 +119,8 @@ function KanbanBoard() {
       ...queryParams,
       journey_board_id: queryParams.journey_board_id,
       
-      from_time: filter.timeRange?.startDate || queryParams.from_time || '',
-      to_time: filter.timeRange?.endDate || queryParams.to_time || '',
+      from_time: formatDateForAPI(filter.timeRange?.startDate || queryParams.from_time || ''),
+      to_time: formatDateForAPI(filter.timeRange?.endDate || queryParams.to_time || ''),
     };
       setQueryParams(updatedParams);
 
