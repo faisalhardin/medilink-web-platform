@@ -128,3 +128,35 @@ export const formatDateTimeWithOffset = (date: Date): string => {
   
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
 }
+
+export const formatDateForAPI = (dateStr: string) => {
+  if (!dateStr) return '';
+  
+  // If it's already in ISO format with timezone, return as is
+  if (dateStr.includes('T') && (dateStr.includes('+') || dateStr.includes('Z'))) {
+    return dateStr;
+  }
+  
+  // If it's in YYYY-MM-DD format, convert to start of day with timezone offset
+  if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    
+    // Get timezone offset in minutes and convert to hours
+    const timezoneOffset = -localDate.getTimezoneOffset();
+    const offsetHours = Math.floor(Math.abs(timezoneOffset) / 60);
+    const offsetMinutes = Math.abs(timezoneOffset) % 60;
+    const offsetSign = timezoneOffset >= 0 ? '+' : '-';
+    
+    // Format as YYYY-MM-DDTHH:MM:SS+HH:MM
+    const yearStr = localDate.getFullYear();
+    const monthStr = String(localDate.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(localDate.getDate()).padStart(2, '0');
+    const hoursStr = String(localDate.getHours()).padStart(2, '0');
+    const minutesStr = String(localDate.getMinutes()).padStart(2, '0');
+    const secondsStr = String(localDate.getSeconds()).padStart(2, '0');
+    
+    return `${yearStr}-${monthStr}-${dayStr}T${hoursStr}:${minutesStr}:${secondsStr}${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
+  };
+  return dateStr;
+};

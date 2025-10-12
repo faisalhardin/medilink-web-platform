@@ -194,8 +194,6 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
   };
 
   const handleCalendarDateClick = (selectedDate: string) => {
-    console.log('Calendar date clicked:', selectedDate, 'isSelectingStart:', dateRangeState.isSelectingStart);
-    
     if (dateRangeState.isSelectingStart) {
       // First click: Set start date and wait for end date
       setDateRangeState(prev => ({
@@ -430,9 +428,10 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
                     selectedStyle = 'bg-blue-500 text-white font-medium z-10';
                   } 
                   if (rangePosition === 'start') {
-                    return `${selectedStyle} rounded-r-none`;
-                  } else if (rangePosition === 'end') {
-                    return `${selectedStyle} rounded-l-none`;
+                    return `${selectedStyle} rounded-none`;
+                  }
+                  if (rangePosition === 'end') {
+                    return `${selectedStyle}  rounded-none`;
                   } else if (rangePosition === 'middle') {
                     return 'bg-blue-100 text-blue-700 rounded-l-none rounded-r-none';
                   } else {
@@ -450,16 +449,6 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
           ))}
         </div>
 
-        {/* Status indicator */}
-        <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
-          {activeFilters.timeRange?.startDate && activeFilters.timeRange?.endDate ? (
-            <span className="text-green-600">📅 Range selected: {activeFilters.timeRange.label}</span>
-          ) : dateRangeState.isSelectingStart ? (
-            <span className="text-blue-600">📅 Click to select start date</span>
-          ) : (
-            <span className="text-orange-600">📅 Click to select end date</span>
-          )}
-        </div>
       </div>
     );
   };
