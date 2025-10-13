@@ -2,6 +2,7 @@ import EditorJS, { BlockToolConstructable } from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import EditorjsList from '@editorjs/list';
 import Paragraph from '@editorjs/paragraph';
+import DentitionTool from './editorjs-plugins/DentitionTool';
 import { useEffect, useRef } from 'react'
 
 interface EditorComponentProps {
@@ -18,19 +19,26 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
   useEffect(() => {
     const initEditor = async (editorData?: any) => {
       if (!editorInstance.current) {
-        editorInstance.current = new EditorJS({
-          holder: id,
-          tools: {
-            header: Header,
-            list: EditorjsList,
-            paragraph: {
-              class: Paragraph as BlockToolConstructable,
-              inlineToolbar: true,
-              config: {
-                preserveBlank: true,
+        try {
+          editorInstance.current = new EditorJS({
+            holder: id,
+            tools: {
+              header: Header,
+              list: EditorjsList,
+              paragraph: {
+                class: Paragraph as BlockToolConstructable,
+                inlineToolbar: true,
+                config: {
+                  preserveBlank: true,
+                },
+              },
+              dentition: {
+                class: DentitionTool,
+                config: {
+                  readOnly: readOnly,
+                },
               },
             },
-          },
           placeholder: placeHolder,
           minHeight: 14,
           readOnly,
@@ -45,6 +53,9 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
             }
           },
         });
+        } catch (error) {
+          console.error('EditorJS initialization error:', error);
+        }
       }
     };
 
