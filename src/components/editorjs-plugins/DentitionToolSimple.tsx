@@ -1,11 +1,11 @@
-import { DentitionData, ToothData } from './types';
+import { OdontogramData } from './types';
 
 interface DentitionToolConfig {
   readOnly?: boolean;
 }
 
 export default class DentitionToolSimple {
-  private data: DentitionData;
+  private data: OdontogramData;
   private config: DentitionToolConfig;
   private wrapper: HTMLElement | null = null;
 
@@ -16,7 +16,7 @@ export default class DentitionToolSimple {
     };
   }
 
-  constructor({ data, config }: { data?: DentitionData; config?: DentitionToolConfig }) {
+  constructor({ data, config }: { data?: OdontogramData; config?: DentitionToolConfig }) {
     console.log('DentitionToolSimple constructor called with:', { data, config });
     this.data = data || { teeth: {} };
     this.config = config || {};
@@ -57,7 +57,7 @@ export default class DentitionToolSimple {
     return this.data;
   }
 
-  validate(savedData: DentitionData) {
+  validate(savedData: OdontogramData) {
     if (!savedData || typeof savedData !== 'object') {
       return false;
     }

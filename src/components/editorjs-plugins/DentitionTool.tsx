@@ -1,16 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { DentitionDiagram } from './DentitionDiagram';
-import { ToothModal } from './ToothModal';
-import { DentitionData, ToothData } from './types';
-
-interface DentitionToolConfig {
-  readOnly?: boolean;
-}
+import { ToothSurfaceModal } from './ToothSurfaceModal';
+import { OdontogramData, ToothData, OdontogramToolConfig } from './types';
 
 export default class DentitionTool {
-  private data: DentitionData;
-  private config: DentitionToolConfig;
+  private data: OdontogramData;
+  private config: OdontogramToolConfig;
   private wrapper: HTMLElement | null = null;
   private root: any = null;
   private selectedToothId: string | null = null;
@@ -28,7 +24,7 @@ export default class DentitionTool {
     };
   }
 
-  constructor({ data, config }: { data?: DentitionData; config?: DentitionToolConfig }) {
+  constructor({ data, config }: { data?: OdontogramData; config?: OdontogramToolConfig }) {
     this.data = data || { teeth: {} };
     // Ensure teeth object exists even if data was provided
     if (!this.data.teeth) {
@@ -77,6 +73,15 @@ export default class DentitionTool {
       this.data.teeth = {};
     }
     
+    // Initialize tooth data if it doesn't exist
+    if (!this.data.teeth[toothData.id]) {
+      this.data.teeth[toothData.id] = {
+        id: toothData.id,
+        surfaces: []
+      };
+    }
+    
+    // Update tooth data
     this.data.teeth[toothData.id] = toothData;
     this.isModalOpen = false;
     this.selectedToothId = null;
@@ -90,10 +95,10 @@ export default class DentitionTool {
   }
 
   save() {
-    return this.data;
+    return this.data as OdontogramData;
   }
 
-  validate(savedData: DentitionData) {
+  validate(savedData: OdontogramData) {
     if (!savedData || typeof savedData !== 'object') {
       return false;
     }
@@ -111,8 +116,8 @@ export default class DentitionTool {
 }
 
 interface DentitionToolComponentProps {
-  data: DentitionData;
-  config: DentitionToolConfig;
+  data: OdontogramData;
+  config: OdontogramToolConfig;
   onToothClick: (toothId: string) => void;
   onToothSave: (toothData: ToothData) => void;
   onModalClose: () => void;
@@ -138,7 +143,7 @@ const DentitionToolComponent: React.FC<DentitionToolComponentProps> = ({
       />
       
       {isModalOpen && selectedToothId && (
-        <ToothModal
+        <ToothSurfaceModal
           toothId={selectedToothId}
           toothData={data.teeth?.[selectedToothId]}
           isOpen={isModalOpen}

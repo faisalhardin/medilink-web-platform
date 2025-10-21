@@ -1,15 +1,36 @@
-export interface ToothData {
-  id: string; // e.g., "18", "31"
-  condition?: string; // Selected condition
-  notes?: string; // Text notes
-  status?: 'normal' | 'attention' | 'urgent'; // Visual state
+// Types for the odontogram plugin
+
+import { Surface } from './odontogramCodes';
+
+// Re-export Surface for convenience
+export type { Surface } from './odontogramCodes';
+
+export interface ToothSurfaceData {
+  surface: Surface;
+  code: string; // amf, gif, car, etc.
+  condition: string; // Display name
+  color: string; // Color code
+  pattern?: 'solid' | 'hatched' | 'outline' | 'text' | 'symbol';
+  notes?: string;
 }
 
-export interface DentitionData {
+export interface ToothData {
+  id: string; // FDI: "18", "31", etc.
+  status?: string; // sou, non, une, mis, etc.
+  surfaces: ToothSurfaceData[];
+  wholeToothCode?: string; // For fmc, poc, ipx, etc.
+  generalNotes?: string;
+}
+
+export interface OdontogramData {
   teeth: { [key: string]: ToothData };
 }
 
-export interface ToothModalProps {
+export interface OdontogramToolConfig {
+  readOnly?: boolean;
+}
+
+export interface ToothSurfaceModalProps {
   toothId: string;
   toothData?: ToothData;
   isOpen: boolean;
@@ -21,6 +42,18 @@ export interface DentitionDiagramProps {
   teethData?: { [key: string]: ToothData };
   onToothClick: (toothId: string) => void;
   isEditable: boolean;
+}
+
+export interface ToothSurfaceDiagramProps {
+  toothId: string;
+  toothData?: ToothData;
+  onSurfaceClick: (surface: Surface) => void;
+  selectedSurface?: Surface;
+}
+
+export interface SurfaceIndicatorsProps {
+  toothData: ToothData;
+  toothPosition: { x: number; y: number; width: number; height: number };
 }
 
 // FDI tooth positions and names
@@ -65,20 +98,3 @@ export const TOOTH_NAMES: { [key: string]: string } = {
   '47': 'Lower Right Second Molar',
   '48': 'Lower Right Third Molar',
 };
-
-export const DENTAL_CONDITIONS = [
-  'Healthy',
-  'Cavity',
-  'Filling',
-  'Crown',
-  'Root Canal',
-  'Missing',
-  'Implant',
-  'Other'
-];
-
-export const TOOTH_STATUSES = [
-  { value: 'normal', label: 'Normal', color: 'bg-green-100 text-green-800' },
-  { value: 'attention', label: 'Attention', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-800' }
-];

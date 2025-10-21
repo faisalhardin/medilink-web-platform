@@ -1,11 +1,35 @@
 import React from 'react';
 import { DentitionDiagramProps } from './types';
+import { SurfaceIndicators } from './SurfaceIndicators';
 
 export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
   teethData = {},
   onToothClick,
   isEditable
 }) => {
+  // 5-segment tooth shape: middle rectangle (O) with trapezoid segments (M, D, V, L)
+  const getToothPath = (_toothId: string, x: number, y: number, width: number, height: number): string => {
+    const w = width;
+    const h = height;
+    
+    // Middle rectangle dimensions (Occlusal area)
+    const middleW = w * 0.6; // 60% of total width
+    const middleH = h * 0.4; // 40% of total height
+    const middleX = x + (w - middleW) / 2; // Center the middle rectangle
+    const middleY = y + (h - middleH) / 2; // Center the middle rectangle
+    
+    // Create the 5-segment shape
+    return `M ${x} ${y}
+            L ${x + w} ${y}
+            L ${x + w} ${y + h}
+            L ${x} ${y + h}
+            Z
+            M ${middleX} ${middleY}
+            L ${middleX + middleW} ${middleY}
+            L ${middleX + middleW} ${middleY + middleH}
+            L ${middleX} ${middleY + middleH}
+            Z`;
+  };
   const getToothColor = (toothId: string) => {
     if (!teethData) return '#f3f4f6'; // Default gray if no data
     const tooth = teethData[toothId];
@@ -46,50 +70,81 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     return tooth ? '2' : '1';
   };
 
+  // Helper function to calculate tooth position in proper dental chart layout
+  const getToothPosition = (index: number, _isUpper: boolean, quadrant: number) => {
+    // Uniform rectangular tooth size for all teeth
+    const width = 16;
+    const height = 20;
+    
+    // Calculate base positions for each quadrant
+    let baseX, baseY;
+    const toothSpacing = 20; // Space between teeth
+    
+    if (quadrant === 1) { // Upper Right
+      baseX = 50;
+      baseY = 30;
+    } else if (quadrant === 2) { // Upper Left  
+      baseX = 200;
+      baseY = 30;
+    } else if (quadrant === 3) { // Lower Left
+      baseX = 200;
+      baseY = 70;
+    } else { // Lower Right
+      baseX = 50;
+      baseY = 70;
+    }
+    
+    // Position teeth in a horizontal line with proper spacing
+    const x = baseX + (index * toothSpacing);
+    const y = baseY;
+    
+    return { x: x - width/2, y: y - height/2, width, height };
+  };
+
   // Generate tooth positions for upper jaw (quadrants 1 & 2)
   const upperTeeth = [
     // Quadrant 1 (Upper Right) - 18 to 11
-    { id: '18', x: 20, y: 20, width: 12, height: 16 },
-    { id: '17', x: 35, y: 20, width: 12, height: 16 },
-    { id: '16', x: 50, y: 20, width: 12, height: 16 },
-    { id: '15', x: 65, y: 20, width: 12, height: 16 },
-    { id: '14', x: 80, y: 20, width: 12, height: 16 },
-    { id: '13', x: 95, y: 20, width: 12, height: 16 },
-    { id: '12', x: 110, y: 20, width: 12, height: 16 },
-    { id: '11', x: 125, y: 20, width: 12, height: 16 },
+    { id: '18', ...getToothPosition(0, true, 1) },
+    { id: '17', ...getToothPosition(1, true, 1) },
+    { id: '16', ...getToothPosition(2, true, 1) },
+    { id: '15', ...getToothPosition(3, true, 1) },
+    { id: '14', ...getToothPosition(4, true, 1) },
+    { id: '13', ...getToothPosition(5, true, 1) },
+    { id: '12', ...getToothPosition(6, true, 1) },
+    { id: '11', ...getToothPosition(7, true, 1) },
     
     // Quadrant 2 (Upper Left) - 21 to 28
-    { id: '21', x: 155, y: 20, width: 12, height: 16 },
-    { id: '22', x: 170, y: 20, width: 12, height: 16 },
-    { id: '23', x: 185, y: 20, width: 12, height: 16 },
-    { id: '24', x: 200, y: 20, width: 12, height: 16 },
-    { id: '25', x: 215, y: 20, width: 12, height: 16 },
-    { id: '26', x: 230, y: 20, width: 12, height: 16 },
-    { id: '27', x: 245, y: 20, width: 12, height: 16 },
-    { id: '28', x: 260, y: 20, width: 12, height: 16 },
+    { id: '21', ...getToothPosition(0, true, 2) },
+    { id: '22', ...getToothPosition(1, true, 2) },
+    { id: '23', ...getToothPosition(2, true, 2) },
+    { id: '24', ...getToothPosition(3, true, 2) },
+    { id: '25', ...getToothPosition(4, true, 2) },
+    { id: '26', ...getToothPosition(5, true, 2) },
+    { id: '27', ...getToothPosition(6, true, 2) },
+    { id: '28', ...getToothPosition(7, true, 2) },
   ];
 
   // Generate tooth positions for lower jaw (quadrants 3 & 4)
   const lowerTeeth = [
     // Quadrant 3 (Lower Left) - 38 to 31
-    { id: '38', x: 20, y: 60, width: 12, height: 16 },
-    { id: '37', x: 35, y: 60, width: 12, height: 16 },
-    { id: '36', x: 50, y: 60, width: 12, height: 16 },
-    { id: '35', x: 65, y: 60, width: 12, height: 16 },
-    { id: '34', x: 80, y: 60, width: 12, height: 16 },
-    { id: '33', x: 95, y: 60, width: 12, height: 16 },
-    { id: '32', x: 110, y: 60, width: 12, height: 16 },
-    { id: '31', x: 125, y: 60, width: 12, height: 16 },
+    { id: '38', ...getToothPosition(0, false, 3) },
+    { id: '37', ...getToothPosition(1, false, 3) },
+    { id: '36', ...getToothPosition(2, false, 3) },
+    { id: '35', ...getToothPosition(3, false, 3) },
+    { id: '34', ...getToothPosition(4, false, 3) },
+    { id: '33', ...getToothPosition(5, false, 3) },
+    { id: '32', ...getToothPosition(6, false, 3) },
+    { id: '31', ...getToothPosition(7, false, 3) },
     
     // Quadrant 4 (Lower Right) - 41 to 48
-    { id: '41', x: 155, y: 60, width: 12, height: 16 },
-    { id: '42', x: 170, y: 60, width: 12, height: 16 },
-    { id: '43', x: 185, y: 60, width: 12, height: 16 },
-    { id: '44', x: 200, y: 60, width: 12, height: 16 },
-    { id: '45', x: 215, y: 60, width: 12, height: 16 },
-    { id: '46', x: 230, y: 60, width: 12, height: 16 },
-    { id: '47', x: 245, y: 60, width: 12, height: 16 },
-    { id: '48', x: 260, y: 60, width: 12, height: 16 },
+    { id: '41', ...getToothPosition(0, false, 4) },
+    { id: '42', ...getToothPosition(1, false, 4) },
+    { id: '43', ...getToothPosition(2, false, 4) },
+    { id: '44', ...getToothPosition(3, false, 4) },
+    { id: '45', ...getToothPosition(4, false, 4) },
+    { id: '46', ...getToothPosition(5, false, 4) },
+    { id: '47', ...getToothPosition(6, false, 4) },
+    { id: '48', ...getToothPosition(7, false, 4) },
   ];
 
   return (
@@ -101,23 +156,20 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
         
         <div className="overflow-x-auto">
           <svg
-            viewBox="0 0 300 100"
+            viewBox="0 0 400 100"
             className="w-full h-auto"
             style={{ minHeight: '200px' }}
           >
             {/* Upper jaw label */}
-            <text x="150" y="10" textAnchor="middle" className="text-sm font-medium fill-gray-600">
+            <text x="200" y="15" textAnchor="middle" className="text-sm font-medium fill-gray-600">
               Upper Jaw
             </text>
             
             {/* Upper jaw teeth */}
             {upperTeeth.map((tooth) => (
               <g key={tooth.id}>
-                <rect
-                  x={tooth.x}
-                  y={tooth.y}
-                  width={tooth.width}
-                  height={tooth.height}
+                <path
+                  d={getToothPath(tooth.id, tooth.x, tooth.y, tooth.width, tooth.height)}
                   fill={getToothColor(tooth.id)}
                   stroke={getToothStrokeColor(tooth.id)}
                   strokeWidth={getToothStrokeWidth(tooth.id)}
@@ -132,22 +184,27 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                 >
                   {tooth.id}
                 </text>
+                
+                {/* Surface indicators */}
+                {teethData[tooth.id] && (
+                  <SurfaceIndicators
+                    toothData={teethData[tooth.id]}
+                    toothPosition={tooth}
+                  />
+                )}
               </g>
             ))}
             
             {/* Lower jaw label */}
-            <text x="150" y="90" textAnchor="middle" className="text-sm font-medium fill-gray-600">
+            <text x="200" y="85" textAnchor="middle" className="text-sm font-medium fill-gray-600">
               Lower Jaw
             </text>
             
             {/* Lower jaw teeth */}
             {lowerTeeth.map((tooth) => (
               <g key={tooth.id}>
-                <rect
-                  x={tooth.x}
-                  y={tooth.y}
-                  width={tooth.width}
-                  height={tooth.height}
+                <path
+                  d={getToothPath(tooth.id, tooth.x, tooth.y, tooth.width, tooth.height)}
                   fill={getToothColor(tooth.id)}
                   stroke={getToothStrokeColor(tooth.id)}
                   strokeWidth={getToothStrokeWidth(tooth.id)}
@@ -162,14 +219,22 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                 >
                   {tooth.id}
                 </text>
+                
+                {/* Surface indicators */}
+                {teethData[tooth.id] && (
+                  <SurfaceIndicators
+                    toothData={teethData[tooth.id]}
+                    toothPosition={tooth}
+                  />
+                )}
               </g>
             ))}
             
             {/* Quadrant labels */}
-            <text x="10" y="15" className="text-xs fill-gray-500">Q1</text>
-            <text x="280" y="15" className="text-xs fill-gray-500">Q2</text>
-            <text x="10" y="55" className="text-xs fill-gray-500">Q3</text>
-            <text x="280" y="55" className="text-xs fill-gray-500">Q4</text>
+            <text x="20" y="25" className="text-xs fill-gray-500">Q1</text>
+            <text x="380" y="25" className="text-xs fill-gray-500">Q2</text>
+            <text x="380" y="85" className="text-xs fill-gray-500">Q3</text>
+            <text x="20" y="85" className="text-xs fill-gray-500">Q4</text>
           </svg>
         </div>
         
