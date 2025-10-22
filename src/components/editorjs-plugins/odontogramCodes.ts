@@ -414,7 +414,7 @@ export const getSurfacesForToothType = (toothType: 'incisor' | 'canine' | 'premo
   switch (toothType) {
     case 'incisor':
     case 'canine':
-      return ['M', 'I', 'D', 'V', 'L']; // No occlusal surface
+      return ['M', 'D', 'V', 'L']; // No occlusal surface
     case 'premolar':
     case 'molar':
       return ['M', 'O', 'D', 'V', 'L']; // Has occlusal surface

@@ -2,6 +2,69 @@ import React from 'react';
 import { ToothSurfaceDiagramProps, Surface } from './types';
 import { getSurfacesForToothType } from './odontogramCodes';
 
+
+const getOcclusalToothPath = () => {
+    return <path
+      d="M 50 20 L 150 20 L 150 110 L 50 110 Z 
+         M 80 50 L 120 50 L 120 80 L 80 80 Z
+         M 50 20 L 80 50 L 80 80 L 50 110 Z
+         M 80 80 L 120 80 L 150 110 L 50 110 Z
+         M 120 50 L 150 20 L 150 110 L 120 80 Z
+         M 50 20 L 80 50 L 120 50 L 150 20 Z"
+      fill="#ffffff"
+      stroke="#374151"
+      strokeWidth="2"
+    />
+  };
+
+const getIncisalToothPath = () => {
+    return <path
+              d="M 50 20 L 150 20 L 150 110 L 50 110 Z 
+              M 50 20 L 91 65 L 50 110 Z
+              M 91 65 L 109 66 L 150 110  L 50 110 Z
+              M 109 65 L 150 20  L 150 110 Z
+               M 50 20 L 91 66 L 109 66 L 150 20 Z
+              "
+              fill="#ffffff"
+              stroke="#374151"
+              strokeWidth="2"
+            />
+};
+
+const getTrapezoidPath = (area: any, surface: Surface) => {
+    const { x, y, width, height } = area;
+    
+    switch (surface) {
+      case 'V': // Vestibular - top wider
+        return `M ${x} ${y} L ${x + width} ${y} L ${x + width * 0.7} ${y + height} L ${x + width * 0.3} ${y + height} Z`;
+      case 'L': // Lingual - bottom wider  
+        return `M ${x + width * 0.3} ${y} L ${x + width * 0.7} ${y} L ${x + width} ${y + height} L ${x} ${y + height} Z`;
+      case 'M': // Mesial - left side
+        return `M ${x} ${y} L ${x + width} ${y + height * 0.33} L ${x + width} ${y + height * 0.66} L ${x} ${y + height} Z`;
+      case 'D': // Distal - right side
+        return `M ${x} ${y + height * 0.33} L ${x + width} ${y} L ${x + width} ${y + height} L ${x} ${y + height * 0.66} Z`;
+      default: // O, I - keep rectangular
+        return `M ${x} ${y} L ${x + width} ${y} L ${x + width} ${y + height} L ${x} ${y + height} Z`;
+    }
+  };
+
+const getTrianglePath = (area: any, surface: Surface) => {
+    const { x, y, width, height } = area;
+    
+    switch (surface) {
+        case 'V': // Vestibular - top wider
+          return `M ${x} ${y} L ${x + width} ${y} L ${x + width * 0.6} ${y + height} L ${x + width * 0.4} ${y + height} Z`;
+        case 'L': // Lingual - bottom wider  
+          return `M ${x + width * 0.4} ${y} L ${x + width * 0.6} ${y} L ${x + width} ${y + height} L ${x} ${y + height} Z`;
+        case 'M': // Mesial - left side
+          return `M ${x} ${y} L ${x + width * 0.8} ${y + height * 0.5} L ${x} ${y + height} Z`;
+        case 'D': // Distal - right side
+          return `M ${x + width* 0.2} ${y + height * 0.5} L ${x + width} ${y} L ${x + width} ${y + height} Z`;
+        default: // O, I - keep rectangular
+          return `M ${x} ${y} L ${x + width} ${y} L ${x + width} ${y + height} L ${x} ${y + height} Z`;
+      }
+  };
+
 export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
   toothId,
   toothData,
@@ -21,16 +84,34 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
   const toothType = getToothType(toothId);
   const applicableSurfaces = getSurfacesForToothType(toothType);
 
-  // Surface click areas for 5-segment layout - trapezoid segments around middle rectangle
-  const surfaceAreas = {
-    O: { x: 70, y: 50, width: 60, height: 50, label: 'Occlusal' }, // Middle rectangle - chewing surface
-    I: { x: 70, y: 50, width: 60, height: 0, label: 'Incisal' }, // Middle rectangle - cutting edge
-    M: { x: 50, y: 50, width: 20, height: 50, label: 'Mesial' }, // Left trapezoid segment
-    D: { x: 130, y: 50, width: 20, height: 50, label: 'Distal' }, // Right trapezoid segment
-    V: { x: 70, y: 20, width: 60, height: 30, label: 'Vestibular' }, // Top trapezoid segment
-    L: { x: 70, y: 100, width: 60, height: 30, label: 'Lingual' } // Bottom trapezoid segment
+
+
+  const surfaceAreasOcclusal = {
+    O: { x: 80, y: 50, width: 40, height: 30, label: 'Occlusal' }, // Center rectangle
+    I: { x: 80, y: 50, width: 40, height: 30, label: 'Incisal' }, // Same as Occlusal
+    M: { x: 50, y: 20, width: 30, height: 90, label: 'Mesial' }, // Left trapezoid
+    D: { x: 120, y: 20, width: 30, height: 90, label: 'Distal' }, // Right trapezoid
+    V: { x: 50, y: 20, width: 100, height: 30, label: 'Vestibular' }, // Top area
+    L: { x: 50, y: 80, width: 100, height: 30, label: 'Lingual' } // Bottom area
   };
 
+  const surfaceAreasIncisor = {
+    O: { x: 0, y: 0, width: 0, height: 0, label: 'Occlusal' }, // Center rectangle
+    I: { x: 0, y: 0, width: 0, height: 0, label: 'Incisal' }, // Same as Occlusal
+    M: { x: 50, y: 20, width: 50, height: 90, label: 'Mesial' }, // Left trapezoid
+    D: { x: 100, y: 20, width: 50, height: 90, label: 'Distal' }, // Right trapezoid
+    V: { x: 50, y: 20, width: 100, height: 45, label: 'Vestibular' }, // Top area
+    L: { x: 50, y: 66, width: 100, height: 45, label: 'Lingual' } // Bottom area
+  };
+
+  
+    const isOcclusal = (toothType: 'incisor' | 'canine' | 'premolar' | 'molar') => {
+        return toothType === 'molar' || toothType === 'premolar';
+    };
+
+    const surfaceAreas = (toothType: 'incisor' | 'canine' | 'premolar' | 'molar') => {
+        return isOcclusal(toothType) ? surfaceAreasOcclusal : surfaceAreasIncisor;
+    };
   const getSurfaceColor = (surface: Surface) => {
     if (!toothData) return '#f3f4f6';
     
@@ -69,7 +150,7 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
     <div className="w-full max-w-md mx-auto">
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <h4 className="text-lg font-semibold text-gray-900 mb-4 text-center">
-          Tooth {toothId} - Surface Selection
+            Surface Selection
         </h4>
         
         <div className="relative">
@@ -79,16 +160,10 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
             style={{ minHeight: '300px' }}
           >
             {/* 5-segment tooth outline - middle rectangle (O) with trapezoid segments (M, D, V, L) */}
-            <path
-              d="M 50 20 L 150 20 L 150 130 L 50 130 Z M 70 50 L 130 50 L 130 100 L 70 100 Z"
-              fill="#ffffff"
-              stroke="#374151"
-              strokeWidth="2"
-            />
-            
+            {isOcclusal(toothType) ?  getOcclusalToothPath() : getIncisalToothPath() }
             {/* Surface areas - only show applicable surfaces */}
             {applicableSurfaces.map(surface => {
-              const area = surfaceAreas[surface];
+              const area = surfaceAreas(toothType)[surface];
               const isMarked = isSurfaceMarked(surface as Surface);
               const isSelected = selectedSurface === surface;
               const color = getSurfaceColor(surface as Surface);
@@ -98,11 +173,8 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
                   {renderSurfacePattern(surface as Surface, area)}
                   
                   {/* Surface clickable area */}
-                  <rect
-                    x={area.x}
-                    y={area.y}
-                    width={area.width}
-                    height={area.height}
+                  <path
+                   d={ isOcclusal(toothType) ? getTrapezoidPath(area, surface as Surface) :getTrianglePath(area, surface as Surface)}
                     fill={isMarked ? color : 'transparent'}
                     fillOpacity={isMarked ? 0.7 : 0}
                     stroke={isSelected ? '#3b82f6' : isMarked ? '#000' : '#d1d5db'}
@@ -114,12 +186,12 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
                   
                   {/* Surface label */}
                   <text
-                    x={area.x + area.width / 2}
+                    x={area.x + (area.width / 2) + (!isOcclusal(toothType) ? (surface === 'M' ? -1 : surface === 'D' ? 1 : 0) * 10 : 0)}
                     y={area.y + area.height / 2}
                     textAnchor="middle"
                     className="text-xs font-medium fill-gray-700 pointer-events-none"
                   >
-                    {surface}
+                    {surface }
                   </text>
                   
                   {/* Pattern overlay for hatched surfaces */}
@@ -135,24 +207,14 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
                   )}
                 </g>
               );
-            })}
-            
-            {/* Tooth number in center */}
-            <text
-              x="100"
-              y="90"
-              textAnchor="middle"
-              className="text-lg font-bold fill-gray-900"
-            >
-              {toothId}
-            </text>
+            })}   
           </svg>
         </div>
         
         {/* Surface legend - only show applicable surfaces */}
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           {applicableSurfaces.map(surface => {
-            const area = surfaceAreas[surface];
+            const area = surfaceAreas(toothType)[surface];
             return (
               <div
                 key={surface}
