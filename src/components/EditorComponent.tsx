@@ -48,8 +48,14 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
           },
           onChange: async () => {
             if (onChange) {
-              const savedData = await editorInstance.current?.save();
-              onChange(savedData);
+              try {
+                const savedData = await editorInstance.current?.save();
+                // Add a small delay to ensure EditorJS state is fully updated
+                await new Promise(resolve => setTimeout(resolve, 0));
+                onChange(savedData);
+              } catch (error) {
+                console.error('Error saving editor data:', error);
+              }
             }
           },
         });

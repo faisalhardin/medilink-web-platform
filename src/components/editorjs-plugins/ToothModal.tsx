@@ -1,5 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { ToothModalProps, DENTAL_CONDITIONS, TOOTH_STATUSES, TOOTH_NAMES } from './types';
+import { ToothData, TOOTH_NAMES } from './types';
+
+// Define the missing types and constants
+interface ToothModalProps {
+  toothId: string;
+  toothData?: ToothData;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (toothData: ToothData) => void;
+}
+
+const DENTAL_CONDITIONS = [
+  'Healthy',
+  'Cavity',
+  'Filling',
+  'Crown',
+  'Bridge',
+  'Implant',
+  'Missing',
+  'Root Canal',
+  'Extraction Needed',
+  'Other'
+];
+
+const TOOTH_STATUSES = [
+  { value: 'normal', label: 'Normal', color: 'bg-green-100 text-green-800' },
+  { value: 'attention', label: 'Attention', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-800' }
+];
 
 export const ToothModal: React.FC<ToothModalProps> = ({
   toothId,
@@ -8,15 +36,15 @@ export const ToothModal: React.FC<ToothModalProps> = ({
   onClose,
   onSave
 }) => {
-  const [condition, setCondition] = useState(toothData?.condition || '');
-  const [notes, setNotes] = useState(toothData?.notes || '');
-  const [status, setStatus] = useState<'normal' | 'attention' | 'urgent'>(toothData?.status || 'normal');
+  const [condition, setCondition] = useState('');
+  const [notes, setNotes] = useState('');
+  const [status, setStatus] = useState<'normal' | 'attention' | 'urgent'>('normal');
 
   useEffect(() => {
     if (toothData) {
-      setCondition(toothData.condition || '');
-      setNotes(toothData.notes || '');
-      setStatus(toothData.status || 'normal');
+      setCondition(toothData.wholeToothCode || '');
+      setNotes(toothData.generalNotes || '');
+      setStatus((toothData.status as 'normal' | 'attention' | 'urgent') || 'normal');
     } else {
       setCondition('');
       setNotes('');
@@ -25,11 +53,12 @@ export const ToothModal: React.FC<ToothModalProps> = ({
   }, [toothData]);
 
   const handleSave = () => {
-    const updatedToothData = {
+    const updatedToothData: ToothData = {
       id: toothId,
-      condition: condition || undefined,
-      notes: notes || undefined,
-      status: status
+      status: status,
+      surfaces: toothData?.surfaces || [],
+      wholeToothCode: condition || undefined,
+      generalNotes: notes || undefined
     };
     onSave(updatedToothData);
     onClose();
@@ -77,7 +106,7 @@ export const ToothModal: React.FC<ToothModalProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
               <option value="">Select condition</option>
-              {DENTAL_CONDITIONS.map((cond) => (
+              {DENTAL_CONDITIONS.map((cond: string) => (
                 <option key={cond} value={cond}>
                   {cond}
                 </option>
@@ -91,7 +120,7 @@ export const ToothModal: React.FC<ToothModalProps> = ({
               Status
             </label>
             <div className="flex space-x-2">
-              {TOOTH_STATUSES.map((statusOption) => (
+              {TOOTH_STATUSES.map((statusOption: { value: string; label: string; color: string }) => (
                 <button
                   key={statusOption.value}
                   onClick={() => setStatus(statusOption.value as 'normal' | 'attention' | 'urgent')}
