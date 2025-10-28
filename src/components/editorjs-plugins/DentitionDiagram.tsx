@@ -84,10 +84,10 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
       baseX = 50;
       baseY = 30;
     } else if (quadrant === 2) { // Upper Left  
-      baseX = 200;
+      baseX = 210;
       baseY = 30;
     } else if (quadrant === 3) { // Lower Left
-      baseX = 200;
+      baseX = 210;
       baseY = 70;
     } else { // Lower Right
       baseX = 50;
@@ -160,10 +160,10 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
             className="w-full h-auto"
             style={{ minHeight: '200px' }}
           >
-            {/* Upper jaw label */}
-            <text x="200" y="15" textAnchor="middle" className="text-sm font-medium fill-gray-600">
-              Upper Jaw
-            </text>
+            <polygon
+              points="196,7 204,7 200,17"
+              fill="#64748b"
+            />
             
             {/* Upper jaw teeth */}
             {upperTeeth.map((tooth) => (
@@ -178,9 +178,9 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                 />
                 <text
                   x={tooth.x + tooth.width / 2}
-                  y={tooth.y + tooth.height / 2 + 2}
+                  y={tooth.y + tooth.height - 25}
                   textAnchor="middle"
-                  className="text-xs font-medium fill-gray-700"
+                  className="text-xxs font-medium fill-gray-700"
                 >
                   {tooth.id}
                 </text>
@@ -194,13 +194,11 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                 )}
               </g>
             ))}
-            
-            {/* Lower jaw label */}
-            <text x="200" y="85" textAnchor="middle" className="text-sm font-medium fill-gray-600">
-              Lower Jaw
-            </text>
+            {/* Lower jaw arrow */}
+           
             
             {/* Lower jaw teeth */}
+            
             {lowerTeeth.map((tooth) => (
               <g key={tooth.id}>
                 <path
@@ -213,9 +211,9 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                 />
                 <text
                   x={tooth.x + tooth.width / 2}
-                  y={tooth.y + tooth.height / 2 + 2}
+                  y={tooth.y + tooth.height + 10}
                   textAnchor="middle"
-                  className="text-xs font-medium fill-gray-700"
+                  className="text-xxs font-medium fill-gray-700"
                 >
                   {tooth.id}
                 </text>
@@ -229,12 +227,11 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                 )}
               </g>
             ))}
+             <polygon
+              points="196,93 204,93 200,83"
+              fill="#64748b"
+            />
             
-            {/* Quadrant labels */}
-            <text x="20" y="25" className="text-xs fill-gray-500">Q1</text>
-            <text x="380" y="25" className="text-xs fill-gray-500">Q2</text>
-            <text x="380" y="85" className="text-xs fill-gray-500">Q3</text>
-            <text x="20" y="85" className="text-xs fill-gray-500">Q4</text>
           </svg>
         </div>
         

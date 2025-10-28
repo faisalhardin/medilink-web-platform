@@ -575,3 +575,8 @@ img.ProseMirror-separator {
 .product-panel-item-m-font {
   @apply font-light;
 }
+
+.text-xxs {
+  font-size: 8px;
+  line-height: 10px;
+}
