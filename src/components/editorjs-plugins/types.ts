@@ -16,9 +16,9 @@ export interface ToothSurfaceData {
 
 export interface ToothData {
   id: string; // FDI: "18", "31", etc.
-  status?: string; // sou, non, une, mis, etc.
+  status?: string; // Deprecated: Use wholeToothCode instead. Kept for backward compatibility.
   surfaces: ToothSurfaceData[];
-  wholeToothCode?: string; // For fmc, poc, ipx, etc.
+  wholeToothCode?: string; // Whole tooth condition code (e.g., une, mis, ipx, fmc, etc.)
   generalNotes?: string;
 }
 

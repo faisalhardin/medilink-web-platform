@@ -1,14 +1,25 @@
 import React from 'react';
-import { DentitionDiagramProps } from './types';
+import { DentitionDiagramProps, Surface } from './types';
 import { SurfaceIndicators } from './SurfaceIndicators';
+import { getSurfacesForToothType } from './odontogramCodes';
 
 export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
   teethData = {},
   onToothClick,
   isEditable
 }) => {
-  // 5-segment tooth shape: middle rectangle (O) with trapezoid segments (M, D, V, L)
-  const getToothPath = (_toothId: string, x: number, y: number, width: number, height: number): string => {
+  // Determine tooth type based on tooth ID
+  const getToothType = (toothId: string): 'incisor' | 'canine' | 'premolar' | 'molar' => {
+    const toothNum = parseInt(toothId);
+    const toothNumMod = toothNum % 10;
+    if (toothNumMod <= 2) return 'incisor';
+    if (toothNumMod === 3) return 'canine';
+    if (toothNumMod <= 5) return 'premolar';
+    return 'molar';
+  };
+
+  // Generate individual surface segment paths for occlusal teeth (molars/premolars)
+  const getOcclusalToothSegments = (x: number, y: number, width: number, height: number) => {
     const w = width;
     const h = height;
     
@@ -18,56 +29,40 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     const middleX = x + (w - middleW) / 2; // Center the middle rectangle
     const middleY = y + (h - middleH) / 2; // Center the middle rectangle
     
-    // Create the 5-segment shape
-    return `M ${x} ${y}
-            L ${x + w} ${y}
-            L ${x + w} ${y + h}
-            L ${x} ${y + h}
-            Z
-            M ${middleX} ${middleY}
-            L ${middleX + middleW} ${middleY}
-            L ${middleX + middleW} ${middleY + middleH}
-            L ${middleX} ${middleY + middleH}
-            Z`;
-  };
-  const getToothColor = (toothId: string) => {
-    if (!teethData) return '#f3f4f6'; // Default gray if no data
-    const tooth = teethData[toothId];
-    if (!tooth) return '#f3f4f6'; // Default gray
-    
-    switch (tooth.status) {
-      case 'urgent':
-        return '#fecaca'; // Red
-      case 'attention':
-        return '#fde68a'; // Yellow
-      case 'normal':
-        return '#d1fae5'; // Green
-      default:
-        return '#dbeafe'; // Blue
-    }
+    return {
+      M: `M ${x} ${y} L ${middleX} ${middleY} L ${middleX} ${middleY + middleH} L ${x} ${y + h} Z`, // Left trapezoid
+      O: `M ${middleX} ${middleY} L ${middleX + middleW} ${middleY} L ${middleX + middleW} ${middleY + middleH} L ${middleX} ${middleY + middleH} Z`, // Center rectangle
+      D: `M ${middleX + middleW} ${middleY} L ${x + w} ${y} L ${x + w} ${y + h} L ${middleX + middleW} ${middleY + middleH} Z`, // Right trapezoid
+      V: `M ${x} ${y} L ${x + w} ${y} L ${middleX + middleW} ${middleY} L ${middleX} ${middleY} Z`, // Top trapezoid
+      L: `M ${middleX} ${middleY + middleH} L ${middleX + middleW} ${middleY + middleH} L ${x + w} ${y + h} L ${x} ${y + h} Z` // Bottom trapezoid
+    };
   };
 
-  const getToothStrokeColor = (toothId: string) => {
-    if (!teethData) return '#9ca3af'; // Default gray stroke if no data
-    const tooth = teethData[toothId];
-    if (!tooth) return '#9ca3af'; // Default gray stroke
+  // Generate individual surface segment paths for incisal teeth (incisors/canines) - NO middle segment
+  const getIncisalToothSegments = (x: number, y: number, width: number, height: number) => {
+    const w = width;
+    const h = height;
     
-    switch (tooth.status) {
-      case 'urgent':
-        return '#dc2626'; // Red
-      case 'attention':
-        return '#d97706'; // Yellow
-      case 'normal':
-        return '#059669'; // Green
-      default:
-        return '#2563eb'; // Blue
-    }
+    // For incisors/canines, we create 4 trapezoid segments without a middle rectangle
+    const centerX = x + w / 2;
+    const centerY = y + h / 2;
+    
+    return {
+      M: `M ${x} ${y} L ${centerX - w * 0.1} ${centerY} L ${centerX - w * 0.1} ${y + h} L ${x} ${y + h} Z`, // Left trapezoid
+      D: `M ${centerX + w * 0.1} ${centerY} L ${x + w} ${y} L ${x + w} ${y + h} L ${centerX + w * 0.1} ${y + h} Z`, // Right trapezoid
+      V: `M ${x} ${y} L ${x + w} ${y} L ${centerX + w * 0.1} ${centerY} L ${centerX - w * 0.1} ${centerY} Z`, // Top trapezoid
+      L: `M ${centerX - w * 0.1} ${centerY} L ${centerX + w * 0.1} ${centerY} L ${x + w} ${y + h} L ${x} ${y + h} Z` // Bottom trapezoid
+    };
   };
 
-  const getToothStrokeWidth = (toothId: string) => {
-    if (!teethData) return '1'; // Default stroke width if no data
+  // Get surface color for a specific tooth surface
+  const getSurfaceColor = (toothId: string, surface: Surface): string => {
+    if (!teethData) return '#ffffff';
     const tooth = teethData[toothId];
-    return tooth ? '2' : '1';
+    if (!tooth) return '#ffffff';
+    
+    const surfaceData = tooth.surfaces.find(s => s.surface === surface);
+    return surfaceData ? surfaceData.color : '#ffffff';
   };
 
   // Helper function to calculate tooth position in proper dental chart layout
@@ -125,26 +120,27 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
   ];
 
   // Generate tooth positions for lower jaw (quadrants 3 & 4)
+  // Arranged left to right: 48, 47, ..., 41, 31, ..., 38
   const lowerTeeth = [
-    // Quadrant 3 (Lower Left) - 38 to 31
-    { id: '38', ...getToothPosition(0, false, 3) },
-    { id: '37', ...getToothPosition(1, false, 3) },
-    { id: '36', ...getToothPosition(2, false, 3) },
-    { id: '35', ...getToothPosition(3, false, 3) },
-    { id: '34', ...getToothPosition(4, false, 3) },
-    { id: '33', ...getToothPosition(5, false, 3) },
-    { id: '32', ...getToothPosition(6, false, 3) },
-    { id: '31', ...getToothPosition(7, false, 3) },
+    // Quadrant 4 (Lower Right) - 48 to 41 (left to right, back to front)
+    { id: '48', ...getToothPosition(0, false, 4) },
+    { id: '47', ...getToothPosition(1, false, 4) },
+    { id: '46', ...getToothPosition(2, false, 4) },
+    { id: '45', ...getToothPosition(3, false, 4) },
+    { id: '44', ...getToothPosition(4, false, 4) },
+    { id: '43', ...getToothPosition(5, false, 4) },
+    { id: '42', ...getToothPosition(6, false, 4) },
+    { id: '41', ...getToothPosition(7, false, 4) },
     
-    // Quadrant 4 (Lower Right) - 41 to 48
-    { id: '41', ...getToothPosition(0, false, 4) },
-    { id: '42', ...getToothPosition(1, false, 4) },
-    { id: '43', ...getToothPosition(2, false, 4) },
-    { id: '44', ...getToothPosition(3, false, 4) },
-    { id: '45', ...getToothPosition(4, false, 4) },
-    { id: '46', ...getToothPosition(5, false, 4) },
-    { id: '47', ...getToothPosition(6, false, 4) },
-    { id: '48', ...getToothPosition(7, false, 4) },
+    // Quadrant 3 (Lower Left) - 31 to 38 (left to right, front to back)
+    { id: '31', ...getToothPosition(0, false, 3) },
+    { id: '32', ...getToothPosition(1, false, 3) },
+    { id: '33', ...getToothPosition(2, false, 3) },
+    { id: '34', ...getToothPosition(3, false, 3) },
+    { id: '35', ...getToothPosition(4, false, 3) },
+    { id: '36', ...getToothPosition(5, false, 3) },
+    { id: '37', ...getToothPosition(6, false, 3) },
+    { id: '38', ...getToothPosition(7, false, 3) },
   ];
 
   return (
@@ -166,67 +162,112 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
             />
             
             {/* Upper jaw teeth */}
-            {upperTeeth.map((tooth) => (
-              <g key={tooth.id}>
-                <path
-                  d={getToothPath(tooth.id, tooth.x, tooth.y, tooth.width, tooth.height)}
-                  fill={getToothColor(tooth.id)}
-                  stroke={getToothStrokeColor(tooth.id)}
-                  strokeWidth={getToothStrokeWidth(tooth.id)}
-                  className={isEditable ? 'cursor-pointer hover:opacity-80' : ''}
-                  onClick={() => isEditable && onToothClick(tooth.id)}
-                />
-                <text
-                  x={tooth.x + tooth.width / 2}
-                  y={tooth.y + tooth.height - 25}
-                  textAnchor="middle"
-                  className="text-xxs font-medium fill-gray-700"
-                >
-                  {tooth.id}
-                </text>
-                
-                {/* Surface indicators */}
-                {teethData[tooth.id] && (
-                  <SurfaceIndicators
-                    toothData={teethData[tooth.id]}
-                    toothPosition={tooth}
+            {upperTeeth.map((tooth) => {
+              const toothType = getToothType(tooth.id);
+              const applicableSurfaces = getSurfacesForToothType(toothType);
+              const segments = toothType === 'incisor' || toothType === 'canine' 
+                ? getIncisalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height)
+                : getOcclusalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height);
+              
+              return (
+                <g key={tooth.id}>
+                  {/* Render individual surface segments */}
+                  {applicableSurfaces.map(surface => (
+                    <path
+                      key={surface}
+                      d={segments[surface as keyof typeof segments]}
+                      fill={getSurfaceColor(tooth.id, surface as Surface)}
+                      stroke="#374151"
+                      strokeWidth="0.5"
+                      className="pointer-events-none"
+                    />
+                  ))}
+                  
+                  {/* Clickable overlay for tooth interaction */}
+                  <rect
+                    x={tooth.x}
+                    y={tooth.y}
+                    width={tooth.width}
+                    height={tooth.height}
+                    fill="transparent"
+                    className={isEditable ? 'cursor-pointer hover:opacity-80' : ''}
+                    onClick={() => isEditable && onToothClick(tooth.id)}
                   />
-                )}
-              </g>
-            ))}
+                  
+                  <text
+                    x={tooth.x + tooth.width / 2}
+                    y={tooth.y + tooth.height - 25}
+                    textAnchor="middle"
+                    className="text-xxs font-medium fill-gray-700"
+                  >
+                    {tooth.id}
+                  </text>
+                  
+                  {/* Whole tooth symbols only */}
+                  {teethData[tooth.id]?.wholeToothCode && (
+                    <SurfaceIndicators
+                      toothData={teethData[tooth.id]}
+                      toothPosition={tooth}
+                    />
+                  )}
+                </g>
+              );
+            })}
             {/* Lower jaw arrow */}
            
             
             {/* Lower jaw teeth */}
-            
-            {lowerTeeth.map((tooth) => (
-              <g key={tooth.id}>
-                <path
-                  d={getToothPath(tooth.id, tooth.x, tooth.y, tooth.width, tooth.height)}
-                  fill={getToothColor(tooth.id)}
-                  stroke={getToothStrokeColor(tooth.id)}
-                  strokeWidth={getToothStrokeWidth(tooth.id)}
-                  className={isEditable ? 'cursor-pointer hover:opacity-80' : ''}
-                  onClick={() => isEditable && onToothClick(tooth.id)}
-                />
-                <text
-                  x={tooth.x + tooth.width / 2}
-                  y={tooth.y + tooth.height + 10}
-                  textAnchor="middle"
-                  className="text-xxs font-medium fill-gray-700"
-                >
-                  {tooth.id}
-                </text>
-                
-                {/* Surface indicators */}
-                {teethData[tooth.id] && (
-                  <SurfaceIndicators
-                    toothData={teethData[tooth.id]}
-                    toothPosition={tooth}
+            {lowerTeeth.map((tooth) => {
+              const toothType = getToothType(tooth.id);
+              const applicableSurfaces = getSurfacesForToothType(toothType);
+              const segments = toothType === 'incisor' || toothType === 'canine' 
+                ? getIncisalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height)
+                : getOcclusalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height);
+              
+              return (
+                <g key={tooth.id}>
+                  {/* Render individual surface segments */}
+                  {applicableSurfaces.map(surface => (
+                    <path
+                      key={surface}
+                      d={segments[surface as keyof typeof segments]}
+                      fill={getSurfaceColor(tooth.id, surface as Surface)}
+                      stroke="#374151"
+                      strokeWidth="0.5"
+                      className="pointer-events-none"
+                    />
+                  ))}
+                  
+                  {/* Clickable overlay for tooth interaction */}
+                  <rect
+                    x={tooth.x}
+                    y={tooth.y}
+                    width={tooth.width}
+                    height={tooth.height}
+                    fill="transparent"
+                    className={isEditable ? 'cursor-pointer hover:opacity-80' : ''}
+                    onClick={() => isEditable && onToothClick(tooth.id)}
                   />
-                )}
-              </g>
-            ))}
+                  
+                  <text
+                    x={tooth.x + tooth.width / 2}
+                    y={tooth.y + tooth.height + 10}
+                    textAnchor="middle"
+                    className="text-xxs font-medium fill-gray-700"
+                  >
+                    {tooth.id}
+                  </text>
+                  
+                  {/* Whole tooth symbols only */}
+                  {teethData[tooth.id]?.wholeToothCode && (
+                    <SurfaceIndicators
+                      toothData={teethData[tooth.id]}
+                      toothPosition={tooth}
+                    />
+                  )}
+                </g>
+              );
+            })}
              <polygon
               points="196,93 204,93 200,83"
               fill="#64748b"

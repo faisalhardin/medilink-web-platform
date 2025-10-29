@@ -11,7 +11,6 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
   onSave
 }) => {
   const [selectedSurface, setSelectedSurface] = useState<Surface | undefined>();
-  const [toothStatus, setToothStatus] = useState<string>('sou');
   const [wholeToothCode, setWholeToothCode] = useState<string>('');
   const [surfaceConditions, setSurfaceConditions] = useState<{ [key in Surface]?: string }>({});
   const [surfaceNotes, setSurfaceNotes] = useState<{ [key in Surface]?: string }>({});
@@ -20,8 +19,9 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
   // Initialize form data when modal opens or toothData changes
   useEffect(() => {
     if (isOpen && toothData) {
-      setToothStatus(toothData.status || 'sou');
-      setWholeToothCode(toothData.wholeToothCode || '');
+      // Migrate old status to wholeToothCode if status exists but wholeToothCode doesn't
+      const initialCode = toothData.wholeToothCode || (toothData.status && toothData.status !== 'sou' ? toothData.status : '');
+      setWholeToothCode(initialCode || '');
       setGeneralNotes(toothData.generalNotes || '');
       
       // Initialize surface conditions
@@ -75,7 +75,6 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
     // Create updated tooth data
     const updatedToothData: ToothData = {
       id: toothId,
-      status: toothStatus,
       surfaces,
       wholeToothCode: wholeToothCode || undefined,
       generalNotes: generalNotes || undefined
@@ -135,25 +134,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
 
             {/* Right side - Controls */}
             <div className="space-y-6">
-              {/* Tooth Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tooth Status
-                </label>
-                <select
-                  value={toothStatus}
-                  onChange={(e) => setToothStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {getWholeToothCodes().map(code => (
-                    <option key={code.code} value={code.code}>
-                      {code.code} - {code.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Whole Tooth Code */}
+              {/* Whole Tooth Condition */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Whole Tooth Condition
@@ -170,6 +151,9 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                     </option>
                   ))}
                 </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Select a condition that applies to the entire tooth (e.g., unerupted, missing, etc.)
+                </p>
               </div>
 
               {/* Surface-specific controls */}
