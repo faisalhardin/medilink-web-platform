@@ -133,12 +133,13 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
 
   const renderSurfacePattern = (surface: Surface, _area: any) => {
     const pattern = getSurfacePattern(surface);
+    const color = getSurfaceColor(surface);
     
     if (pattern === 'hatched') {
       return (
         <defs>
           <pattern id={`hatch-${surface}`} patternUnits="userSpaceOnUse" width="4" height="4">
-            <path d="M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2" stroke="#000" strokeWidth="0.5"/>
+            <path d="M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2" stroke={color} strokeWidth="0.5"/>
           </pattern>
         </defs>
       );

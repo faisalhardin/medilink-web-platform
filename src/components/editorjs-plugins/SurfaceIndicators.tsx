@@ -156,9 +156,9 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
         return (
           <text
             x={centerX}
-            y={centerY + 2}
+            y={centerY-13}
             textAnchor="middle"
-            className="text-xs font-bold fill-black"
+            className="text-xxs font-bold"
           >
             {code}
           </text>
@@ -179,7 +179,7 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
         )}
       
       {/* Surface notation labels */}
-      {toothData.surfaces
+      {/* {toothData.surfaces
         .filter(surface => applicableSurfaces.includes(surface.surface))
         .map(surface => {
           const pos = surfacePositions[surface.surface];
@@ -188,14 +188,14 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
               key={`label-${surface.surface}`}
               x={pos.x}
               y={pos.y - 2}
-              textAnchor="middle"
+              textAnchor="top"
               className="text-xs font-bold fill-black pointer-events-none"
               style={{ fontSize: '8px' }}
             >
               {surface.surface}
             </text>
           );
-        })}
+        })} */}
       
       {/* Whole tooth symbols */}
       {renderWholeToothSymbol()}

@@ -196,7 +196,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                   
                   <text
                     x={tooth.x + tooth.width / 2}
-                    y={tooth.y + tooth.height - 25}
+                    y={tooth.y + tooth.height - 35}
                     textAnchor="middle"
                     className="text-xxs font-medium fill-gray-700"
                   >
@@ -251,7 +251,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                   
                   <text
                     x={tooth.x + tooth.width / 2}
-                    y={tooth.y + tooth.height + 10}
+                    y={tooth.y + tooth.height + 20}
                     textAnchor="middle"
                     className="text-xxs font-medium fill-gray-700"
                   >
