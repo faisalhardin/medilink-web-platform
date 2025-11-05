@@ -18,8 +18,13 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     return 'molar';
   };
 
+  // Get quadrant from tooth ID (first digit)
+  const getQuadrantFromToothId = (toothId: string): number => {
+    return parseInt(toothId[0]);
+  };
+
   // Generate individual surface segment paths for occlusal teeth (molars/premolars)
-  const getOcclusalToothSegments = (x: number, y: number, width: number, height: number) => {
+  const getOcclusalToothSegments = (x: number, y: number, width: number, height: number, swapMD: boolean = false) => {
     const w = width;
     const h = height;
     
@@ -29,17 +34,20 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     const middleX = x + (w - middleW) / 2; // Center the middle rectangle
     const middleY = y + (h - middleH) / 2; // Center the middle rectangle
     
+    const mPath = `M ${x} ${y} L ${middleX} ${middleY} L ${middleX} ${middleY + middleH} L ${x} ${y + h} Z`; // Left trapezoid
+    const dPath = `M ${middleX + middleW} ${middleY} L ${x + w} ${y} L ${x + w} ${y + h} L ${middleX + middleW} ${middleY + middleH} Z`; // Right trapezoid
+    
     return {
-      M: `M ${x} ${y} L ${middleX} ${middleY} L ${middleX} ${middleY + middleH} L ${x} ${y + h} Z`, // Left trapezoid
+      M: swapMD ? dPath : mPath,
       O: `M ${middleX} ${middleY} L ${middleX + middleW} ${middleY} L ${middleX + middleW} ${middleY + middleH} L ${middleX} ${middleY + middleH} Z`, // Center rectangle
-      D: `M ${middleX + middleW} ${middleY} L ${x + w} ${y} L ${x + w} ${y + h} L ${middleX + middleW} ${middleY + middleH} Z`, // Right trapezoid
+      D: swapMD ? mPath : dPath,
       V: `M ${x} ${y} L ${x + w} ${y} L ${middleX + middleW} ${middleY} L ${middleX} ${middleY} Z`, // Top trapezoid
       L: `M ${middleX} ${middleY + middleH} L ${middleX + middleW} ${middleY + middleH} L ${x + w} ${y + h} L ${x} ${y + h} Z` // Bottom trapezoid
     };
   };
 
   // Generate individual surface segment paths for incisal teeth (incisors/canines) - NO middle segment
-  const getIncisalToothSegments = (x: number, y: number, width: number, height: number) => {
+  const getIncisalToothSegments = (x: number, y: number, width: number, height: number, swapMD: boolean = false) => {
     const w = width;
     const h = height;
     
@@ -47,9 +55,12 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     const centerX = x + w / 2;
     const centerY = y + h / 2;
     
+    const mPath = `M ${x} ${y} L ${centerX - w * 0.1} ${centerY} L ${centerX - w * 0.1} ${y + h * 0.5} L ${x} ${y + h} Z`; // Left trapezoid
+    const dPath = `M ${centerX + w * 0.1} ${centerY} L ${x + w} ${y} L ${x + w} ${y + h} L ${centerX + w * 0.1} ${y + h * 0.5} Z`; // Right trapezoid
+    
     return {
-      M: `M ${x} ${y} L ${centerX - w * 0.1} ${centerY} L ${centerX - w * 0.1} ${y + h * 0.5} L ${x} ${y + h} Z`, // Left trapezoid
-      D: `M ${centerX + w * 0.1} ${centerY} L ${x + w} ${y} L ${x + w} ${y + h} L ${centerX + w * 0.1} ${y + h * 0.5} Z`, // Right trapezoid
+      M: swapMD ? dPath : mPath,
+      D: swapMD ? mPath : dPath,
       V: `M ${x} ${y} L ${x + w} ${y} L ${centerX + w * 0.1} ${centerY} L ${centerX - w * 0.1} ${centerY} Z`, // Top trapezoid
       L: `M ${centerX - w * 0.1} ${centerY} L ${centerX + w * 0.1} ${centerY} L ${x + w} ${y + h} L ${x} ${y + h} Z` // Bottom trapezoid
     };
@@ -173,10 +184,12 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
             {/* Upper jaw teeth */}
             {upperTeeth.map((tooth) => {
               const toothType = getToothType(tooth.id);
+              const quadrant = getQuadrantFromToothId(tooth.id);
+              const swapMD = quadrant === 1 || quadrant === 4;
               const applicableSurfaces = getSurfacesForToothType(toothType);
               const segments = toothType === 'incisor' || toothType === 'canine' 
-                ? getIncisalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height)
-                : getOcclusalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height);
+                ? getIncisalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height, swapMD)
+                : getOcclusalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height, swapMD);
               
               return (
                 <g key={tooth.id}>
@@ -231,10 +244,12 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
             {/* Lower jaw teeth */}
             {lowerTeeth.map((tooth) => {
               const toothType = getToothType(tooth.id);
+              const quadrant = getQuadrantFromToothId(tooth.id);
+              const swapMD = quadrant === 1 || quadrant === 4;
               const applicableSurfaces = getSurfacesForToothType(toothType);
               const segments = toothType === 'incisor' || toothType === 'canine' 
-                ? getIncisalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height)
-                : getOcclusalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height);
+                ? getIncisalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height, swapMD)
+                : getOcclusalToothSegments(tooth.x, tooth.y, tooth.width, tooth.height, swapMD);
               
               return (
                 <g key={tooth.id}>
