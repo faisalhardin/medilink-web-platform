@@ -196,12 +196,19 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
 
 
                   {/* Whole tooth symbols only indicators*/}
-                  {teethData[tooth.id]?.wholeToothCode && (
-                    <SurfaceIndicators
-                      toothData={teethData[tooth.id]}
-                      toothPosition={tooth}
-                    />
-                  )}
+                  {(() => {
+                    const toothData = teethData[tooth.id];
+                    if (!toothData) return null;
+                    const codes = Array.isArray(toothData.wholeToothCode) 
+                      ? toothData.wholeToothCode 
+                      : (toothData.wholeToothCode ? [toothData.wholeToothCode] : []);
+                    return codes.length > 0 ? (
+                      <SurfaceIndicators
+                        toothData={toothData}
+                        toothPosition={tooth}
+                      />
+                    ) : null;
+                  })()}
                   {/* Render individual surface segments */}
                   {applicableSurfaces.map(surface => (
                     <path
@@ -255,12 +262,19 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                 <g key={tooth.id}>
 
                   {/* Whole tooth symbols only indicators*/}
-                  {teethData[tooth.id]?.wholeToothCode && (
-                    <SurfaceIndicators
-                      toothData={teethData[tooth.id]}
-                      toothPosition={tooth}
-                    />
-                  )}
+                  {(() => {
+                    const toothData = teethData[tooth.id];
+                    if (!toothData) return null;
+                    const codes = Array.isArray(toothData.wholeToothCode) 
+                      ? toothData.wholeToothCode 
+                      : (toothData.wholeToothCode ? [toothData.wholeToothCode] : []);
+                    return codes.length > 0 ? (
+                      <SurfaceIndicators
+                        toothData={toothData}
+                        toothPosition={tooth}
+                      />
+                    ) : null;
+                  })()}
                   {/* Render individual surface segments */}
                   {applicableSurfaces.map(surface => (
                     <path

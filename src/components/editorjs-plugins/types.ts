@@ -18,7 +18,7 @@ export interface ToothData {
   id: string; // FDI: "18", "31", etc.
   status?: string; // Deprecated: Use wholeToothCode instead. Kept for backward compatibility.
   surfaces: ToothSurfaceData[];
-  wholeToothCode?: string; // Whole tooth condition code (e.g., une, mis, ipx, fmc, etc.)
+  wholeToothCode?: string | string[]; // Whole tooth condition code(s) - supports both string (legacy) and string[] (new). e.g., "mis" or ["poc", "rct"]
   generalNotes?: string;
 }
 

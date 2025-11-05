@@ -413,6 +413,59 @@ export const getWholeToothCodes = (): OdontogramCode[] => {
   return ODONTOGRAM_CODES.filter(c => c.appliesTo === 'wholeTooth' || c.appliesTo === 'both');
 };
 
+// Priority order for whole tooth codes (lower number = higher priority)
+// 1. Missing/Status (missing: mis, mam, mpm + status: non, une, pre, imx, ano)
+// 2. Pathology (pathology: car, cfr, nvt, nca, fra, rrx, per, una)
+// 3. Restoration/Indirect/Advanced/Prosthetic (all other categories)
+export const getCodePriority = (code: string): number => {
+  const codeData = ODONTOGRAM_CODES_MAP[code];
+  if (!codeData) return 999; // Unknown codes have lowest priority
+  
+  switch (codeData.category) {
+    case 'missing':
+    case 'status':
+      return 1; // Highest priority
+    case 'pathology':
+      return 2; // Second priority
+    case 'restoration':
+    case 'indirect':
+    case 'advanced':
+    case 'prosthetic':
+      return 3; // Third priority
+    default:
+      return 999;
+  }
+};
+
+// Get the most critical (highest priority) code from an array
+export const getMostCriticalCode = (codes: string[]): string | null => {
+  if (!codes || codes.length === 0) return null;
+  
+  // Sort by priority, then by order in ODONTOGRAM_CODES array
+  const sortedCodes = [...codes].sort((a, b) => {
+    const priorityA = getCodePriority(a);
+    const priorityB = getCodePriority(b);
+    
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // If same priority, maintain order as in ODONTOGRAM_CODES
+    const indexA = ODONTOGRAM_CODES.findIndex(c => c.code === a);
+    const indexB = ODONTOGRAM_CODES.findIndex(c => c.code === b);
+    return indexA - indexB;
+  });
+  
+  return sortedCodes[0];
+};
+
+// Normalize wholeToothCode to array format (handles both string and array)
+export const normalizeWholeToothCode = (code: string | string[] | undefined): string[] => {
+  if (!code) return [];
+  if (Array.isArray(code)) return code.filter(c => c && c !== '');
+  return code ? [code] : [];
+};
+
 // Surface definitions
 export const SURFACES = ['M', 'O', 'I', 'D', 'V', 'L'] as const;
 export type Surface = typeof SURFACES[number];

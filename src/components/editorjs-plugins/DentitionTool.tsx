@@ -81,8 +81,16 @@ export default class DentitionTool {
       };
     }
     
+    // Normalize wholeToothCode to array format (migration from string to array)
+    const normalizedToothData: ToothData = {
+      ...toothData,
+      wholeToothCode: Array.isArray(toothData.wholeToothCode)
+        ? toothData.wholeToothCode
+        : (toothData.wholeToothCode ? [toothData.wholeToothCode] : undefined)
+    };
+    
     // Update tooth data
-    this.data.teeth[toothData.id] = toothData;
+    this.data.teeth[toothData.id] = normalizedToothData;
     this.isModalOpen = false;
     this.selectedToothId = null;
     this.renderComponent();

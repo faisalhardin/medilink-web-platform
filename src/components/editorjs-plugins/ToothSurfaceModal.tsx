@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ToothSurfaceModalProps, ToothData, Surface } from './types';
-import { ODONTOGRAM_CODES_MAP, getCodesBySurface, getWholeToothCodes, SURFACE_NAMES } from './odontogramCodes';
+import { ODONTOGRAM_CODES_MAP, getCodesBySurface, getWholeToothCodes, SURFACE_NAMES, normalizeWholeToothCode } from './odontogramCodes';
 import { ToothSurfaceDiagram } from './ToothSurfaceDiagram';
 
 export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
@@ -11,17 +11,26 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
   onSave
 }) => {
   const [selectedSurface, setSelectedSurface] = useState<Surface | undefined>();
-  const [wholeToothCode, setWholeToothCode] = useState<string>('');
+  const [wholeToothCodes, setWholeToothCodes] = useState<string[]>([]);
   const [surfaceConditions, setSurfaceConditions] = useState<{ [key in Surface]?: string }>({});
   const [surfaceNotes, setSurfaceNotes] = useState<{ [key in Surface]?: string }>({});
   const [generalNotes, setGeneralNotes] = useState<string>('');
+  const [tagInputValue, setTagInputValue] = useState<string>('');
+  const [showAutocomplete, setShowAutocomplete] = useState<boolean>(false);
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
   // Initialize form data when modal opens or toothData changes
   useEffect(() => {
     if (isOpen && toothData) {
-      // Migrate old status to wholeToothCode if status exists but wholeToothCode doesn't
-      const initialCode = toothData.wholeToothCode || (toothData.status && toothData.status !== 'sou' ? toothData.status : '');
-      setWholeToothCode(initialCode || '');
+      // Normalize wholeToothCode to array (handles both string and array)
+      let initialCodes: string[] = [];
+      if (toothData.wholeToothCode) {
+        initialCodes = normalizeWholeToothCode(toothData.wholeToothCode);
+      } else if (toothData.status && toothData.status !== 'sou') {
+        // Migrate old status to wholeToothCode for backward compatibility
+        initialCodes = [toothData.status];
+      }
+      setWholeToothCodes(initialCodes);
       setGeneralNotes(toothData.generalNotes || '');
       
       // Initialize surface conditions
@@ -76,7 +85,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
     const updatedToothData: ToothData = {
       id: toothId,
       surfaces,
-      wholeToothCode: wholeToothCode || undefined,
+      wholeToothCode: wholeToothCodes.length > 0 ? wholeToothCodes : undefined,
       generalNotes: generalNotes || undefined
     };
 
@@ -98,6 +107,94 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
   const getSelectedSurfaceNotes = () => {
     if (!selectedSurface) return '';
     return surfaceNotes[selectedSurface] || '';
+  };
+
+  // Get filtered autocomplete suggestions
+  const getAutocompleteSuggestions = () => {
+    const allCodes = getWholeToothCodes();
+    const selectedCodeSet = new Set(wholeToothCodes);
+    
+    // Filter out already selected codes
+    let filteredCodes = allCodes.filter(code => !selectedCodeSet.has(code.code));
+    
+    // If there's input, filter by search term
+    if (tagInputValue.trim()) {
+      const searchTerm = tagInputValue.toLowerCase();
+      filteredCodes = filteredCodes.filter(code => {
+        const codeLower = code.code.toLowerCase();
+        const nameLower = code.name.toLowerCase();
+        return codeLower.includes(searchTerm) || nameLower.includes(searchTerm);
+      });
+    }
+    
+    // Limit to 10 suggestions when searching, show more when just focused
+    return filteredCodes.slice(0, tagInputValue.trim() ? 10 : 20);
+  };
+
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTagInputValue(value);
+    // Keep autocomplete open when typing (filtering)
+    if (showAutocomplete) {
+      setHighlightedIndex(-1);
+    }
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const suggestions = getAutocompleteSuggestions();
+    
+    if (e.key === 'Enter' && highlightedIndex >= 0 && suggestions[highlightedIndex]) {
+      e.preventDefault();
+      addTag(suggestions[highlightedIndex].code);
+    } else if (e.key === 'Enter' && suggestions.length > 0) {
+      e.preventDefault();
+      addTag(suggestions[0].code);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex(prev => 
+        prev < suggestions.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+    } else if (e.key === 'Escape') {
+      setShowAutocomplete(false);
+      setHighlightedIndex(-1);
+    } else if (e.key === 'Backspace' && tagInputValue === '' && wholeToothCodes.length > 0) {
+      // Remove last tag when backspace is pressed on empty input
+      removeTag(wholeToothCodes[wholeToothCodes.length - 1]);
+    }
+  };
+
+  const addTag = (code: string) => {
+    if (!wholeToothCodes.includes(code)) {
+      setWholeToothCodes(prev => [...prev, code]);
+      setTagInputValue('');
+      setShowAutocomplete(false);
+      setHighlightedIndex(-1);
+    }
+  };
+
+  const removeTag = (code: string) => {
+    setWholeToothCodes(prev => prev.filter(c => c !== code));
+  };
+
+  const handleSuggestionClick = (code: string) => {
+    addTag(code);
+  };
+
+  const highlightMatch = (text: string, searchTerm: string) => {
+    if (!searchTerm || !searchTerm.trim()) return text;
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, index) => {
+      const testRegex = new RegExp(`^${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'gi');
+      return testRegex.test(part) ? (
+        <span key={index} className="text-blue-600 font-semibold">{part}</span>
+      ) : (
+        <span key={index}>{part}</span>
+      );
+    });
   };
 
   if (!isOpen) return null;
@@ -134,25 +231,116 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
 
             {/* Right side - Controls */}
             <div className="space-y-6">
-              {/* Whole Tooth Condition */}
-              <div>
+              {/* Whole Tooth Condition - Tag Input */}
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Whole Tooth Condition
+                  Whole Tooth Condition(s)
                 </label>
-                <select
-                  value={wholeToothCode}
-                  onChange={(e) => setWholeToothCode(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">None</option>
-                  {getWholeToothCodes().map(code => (
-                    <option key={code.code} value={code.code}>
-                      {code.code} - {code.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  {/* Input field with chips */}
+                  <div
+                    className="w-full min-h-[42px] px-3 py-2 border border-gray-300 rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 cursor-text"
+                    onClick={() => {
+                      const input = document.getElementById('tag-input');
+                      input?.focus();
+                      // Show all options when clicking on the input container
+                      setShowAutocomplete(true);
+                      setHighlightedIndex(-1);
+                    }}
+                  >
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {/* Existing chips */}
+                      {wholeToothCodes.map(code => {
+                        const codeData = ODONTOGRAM_CODES_MAP[code];
+                        return (
+                          <span
+                            key={code}
+                            className="chip-tooltip-group relative inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 cursor-help"
+                          >
+                            {code} 
+                            {/* - {codeData?.name || code} */}
+                            
+                            {/* Custom tooltip - shows only on hover */}
+                            {codeData?.name && (
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg hidden [.chip-tooltip-group:hover_&]:block pointer-events-none whitespace-nowrap z-50">
+                                {codeData.name}
+                                {/* Arrow */}
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                  <div className="border-4 border-transparent border-t-gray-900"></div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeTag(code);
+                              }}
+                              className="ml-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded px-0.5 transition-colors"
+                              aria-label={`Remove ${code}`}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        );
+                      })}
+                      {/* Input field */}
+                      <input
+                        id="tag-input"
+                        type="text"
+                        value={tagInputValue}
+                        onChange={handleTagInputChange}
+                        onKeyDown={handleTagInputKeyDown}
+                        onFocus={() => {
+                          // Show all options when input is focused
+                          setShowAutocomplete(true);
+                          setHighlightedIndex(-1);
+                        }}
+                        onBlur={() => {
+                          // Delay to allow click events on suggestions
+                          setTimeout(() => setShowAutocomplete(false), 200);
+                        }}
+                        placeholder={wholeToothCodes.length === 0 ? "Type to search conditions..." : ""}
+                        className="flex-1 min-w-[120px] outline-none text-sm bg-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Autocomplete dropdown */}
+                  {showAutocomplete && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {getAutocompleteSuggestions().length > 0 ? (
+                        getAutocompleteSuggestions().map((code, index) => {
+                          const isHighlighted = index === highlightedIndex;
+                          return (
+                            <button
+                              key={code.code}
+                              type="button"
+                              onClick={() => handleSuggestionClick(code.code)}
+                              onMouseEnter={() => setHighlightedIndex(index)}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                                isHighlighted ? 'bg-gray-100' : ''
+                              }`}
+                            >
+                              <span className="font-medium">{code.code}</span>
+                              <span className="text-gray-500 ml-2">-</span>
+                              <span className="text-gray-700 ml-2">
+                                {highlightMatch(code.name, tagInputValue)}
+                              </span>
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                          {tagInputValue.trim() ? 'No matching conditions found' : 'All conditions selected'}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Select a condition that applies to the entire tooth (e.g., unerupted, missing, etc.)
+                  Type to search and select multiple conditions. Press Enter to add, or click a suggestion.
                 </p>
               </div>
 

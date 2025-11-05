@@ -1,6 +1,6 @@
 import React from 'react';
 import { SurfaceIndicatorsProps, Surface, ToothSurfaceData } from './types';
-import { getSurfacesForToothType } from './odontogramCodes';
+import { getSurfacesForToothType, normalizeWholeToothCode, getMostCriticalCode } from './odontogramCodes';
 
 export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
   toothData,
@@ -84,15 +84,21 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
   };
 
   const renderWholeToothSymbol = (toothId: string) => {
-    if (!toothData.wholeToothCode) return null;
+    // Normalize wholeToothCode to array
+    const codes = normalizeWholeToothCode(toothData.wholeToothCode);
+    if (codes.length === 0) return null;
+    
     const quadrant = toothId.slice(0, 1);
-
-    const code = toothData.wholeToothCode;
+    
+    // Get the most critical code (highest priority)
+    const primaryCode = getMostCriticalCode(codes);
+    if (!primaryCode) return null;
+    
     const centerX = x + width / 2;
     const centerY = y + height / 2;
 
     // Handle different whole tooth symbols
-    switch (code) {
+    switch (primaryCode) {
       case 'mis':
       case 'mam':
         return (
@@ -281,7 +287,7 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
               textAnchor="middle"
               className="text-xxs font-bold"
             >
-              {code}
+              {primaryCode}
             </text>
             <text
               x={centerX}
@@ -327,7 +333,6 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
           </>
           
         )
-      case 'prd':
       case 'non':
       case 'une':
       case 'pre':
@@ -342,13 +347,41 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
             textAnchor="middle"
             className="text-xxs font-bold"
           >
-            {code}
+            {primaryCode}
           </text>
         );
 
       default:
         return null;
     }
+  };
+
+  // Render the symbol and "*" indicator if there are more codes
+  const renderSymbolWithIndicator = () => {
+    const symbol = renderWholeToothSymbol(toothData.id);
+    if (!symbol) return null;
+    
+    const codes = normalizeWholeToothCode(toothData.wholeToothCode);
+    const hasMoreCodes = codes.length > 1;
+    
+    if (!hasMoreCodes) return symbol;
+    
+    // If there are more codes, add "*" indicator
+    // Position "*" in top-right corner of the tooth
+    return (
+      <g>
+        {symbol}
+        <text
+          x={x + width - 4}
+          y={y + 8}
+          textAnchor="end"
+          className="text-xs font-bold fill-black"
+          style={{ fontSize: '10px' }}
+        >
+          *
+        </text>
+      </g>
+    );
   };
 
   return (
@@ -380,7 +413,7 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
         })} */}
       
       {/* Whole tooth symbols */}
-      {renderWholeToothSymbol(toothData.id)}
+      {renderSymbolWithIndicator()}
     </g>
   );
 };
