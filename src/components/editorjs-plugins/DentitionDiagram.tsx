@@ -1,7 +1,7 @@
 import React from 'react';
 import { DentitionDiagramProps, Surface } from './types';
 import { SurfaceIndicators } from './SurfaceIndicators';
-import { getSurfacesForToothType } from './odontogramCodes';
+import { getSurfacesForToothType, ODONTOGRAM_CODES_MAP } from './odontogramCodes';
 
 export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
   teethData = {},
@@ -24,7 +24,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     const h = height;
     
     // Middle rectangle dimensions (Occlusal area)
-    const middleW = w * 0.6; // 60% of total width
+    const middleW = w * 0.4; // 40% of total width
     const middleH = h * 0.4; // 40% of total height
     const middleX = x + (w - middleW) / 2; // Center the middle rectangle
     const middleY = y + (h - middleH) / 2; // Center the middle rectangle
@@ -48,8 +48,8 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     const centerY = y + h / 2;
     
     return {
-      M: `M ${x} ${y} L ${centerX - w * 0.1} ${centerY} L ${centerX - w * 0.1} ${y + h} L ${x} ${y + h} Z`, // Left trapezoid
-      D: `M ${centerX + w * 0.1} ${centerY} L ${x + w} ${y} L ${x + w} ${y + h} L ${centerX + w * 0.1} ${y + h} Z`, // Right trapezoid
+      M: `M ${x} ${y} L ${centerX - w * 0.1} ${centerY} L ${centerX - w * 0.1} ${y + h * 0.5} L ${x} ${y + h} Z`, // Left trapezoid
+      D: `M ${centerX + w * 0.1} ${centerY} L ${x + w} ${y} L ${x + w} ${y + h} L ${centerX + w * 0.1} ${y + h * 0.5} Z`, // Right trapezoid
       V: `M ${x} ${y} L ${x + w} ${y} L ${centerX + w * 0.1} ${centerY} L ${centerX - w * 0.1} ${centerY} Z`, // Top trapezoid
       L: `M ${centerX - w * 0.1} ${centerY} L ${centerX + w * 0.1} ${centerY} L ${x + w} ${y + h} L ${x} ${y + h} Z` // Bottom trapezoid
     };
@@ -57,12 +57,21 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
 
   // Get surface color for a specific tooth surface
   const getSurfaceColor = (toothId: string, surface: Surface): string => {
-    if (!teethData) return '#ffffff';
+    if (!teethData) return 'transparent';
     const tooth = teethData[toothId];
-    if (!tooth) return '#ffffff';
+    if (!tooth) return 'transparent';
     
     const surfaceData = tooth.surfaces.find(s => s.surface === surface);
-    return surfaceData ? surfaceData.color : '#ffffff';
+    return surfaceData ? surfaceData.color : 'transparent';
+  };
+
+  const getSurfaceStrokeWidth = (toothId: string, surface: Surface): string => {
+    if (!teethData) return '0.3';
+    const tooth = teethData[toothId];
+    if (!tooth) return '0.3';
+    
+    const surfaceData = tooth.surfaces.find(s => s.surface === surface && ODONTOGRAM_CODES_MAP[s.code].pattern === 'outline');
+    return surfaceData ? '1' : '0.3';
   };
 
   // Helper function to calculate tooth position in proper dental chart layout
@@ -171,6 +180,15 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
               
               return (
                 <g key={tooth.id}>
+
+
+                  {/* Whole tooth symbols only indicators*/}
+                  {teethData[tooth.id]?.wholeToothCode && (
+                    <SurfaceIndicators
+                      toothData={teethData[tooth.id]}
+                      toothPosition={tooth}
+                    />
+                  )}
                   {/* Render individual surface segments */}
                   {applicableSurfaces.map(surface => (
                     <path
@@ -178,7 +196,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                       d={segments[surface as keyof typeof segments]}
                       fill={getSurfaceColor(tooth.id, surface as Surface)}
                       stroke="#374151"
-                      strokeWidth="0.5"
+                      strokeWidth={getSurfaceStrokeWidth(tooth.id, surface as Surface)}
                       className="pointer-events-none"
                     />
                   ))}
@@ -203,13 +221,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                     {tooth.id}
                   </text>
                   
-                  {/* Whole tooth symbols only */}
-                  {teethData[tooth.id]?.wholeToothCode && (
-                    <SurfaceIndicators
-                      toothData={teethData[tooth.id]}
-                      toothPosition={tooth}
-                    />
-                  )}
+                  
                 </g>
               );
             })}
@@ -226,6 +238,14 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
               
               return (
                 <g key={tooth.id}>
+
+                  {/* Whole tooth symbols only indicators*/}
+                  {teethData[tooth.id]?.wholeToothCode && (
+                    <SurfaceIndicators
+                      toothData={teethData[tooth.id]}
+                      toothPosition={tooth}
+                    />
+                  )}
                   {/* Render individual surface segments */}
                   {applicableSurfaces.map(surface => (
                     <path
@@ -233,7 +253,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                       d={segments[surface as keyof typeof segments]}
                       fill={getSurfaceColor(tooth.id, surface as Surface)}
                       stroke="#374151"
-                      strokeWidth="0.5"
+                      strokeWidth={getSurfaceStrokeWidth(tooth.id, surface as Surface)}
                       className="pointer-events-none"
                     />
                   ))}
@@ -258,13 +278,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                     {tooth.id}
                   </text>
                   
-                  {/* Whole tooth symbols only */}
-                  {teethData[tooth.id]?.wholeToothCode && (
-                    <SurfaceIndicators
-                      toothData={teethData[tooth.id]}
-                      toothPosition={tooth}
-                    />
-                  )}
+                  
                 </g>
               );
             })}

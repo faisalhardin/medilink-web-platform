@@ -1,5 +1,5 @@
 import React from 'react';
-import { SurfaceIndicatorsProps, Surface } from './types';
+import { SurfaceIndicatorsProps, Surface, ToothSurfaceData } from './types';
 import { getSurfacesForToothType } from './odontogramCodes';
 
 export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
@@ -31,7 +31,7 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
     L: { x: x + width / 2, y: y + height * 0.8, size: 4 } // Bottom trapezoid segment (lingual)
   };
 
-  const renderSurfaceIndicator = (surface: Surface, surfaceData: any) => {
+  const renderSurfaceIndicator = (surface: Surface, surfaceData: ToothSurfaceData) => {
     const pos = surfacePositions[surface];
     const { color, pattern } = surfaceData;
 
@@ -83,8 +83,9 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
     );
   };
 
-  const renderWholeToothSymbol = () => {
+  const renderWholeToothSymbol = (toothId: string) => {
     if (!toothData.wholeToothCode) return null;
+    const quadrant = toothId.slice(0, 1);
 
     const code = toothData.wholeToothCode;
     const centerX = x + width / 2;
@@ -122,14 +123,34 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
           <circle
             cx={centerX}
             cy={centerY}
-            r={Math.min(width, height) / 3}
+            r={Math.min(width, height) / 2}
             fill="transparent"
             stroke="#000000"
-            strokeWidth="3"
+            strokeWidth="2"
           />
         );
 
       case 'rct':
+        if (quadrant === '1' || quadrant === '2') {
+          return (
+            <polygon
+            points={`${centerX},${y + height + 7} ${x + 4},${y + height + 1} ${x + width - 4},${y + height + 1}`}
+            fill="#000000"
+            stroke="#000000"
+            strokeWidth="1"
+          />
+          )
+          
+        } 
+        return (
+          <polygon
+              points={`${centerX},${y - 7} ${x + width - 4},${y - 1} ${x + 4},${y - 1}`}
+              fill="#000000"
+              stroke="#000000"
+              strokeWidth="1"
+            />
+          
+        );
       case 'fra':
         return (
           <line
@@ -143,14 +164,175 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
           />
         );
 
+      case 'cfr':
+        return (
+          <text
+            x={centerX}
+            y={centerY + 5}
+            textAnchor="middle"
+            className=" font-bold fill-black"
+          >
+            #
+          </text>
+        );
+
+      case 'nvt':
+        
+        if (quadrant === '1' || quadrant === '2') {
+          return (
+            <polygon
+            points={`${centerX},${y + height + 7} ${x + 4},${y + height + 1} ${x + width - 4},${y + height + 1}`}
+            fill="transparent"
+            stroke="#000000"
+            strokeWidth="1"
+          />
+          )
+          
+        } 
+        return (
+          <polygon
+              points={`${centerX},${y - 7} ${x + width - 4},${y - 1} ${x + 4},${y - 1}`}
+              fill="transparent"
+              stroke="#000000"
+              strokeWidth="1"
+            />
+          
+        );
+      case 'rrx':
+        
+        return (
+          <text
+            x={centerX}
+            y={centerY + 5}
+            textAnchor="middle"
+            className=" font-bold fill-black"
+          >
+            V
+          </text>
+        );
+      case 'fmc':
+      case 'onl':
+      case 'inl':
+        <rect x={centerX - 4} y={centerY - 4} width={8} height={8} fill="#000000"/>
+        return (
+          <rect
+            x={centerX - width/2}
+            y={centerY - height/2}
+            width={width}
+            height={height}
+            fill="#000000"
+          />
+        );
+      case 'mpc':
+      case 'poc':
+        return (
+          <rect
+            x={centerX - width/2}
+            y={centerY - height/2}
+            width={width}
+            height={height}
+            fill="#16a34a"
+            stroke="#000000"
+            strokeWidth="2"
+          />
+        );
+      case 'gmc':
+        return (
+          <rect
+            x={centerX - width/2}
+            y={centerY - height/2}
+            width={width}
+            height={height}
+            fill="#dc2626"
+            stroke="#000000"
+            strokeWidth="2"
+          />
+        );
       case 'ipx':
+        return (
+          <rect
+            x={centerX - width/2}
+            y={centerY - height/2}
+            width={width}
+            height={height}
+            fill="#6b7280"
+            stroke="#000000"
+            strokeWidth="2"
+          />
+        );
+      case 'abu':
+        return (
+          <rect
+            x={centerX - width/2}
+            y={centerY - height/2}
+            width={width}
+            height={height}
+            fill="#c2c2c2"
+            stroke="#000000"
+            strokeWidth="2"
+          />
+        );
+      case 'prd':
+        return (
+          <>
+            <text
+              x={centerX}
+              y={centerY - 13}
+              textAnchor="middle"
+              className="text-xxs font-bold"
+            >
+              {code}
+            </text>
+            <text
+              x={centerX}
+              y={centerY + 5}
+              textAnchor="middle"
+              className=" font-bold fill-black"
+            >
+              X
+            </text>
+          </>
+        );
+      case 'acr':
+        return (
+          <rect
+            x={centerX - width/2}
+            y={centerY - height/2}
+            width={width}
+            height={height}
+            fill="#ebc3da"
+            stroke="#000000"
+            strokeWidth="2"
+          />
+        );
+      case 'fld':
+        return(
+          <>
+          <line
+              x1={x}
+              y1={y }
+              x2={x + width}
+              y2={y}
+              stroke="#000000"
+              strokeWidth="3"
+            />
+            <line
+              x1={x}
+              y1={y + height}
+              x2={x + width}
+              y2={y}
+              stroke="#000000"
+              strokeWidth="3"
+            />
+          </>
+          
+        )
       case 'prd':
       case 'non':
       case 'une':
       case 'pre':
       case 'imx':
       case 'ano':
-      case 'rrx':
       case 'per':
       case 'una':
         return (
@@ -198,7 +380,7 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
         })} */}
       
       {/* Whole tooth symbols */}
-      {renderWholeToothSymbol()}
+      {renderWholeToothSymbol(toothData.id)}
     </g>
   );
 };

@@ -13,7 +13,7 @@ const getOcclusalToothPath = () => {
          M 50 20 L 80 50 L 120 50 L 150 20 Z"
       fill="#ffffff"
       stroke="#374151"
-      strokeWidth="2"
+      strokeWidth="1"
     />
   };
 
@@ -27,7 +27,7 @@ const getIncisalToothPath = () => {
               "
               fill="#ffffff"
               stroke="#374151"
-              strokeWidth="2"
+              strokeWidth="1"
             />
 };
 
@@ -133,13 +133,12 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
 
   const renderSurfacePattern = (surface: Surface, _area: any) => {
     const pattern = getSurfacePattern(surface);
-    const color = getSurfaceColor(surface);
     
     if (pattern === 'hatched') {
       return (
         <defs>
           <pattern id={`hatch-${surface}`} patternUnits="userSpaceOnUse" width="4" height="4">
-            <path d="M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2" stroke={color} strokeWidth="0.5"/>
+            <path d="M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2" stroke="#000" strokeWidth="0.5"/>
           </pattern>
         </defs>
       );
@@ -179,7 +178,7 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
                     fill={isMarked ? color : 'transparent'}
                     fillOpacity={isMarked ? 0.7 : 0}
                     stroke={isSelected ? '#3b82f6' : isMarked ? '#000' : '#d1d5db'}
-                    strokeWidth={isSelected ? 3 : isMarked ? 2 : 1}
+                    strokeWidth={isSelected ? 3 : isMarked ? 2 : 0}
                     strokeDasharray={isMarked ? 'none' : '5,5'}
                     className="cursor-pointer hover:opacity-80"
                     onClick={() => onSurfaceClick(surface as Surface)}

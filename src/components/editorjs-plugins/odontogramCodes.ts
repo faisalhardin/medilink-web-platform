@@ -80,10 +80,29 @@ export const ODONTOGRAM_CODES: OdontogramCode[] = [
     code: 'car',
     name: 'Caries',
     description: 'Cavity',
-    color: '#dc2626',
-    pattern: 'solid',
+    color: '#ffffff',
+    pattern: 'outline',
     appliesTo: 'surface',
-    surfaces: ['M', 'O', 'D', 'V', 'L'],
+    category: 'pathology'
+  },
+  {
+    code: 'cfr',
+    name: 'Crown Fractured',
+    description: 'Crown fracture - part of crown is broken',
+    color: '#000000',
+    pattern: 'symbol',
+    appliesTo: 'wholeTooth',
+    symbol: '#',
+    category: 'pathology'
+  },
+  {
+    code: 'nvt',
+    name: 'Non Vital',
+    description: 'Tooth has lost vitality (necrotic pulp)',
+    color: '#000000',
+    pattern: 'symbol',
+    appliesTo: 'wholeTooth',
+    symbol: 'triangle',
     category: 'pathology'
   },
   {
@@ -111,8 +130,8 @@ export const ODONTOGRAM_CODES: OdontogramCode[] = [
     name: 'Radix',
     description: 'Root remains',
     color: '#000000',
-    pattern: 'text',
-    symbol: 'rrx',
+    pattern: 'symbol',
+    symbol: 'V',
     appliesTo: 'wholeTooth',
     category: 'pathology'
   },
@@ -214,7 +233,7 @@ export const ODONTOGRAM_CODES: OdontogramCode[] = [
     code: 'fis',
     name: 'Fissure Sealant',
     description: 'Preventive sealant',
-    color: '#ec4899',
+    color: '#ebc3da',
     pattern: 'solid',
     appliesTo: 'surface',
     surfaces: ['O'],
@@ -367,9 +386,16 @@ export const ODONTOGRAM_CODES: OdontogramCode[] = [
   }
 ];
 
+// Create a map for fast O(1) code lookups
+export const ODONTOGRAM_CODES_MAP: Record<string, OdontogramCode> = 
+  ODONTOGRAM_CODES.reduce((acc, code) => {
+    acc[code.code] = code;
+    return acc;
+  }, {} as Record<string, OdontogramCode>);
+
 // Helper functions
 export const getCodeByCode = (code: string): OdontogramCode | undefined => {
-  return ODONTOGRAM_CODES.find(c => c.code === code);
+  return ODONTOGRAM_CODES_MAP[code];
 };
 
 export const getCodesByCategory = (category: string): OdontogramCode[] => {

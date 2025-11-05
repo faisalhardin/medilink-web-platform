@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ToothSurfaceModalProps, ToothData, Surface } from './types';
-import { ODONTOGRAM_CODES, getCodesBySurface, getWholeToothCodes, SURFACE_NAMES } from './odontogramCodes';
+import { ODONTOGRAM_CODES_MAP, getCodesBySurface, getWholeToothCodes, SURFACE_NAMES } from './odontogramCodes';
 import { ToothSurfaceDiagram } from './ToothSurfaceDiagram';
 
 export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
@@ -61,7 +61,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
     const surfaces = Object.entries(surfaceConditions)
       .filter(([_, code]) => code && code !== '')
       .map(([surface, code]) => {
-        const codeData = ODONTOGRAM_CODES.find(c => c.code === code);
+        const codeData = ODONTOGRAM_CODES_MAP[code];
         return {
           surface: surface as Surface,
           code: code!,
