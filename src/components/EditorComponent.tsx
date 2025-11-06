@@ -32,15 +32,7 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
                   preserveBlank: true,
                 },
               },
-              // New tool name
               odontogram: {
-                class: DentitionTool,
-                config: {
-                  readOnly: readOnly,
-                },
-              },
-              // Backward compatibility: support old "dentition" blocks
-              dentition: {
                 class: DentitionTool,
                 config: {
                   readOnly: readOnly,
