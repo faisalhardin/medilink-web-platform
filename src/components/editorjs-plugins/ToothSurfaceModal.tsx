@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ToothSurfaceModalProps, ToothData, Surface } from './types';
 import { ODONTOGRAM_CODES_MAP, getCodesBySurface, getWholeToothCodes, SURFACE_NAMES, normalizeWholeToothCode } from './odontogramCodes';
 import { ToothSurfaceDiagram } from './ToothSurfaceDiagram';
@@ -18,10 +18,17 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
   const [tagInputValue, setTagInputValue] = useState<string>('');
   const [showAutocomplete, setShowAutocomplete] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  const lastInitializedToothId = useRef<string | null>(null);
+  const generalNotesRef = useRef<string>('');
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const wasFocusedRef = useRef<boolean>(false);
+  const tagInputRef = useRef<HTMLInputElement | null>(null);
+  const tagInputWasFocusedRef = useRef<boolean>(false);
 
-  // Initialize form data when modal opens or toothData changes
+  // Initialize form data when modal opens or toothId changes
   useEffect(() => {
-    if (isOpen && toothData) {
+    // Only initialize when modal opens with a different tooth
+    if (isOpen && toothData && lastInitializedToothId.current !== toothId) {
       // Normalize wholeToothCode to array (handles both string and array)
       let initialCodes: string[] = [];
       if (toothData.wholeToothCode) {
@@ -31,7 +38,9 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
         initialCodes = [toothData.status];
       }
       setWholeToothCodes(initialCodes);
-      setGeneralNotes(toothData.generalNotes || '');
+      const initialNotes = toothData.generalNotes || '';
+      setGeneralNotes(initialNotes);
+      generalNotesRef.current = initialNotes;
       
       // Initialize surface conditions
       const conditions: { [key in Surface]?: string } = {};
@@ -44,8 +53,52 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
       
       setSurfaceConditions(conditions);
       setSurfaceNotes(notes);
+      lastInitializedToothId.current = toothId;
     }
-  }, [isOpen, toothData]);
+    
+    // Reset when modal closes
+    if (!isOpen) {
+      lastInitializedToothId.current = null;
+      generalNotesRef.current = '';
+      wasFocusedRef.current = false;
+      tagInputWasFocusedRef.current = false;
+    }
+  }, [isOpen, toothId]); // Use toothId instead of toothData to prevent re-initialization
+
+  // Restore focus to textarea if it was focused but lost focus due to re-render
+  useEffect(() => {
+    if (wasFocusedRef.current && textareaRef.current) {
+      const activeElement = document.activeElement;
+      // Only restore if focus moved to another element in the modal (not user-initiated blur)
+      if (activeElement && activeElement !== textareaRef.current && activeElement.closest('.bg-white.rounded-lg')) {
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          if (textareaRef.current && wasFocusedRef.current) {
+            // Restore cursor position
+            const cursorPos = textareaRef.current.selectionStart || generalNotes.length;
+            textareaRef.current.focus();
+            textareaRef.current.setSelectionRange(cursorPos, cursorPos);
+          }
+        });
+      }
+    }
+  });
+
+  // Restore focus to tag input if it was focused but lost focus due to re-render
+  useEffect(() => {
+    if (tagInputWasFocusedRef.current && tagInputRef.current) {
+      const activeElement = document.activeElement;
+      // Only restore if focus moved to another element in the modal (not user-initiated blur)
+      if (activeElement && activeElement !== tagInputRef.current && activeElement.closest('.bg-white.rounded-lg')) {
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          if (tagInputRef.current && tagInputWasFocusedRef.current) {
+            tagInputRef.current.focus();
+          }
+        });
+      }
+    }
+  });
 
   const handleSurfaceClick = (surface: Surface) => {
     setSelectedSurface(surface);
@@ -81,12 +134,15 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
         };
       });
 
+    // Use ref value for generalNotes to ensure we get the latest value
+    const notesToSave = generalNotesRef.current || generalNotes;
+
     // Create updated tooth data
     const updatedToothData: ToothData = {
       id: toothId,
       surfaces,
       wholeToothCode: wholeToothCodes.length > 0 ? wholeToothCodes : undefined,
-      generalNotes: generalNotes || undefined
+      generalNotes: notesToSave || undefined
     };
 
     onSave(updatedToothData);
@@ -141,6 +197,9 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
   };
 
   const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Stop propagation to prevent events from reaching elements behind the modal
+    e.stopPropagation();
+    
     const suggestions = getAutocompleteSuggestions();
     
     if (e.key === 'Enter' && highlightedIndex >= 0 && suggestions[highlightedIndex]) {
@@ -158,11 +217,19 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
       e.preventDefault();
       setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
     } else if (e.key === 'Escape') {
+      e.preventDefault();
       setShowAutocomplete(false);
       setHighlightedIndex(-1);
     } else if (e.key === 'Backspace' && tagInputValue === '' && wholeToothCodes.length > 0) {
+      e.preventDefault();
       // Remove last tag when backspace is pressed on empty input
       removeTag(wholeToothCodes[wholeToothCodes.length - 1]);
+      // Ensure focus stays on the input after removing tag
+      requestAnimationFrame(() => {
+        if (tagInputRef.current) {
+          tagInputRef.current.focus();
+        }
+      });
     }
   };
 
@@ -177,6 +244,12 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
 
   const removeTag = (code: string) => {
     setWholeToothCodes(prev => prev.filter(c => c !== code));
+    // Ensure focus stays on the input after removing tag
+    requestAnimationFrame(() => {
+      if (tagInputRef.current && tagInputWasFocusedRef.current) {
+        tagInputRef.current.focus();
+      }
+    });
   };
 
   const handleSuggestionClick = (code: string) => {
@@ -286,19 +359,25 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                       })}
                       {/* Input field */}
                       <input
+                        ref={tagInputRef}
                         id="tag-input"
                         type="text"
                         value={tagInputValue}
                         onChange={handleTagInputChange}
                         onKeyDown={handleTagInputKeyDown}
                         onFocus={() => {
+                          tagInputWasFocusedRef.current = true;
                           // Show all options when input is focused
                           setShowAutocomplete(true);
                           setHighlightedIndex(-1);
                         }}
-                        onBlur={() => {
-                          // Delay to allow click events on suggestions
-                          setTimeout(() => setShowAutocomplete(false), 200);
+                        onBlur={(e) => {
+                          // Only hide autocomplete if focus is not moving to another element in the modal
+                          const relatedTarget = e.relatedTarget as HTMLElement;
+                          if (!relatedTarget || !relatedTarget.closest('.bg-white.rounded-lg')) {
+                            setShowAutocomplete(false);
+                            tagInputWasFocusedRef.current = false;
+                          }
                         }}
                         placeholder={wholeToothCodes.length === 0 ? "Type to search conditions..." : ""}
                         className="flex-1 min-w-[120px] outline-none text-sm bg-transparent"
@@ -316,7 +395,10 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                             <button
                               key={code.code}
                               type="button"
-                              onClick={() => handleSuggestionClick(code.code)}
+                              onMouseDown={(e) => {
+                                e.preventDefault(); // Prevent input blur
+                                handleSuggestionClick(code.code);
+                              }}
                               onMouseEnter={() => setHighlightedIndex(index)}
                               className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors ${
                                 isHighlighted ? 'bg-gray-100' : ''
@@ -393,8 +475,23 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                   General Notes
                 </label>
                 <textarea
+                  ref={textareaRef}
                   value={generalNotes}
-                  onChange={(e) => setGeneralNotes(e.target.value)}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setGeneralNotes(newValue);
+                    generalNotesRef.current = newValue;
+                  }}
+                  onKeyDown={(e) => {
+                    // Stop propagation to prevent other handlers from interfering
+                    e.stopPropagation();
+                  }}
+                  onFocus={() => {
+                    wasFocusedRef.current = true;
+                  }}
+                  onBlur={() => {
+                    wasFocusedRef.current = false;
+                  }}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Add general notes for this tooth..."
