@@ -42,7 +42,7 @@ export const ToothModal: React.FC<ToothModalProps> = ({
 
   useEffect(() => {
     if (toothData) {
-      setCondition(toothData.wholeToothCode || '');
+      setCondition(toothData.wholeToothCode ? Array.isArray(toothData.wholeToothCode) ? toothData.wholeToothCode[0] : toothData.wholeToothCode : '');
       setNotes(toothData.generalNotes || '');
       setStatus((toothData.status as 'normal' | 'attention' | 'urgent') || 'normal');
     } else {
