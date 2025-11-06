@@ -1,6 +1,6 @@
 import React from 'react';
 import { SurfaceIndicatorsProps, Surface, ToothSurfaceData } from './types';
-import { getSurfacesForToothType, normalizeWholeToothCode, getMostCriticalCode } from './odontogramCodes';
+import { getSurfacesForToothType, normalizeWholeToothCode, getCodePriority, ODONTOGRAM_CODES } from './odontogramCodes';
 
 export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
   toothData,
@@ -83,22 +83,44 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
     );
   };
 
-  const renderWholeToothSymbol = (toothId: string) => {
-    // Normalize wholeToothCode to array
-    const codes = normalizeWholeToothCode(toothData.wholeToothCode);
-    if (codes.length === 0) return null;
-    
-    const quadrant = toothId.slice(0, 1);
-    
-    // Get the most critical code (highest priority)
-    const primaryCode = getMostCriticalCode(codes);
-    if (!primaryCode) return null;
-    
+  // Get position category for a code (TOP, MIDDLE, BOTTOM)
+  const getSymbolPosition = (code: string): 'TOP' | 'MIDDLE' | 'BOTTOM' => {
+    // TOP position: Text symbols (vestibular side)
+    if (['non', 'une', 'pre', 'imx', 'ano', 'per', 'una', 'ipx'].includes(code)) {
+      return 'TOP';
+    }
+    // BOTTOM position: Triangle symbols (rct, nvt)
+    if (['rct', 'nvt'].includes(code)) {
+      return 'BOTTOM';
+    }
+    // MIDDLE position: All other symbols
+    return 'MIDDLE';
+  };
+
+  // Render a single symbol for a specific code with vertical offset
+  const renderSingleSymbol = (code: string, quadrant: string, verticalOffset: number = 0) => {
     const centerX = x + width / 2;
     const centerY = y + height / 2;
+    const position = getSymbolPosition(code);
+    
+    // Calculate base Y position based on position category and quadrant
+    let baseY: number;
+    if (position === 'TOP') {
+      // Upper jaw: above tooth, Lower jaw: below tooth
+      baseY = (quadrant === '1' || quadrant === '2') ? y - 4 : y + height +8;
+    } else if (position === 'BOTTOM') {
+      // Upper jaw: below tooth, Lower jaw: above tooth
+      baseY = (quadrant === '1' || quadrant === '2') ? y + height + 2 : y - 2;
+    } else {
+      // MIDDLE: always centered
+      baseY = centerY;
+    }
+    
+    // Apply vertical offset for stacking
+    const symbolY = baseY + verticalOffset;
 
     // Handle different whole tooth symbols
-    switch (primaryCode) {
+    switch (code) {
       case 'mis':
       case 'mam':
         return (
@@ -128,7 +150,7 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
         return (
           <circle
             cx={centerX}
-            cy={centerY}
+            cy={symbolY}
             r={Math.min(width, height) / 2}
             fill="transparent"
             stroke="#000000"
@@ -140,22 +162,20 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
         if (quadrant === '1' || quadrant === '2') {
           return (
             <polygon
-            points={`${centerX},${y + height + 7} ${x + 4},${y + height + 1} ${x + width - 4},${y + height + 1}`}
-            fill="#000000"
-            stroke="#000000"
-            strokeWidth="1"
-          />
-          )
-          
-        } 
-        return (
-          <polygon
-              points={`${centerX},${y - 7} ${x + width - 4},${y - 1} ${x + 4},${y - 1}`}
+              points={`${centerX},${symbolY + 6} ${x + 4},${symbolY} ${x + width - 4},${symbolY}`}
               fill="#000000"
               stroke="#000000"
               strokeWidth="1"
             />
-          
+          );
+        } 
+        return (
+          <polygon
+            points={`${centerX},${symbolY - 6} ${x + width - 4},${symbolY} ${x + 4},${symbolY}`}
+            fill="#000000"
+            stroke="#000000"
+            strokeWidth="1"
+          />
         );
       case 'fra':
         return (
@@ -174,7 +194,7 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
         return (
           <text
             x={centerX}
-            y={centerY + 5}
+            y={symbolY + 5}
             textAnchor="middle"
             className=" font-bold fill-black"
           >
@@ -183,33 +203,29 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
         );
 
       case 'nvt':
-        
         if (quadrant === '1' || quadrant === '2') {
           return (
             <polygon
-            points={`${centerX},${y + height + 7} ${x + 4},${y + height + 1} ${x + width - 4},${y + height + 1}`}
-            fill="transparent"
-            stroke="#000000"
-            strokeWidth="1"
-          />
-          )
-          
-        } 
-        return (
-          <polygon
-              points={`${centerX},${y - 7} ${x + width - 4},${y - 1} ${x + 4},${y - 1}`}
+              points={`${centerX},${symbolY + 6} ${x + 4},${symbolY} ${x + width - 4},${symbolY}`}
               fill="transparent"
               stroke="#000000"
               strokeWidth="1"
             />
-          
+          );
+        } 
+        return (
+          <polygon
+            points={`${centerX},${symbolY - 6} ${x + width - 4},${symbolY} ${x + 4},${symbolY}`}
+            fill="transparent"
+            stroke="#000000"
+            strokeWidth="1"
+          />
         );
       case 'rrx':
-        
         return (
           <text
             x={centerX}
-            y={centerY + 5}
+            y={symbolY + 5}
             textAnchor="middle"
             className=" font-bold fill-black"
           >
@@ -219,7 +235,6 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
       case 'fmc':
       case 'onl':
       case 'inl':
-        <rect x={centerX - 4} y={centerY - 4} width={8} height={8} fill="#000000"/>
         return (
           <rect
             x={centerX - width/2}
@@ -283,15 +298,15 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
           <>
             <text
               x={centerX}
-              y={centerY - 13}
+              y={symbolY - 8}
               textAnchor="middle"
               className="text-xxs font-bold"
             >
-              {primaryCode}
+              {code}
             </text>
             <text
               x={centerX}
-              y={centerY + 5}
+              y={symbolY + 5}
               textAnchor="middle"
               className=" font-bold fill-black"
             >
@@ -340,14 +355,15 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
       case 'ano':
       case 'per':
       case 'una':
+      case 'ipx':
         return (
           <text
             x={centerX}
-            y={centerY-13}
+            y={symbolY}
             textAnchor="middle"
             className="text-xxs font-bold"
           >
-            {primaryCode}
+            {code}
           </text>
         );
 
@@ -356,33 +372,93 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
     }
   };
 
-  // Render the symbol and "*" indicator if there are more codes
-  const renderSymbolWithIndicator = () => {
-    const symbol = renderWholeToothSymbol(toothData.id);
-    if (!symbol) return null;
-    
+  // Render all whole tooth symbols stacked vertically by position category
+  const renderAllWholeToothSymbols = () => {
     const codes = normalizeWholeToothCode(toothData.wholeToothCode);
-    const hasMoreCodes = codes.length > 1;
+    if (codes.length === 0) return null;
     
-    if (!hasMoreCodes) return symbol;
+    const quadrant = toothData.id.slice(0, 1);
     
-    // If there are more codes, add "*" indicator
-    // Position "*" in top-right corner of the tooth
-    return (
-      <g>
-        {symbol}
-        <text
-          x={x + width - 4}
-          y={y + 8}
-          textAnchor="end"
-          className="text-xs font-bold fill-black"
-          style={{ fontSize: '10px' }}
-        >
-          *
-        </text>
-      </g>
-    );
+    // Sort codes by priority
+    const sortedCodes = [...codes].sort((a, b) => {
+      const priorityA = getCodePriority(a);
+      const priorityB = getCodePriority(b);
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      // If same priority, maintain order as in ODONTOGRAM_CODES
+      const indexA = ODONTOGRAM_CODES.findIndex(c => c.code === a);
+      const indexB = ODONTOGRAM_CODES.findIndex(c => c.code === b);
+      return indexA - indexB;
+    });
+    
+    // Group codes by position category
+    const topCodes: string[] = [];
+    const middleCodes: string[] = [];
+    const bottomCodes: string[] = [];
+    
+    sortedCodes.forEach(code => {
+      const position = getSymbolPosition(code);
+      if (position === 'TOP') {
+        topCodes.push(code);
+      } else if (position === 'BOTTOM') {
+        bottomCodes.push(code);
+      } else {
+        middleCodes.push(code);
+      }
+    });
+    
+    const symbolSpacing = 1; // Vertical spacing between stacked symbols
+    const result: JSX.Element[] = [];
+    
+    // Render TOP position symbols (stacked)
+    topCodes.forEach((code, index) => {
+      const offset = (quadrant === '1' || quadrant === '2') 
+        ? -index * symbolSpacing 
+        : index * symbolSpacing;
+      const symbol = renderSingleSymbol(code, quadrant, offset);
+      if (symbol) {
+        result.push(
+          <g key={`top-${code}-${index}`}>
+            {symbol}
+          </g>
+        );
+      }
+    });
+    
+    // Render MIDDLE position symbols (stacked)
+    middleCodes.forEach((code, index) => {
+      const offset = (index - (middleCodes.length - 1) / 2) * symbolSpacing;
+      const symbol = renderSingleSymbol(code, quadrant, offset);
+      if (symbol) {
+        result.push(
+          <g key={`middle-${code}-${index}`}>
+            {symbol}
+          </g>
+        );
+      }
+    });
+    
+    // Render BOTTOM position symbols (stacked)
+    bottomCodes.forEach((code, index) => {
+      const offset = (quadrant === '1' || quadrant === '2') 
+        ? index * symbolSpacing 
+        : -index * symbolSpacing;
+      const symbol = renderSingleSymbol(code, quadrant, offset);
+      if (symbol) {
+        result.push(
+          <g key={`bottom-${code}-${index}`}>
+            {symbol}
+          </g>
+        );
+      }
+    });
+    
+    return result.length > 0 ? <g>{result}</g> : null;
   };
+
 
   return (
     <g>
@@ -412,8 +488,8 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
           );
         })} */}
       
-      {/* Whole tooth symbols */}
-      {renderSymbolWithIndicator()}
+      {/* Whole tooth symbols - all stacked vertically by position */}
+      {renderAllWholeToothSymbols()}
     </g>
   );
 };
