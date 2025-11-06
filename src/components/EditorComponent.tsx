@@ -32,6 +32,14 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
                   preserveBlank: true,
                 },
               },
+              // New tool name
+              odontogram: {
+                class: DentitionTool,
+                config: {
+                  readOnly: readOnly,
+                },
+              },
+              // Backward compatibility: support old "dentition" blocks
               dentition: {
                 class: DentitionTool,
                 config: {
@@ -50,6 +58,15 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
             if (onChange) {
               try {
                 const savedData = await editorInstance.current?.save();
+                // Migrate old "dentition" blocks to "odontogram" for backward compatibility
+                if (savedData?.blocks) {
+                  savedData.blocks = savedData.blocks.map((block: any) => {
+                    if (block.type === 'dentition') {
+                      return { ...block, type: 'odontogram' };
+                    }
+                    return block;
+                  });
+                }
                 // Add a small delay to ensure EditorJS state is fully updated
                 await new Promise(resolve => setTimeout(resolve, 0));
                 onChange(savedData);
@@ -67,7 +84,17 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
 
     const initialize = async () => {
       if (data) {
-        await initEditor(data);
+        // Migrate old "dentition" blocks to "odontogram" when loading data
+        const migratedData = {
+          ...data,
+          blocks: data.blocks?.map((block: any) => {
+            if (block.type === 'dentition') {
+              return { ...block, type: 'odontogram' };
+            }
+            return block;
+          }) || []
+        };
+        await initEditor(migratedData);
       } else {
         await initEditor();
       }
