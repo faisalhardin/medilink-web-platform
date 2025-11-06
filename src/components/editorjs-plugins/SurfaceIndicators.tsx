@@ -294,20 +294,22 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
           />
         );
       case 'prd':
+          // Upper jaw: above tooth, Lower jaw: below tooth
+        const baseYText = (quadrant === '1' || quadrant === '2') ? y - 4 : y + height +8;
         return (
           <>
             <text
               x={centerX}
-              y={symbolY - 8}
+              y={baseYText}
               textAnchor="middle"
               className="text-xxs font-bold"
             >
               {code}
             </text>
             <text
-              x={centerX}
-              y={symbolY + 5}
-              textAnchor="middle"
+             x={centerX}
+             y={symbolY + 5}
+             textAnchor="middle"
               className=" font-bold fill-black"
             >
               X

@@ -128,7 +128,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
     }
     
     // Limit to 10 suggestions when searching, show more when just focused
-    return filteredCodes.slice(0, tagInputValue.trim() ? 10 : 20);
+    return filteredCodes.slice(0, tagInputValue.trim() ? 10 : 100);
   };
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,8 +257,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                             key={code}
                             className="chip-tooltip-group relative inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 cursor-help"
                           >
-                            {code} 
-                            {/* - {codeData?.name || code} */}
+                            {code}
                             
                             {/* Custom tooltip - shows only on hover */}
                             {codeData?.name && (

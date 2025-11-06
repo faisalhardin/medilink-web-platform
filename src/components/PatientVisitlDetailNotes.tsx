@@ -16,13 +16,17 @@ interface patientVisitProps {
 export const PatientVisitlDetailNotes = ({ patientVisit, visitDetail, activeTab, journeyPoints, upsertVisitDetailFunc }: patientVisitProps) => {   
     const [isChanged, setIsChanged] = useState(false);
     const newNoteRef = useRef<VisitDetail | null>(null);
+    const updatedNoteRef = useRef<VisitDetail | null>(null);
 
     // Simplified note change handler
     const handleNoteChange = (notes: Record<string, any>) => {
         
         if (visitDetail) {
-            // Update existing note
-            visitDetail.notes = notes;
+            // Store updated note in ref instead of mutating prop
+            updatedNoteRef.current = {
+                ...visitDetail,
+                notes: notes
+            };
         } else {
             // Handle new note
             if (!newNoteRef.current) {
@@ -41,11 +45,12 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetail, activeTab,
 
     // Simplified save function
     const saveNote = () => {
-        const noteToSave = visitDetail || newNoteRef.current;
+        const noteToSave = updatedNoteRef.current || visitDetail || newNoteRef.current;
 
         if (noteToSave) {
             upsertVisitDetailFunc(noteToSave);
             setIsChanged(false);
+            updatedNoteRef.current = null; // Reset after save
         }
     };
 

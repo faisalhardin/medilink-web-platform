@@ -167,7 +167,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     <div className="w-full max-w-4xl mx-auto p-4">
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
-          Dental Chart - FDI Notation
+          Odontogram
         </h3>
         
         <div className="overflow-x-auto">
@@ -317,30 +317,6 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
             />
             
           </svg>
-        </div>
-        
-        {/* Legend */}
-        <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-gray-100 border border-gray-400"></div>
-            <span>No data</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-100 border border-blue-400"></div>
-            <span>Has data</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-100 border border-green-400"></div>
-            <span>Normal</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-400"></div>
-            <span>Attention</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-red-100 border border-red-400"></div>
-            <span>Urgent</span>
-          </div>
         </div>
       </div>
     </div>
