@@ -357,7 +357,6 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
       case 'ano':
       case 'per':
       case 'una':
-      case 'ipx':
         return (
           <text
             x={centerX}
