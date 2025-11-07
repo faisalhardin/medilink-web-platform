@@ -1,6 +1,6 @@
 import React from 'react';
 import { ToothSurfaceDiagramProps, Surface } from './types';
-import { getSurfacesForToothType } from './odontogramCodes';
+import { getSurfacesForToothType, normalizeWholeToothCode } from './odontogramCodes';
 
 
 const getOcclusalToothPath = () => {
@@ -12,7 +12,7 @@ const getOcclusalToothPath = () => {
          M 120 50 L 150 20 L 150 110 L 120 80 Z
          M 50 20 L 80 50 L 120 50 L 150 20 Z"
       fill="#ffffff"
-      stroke="#374151"
+      stroke="#505763"
       strokeWidth="1"
     />
   };
@@ -26,7 +26,7 @@ const getIncisalToothPath = () => {
                M 50 20 L 91 66 L 109 66 L 150 20 Z
               "
               fill="#ffffff"
-              stroke="#374151"
+              stroke="#505763"
               strokeWidth="1"
             />
 };
@@ -173,6 +173,21 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
     return toothData.surfaces.some(s => s.surface === surface);
   };
 
+  const getWholeToothConditionsText = (): string => {
+    if (!toothData || !toothData.wholeToothCode) return '';
+    const codes = normalizeWholeToothCode(toothData.wholeToothCode);
+    return codes.length > 0 ? codes.join('-') : '';
+  };
+
+  const getSurfaceConditionsText = (): string => {
+    if (!toothData || !toothData.surfaces || toothData.surfaces.length === 0) return '';
+    const surfaceConditions = toothData.surfaces
+      .filter(s => s.code && s.code !== '')
+      .map(s => `${s.surface} ${s.code}`)
+      .join(' ');
+    return surfaceConditions;
+  };
+
   const renderSurfacePattern = (surface: Surface, _area: any) => {
     const pattern = getSurfacePattern(surface);
     
@@ -252,6 +267,19 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
             })}   
           </svg>
         </div>
+        
+        {/* Textual conditions display */}
+        {(() => {
+          const wholeToothText = getWholeToothConditionsText();
+          const surfaceText = getSurfaceConditionsText();
+          const parts = [surfaceText, wholeToothText].filter(Boolean);
+          const conditionsText = parts.join(' - ');
+          return conditionsText ? (
+            <div className="mt-4 text-xs text-gray-600 text-center">
+              {conditionsText}
+            </div>
+          ) : null;
+        })()}
         
         {/* Surface legend - only show applicable surfaces */}
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">

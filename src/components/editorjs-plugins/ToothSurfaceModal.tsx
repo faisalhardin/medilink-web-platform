@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ToothSurfaceModalProps, ToothData, Surface } from './types';
 import { ODONTOGRAM_CODES_MAP, getCodesBySurface, getWholeToothCodes, SURFACE_NAMES, normalizeWholeToothCode } from './odontogramCodes';
 import { ToothSurfaceDiagram } from './ToothSurfaceDiagram';
@@ -270,9 +271,36 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
     });
   };
 
+  // Compute current toothData for live updates in the diagram
+  const currentToothData: ToothData | undefined = useMemo(() => {
+    if (!toothData) return undefined;
+    
+    // Build surfaces array from current state
+    const surfaces = Object.entries(surfaceConditions)
+      .filter(([_, code]) => code && code !== '')
+      .map(([surface, code]) => {
+        const codeData = ODONTOGRAM_CODES_MAP[code];
+        return {
+          surface: surface as Surface,
+          code: code!,
+          condition: codeData?.name || code!,
+          color: codeData?.color || '#000000',
+          pattern: codeData?.pattern || 'solid',
+          notes: surfaceNotes[surface as Surface] || ''
+        };
+      });
+
+    return {
+      id: toothId,
+      surfaces,
+      wholeToothCode: wholeToothCodes.length > 0 ? wholeToothCodes : undefined,
+      generalNotes: generalNotes || toothData.generalNotes
+    };
+  }, [toothData, toothId, surfaceConditions, surfaceNotes, wholeToothCodes, generalNotes]);
+
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
@@ -296,7 +324,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
             <div>
               <ToothSurfaceDiagram
                 toothId={toothId}
-                toothData={toothData}
+                toothData={currentToothData}
                 onSurfaceClick={handleSurfaceClick}
                 selectedSurface={selectedSurface}
               />
@@ -517,6 +545,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
