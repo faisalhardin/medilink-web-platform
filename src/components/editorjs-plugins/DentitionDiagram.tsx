@@ -1,13 +1,14 @@
-import React from 'react';
-import { DentitionDiagramProps, Surface } from './types';
+import React, { useState } from 'react';
+import { DentitionDiagramProps, Surface, ToothData } from './types';
 import { SurfaceIndicators } from './SurfaceIndicators';
-import { getSurfacesForToothType, ODONTOGRAM_CODES_MAP } from './odontogramCodes';
+import { getSurfacesForToothType, ODONTOGRAM_CODES_MAP, normalizeWholeToothCode } from './odontogramCodes';
 
 export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
   teethData = {},
   onToothClick,
   isEditable
 }) => {
+  const [viewMode, setViewMode] = useState<'diagram' | 'table'>('diagram');
   // Determine tooth type based on tooth ID
   const getToothType = (toothId: string): 'incisor' | 'canine' | 'premolar' | 'molar' => {
     const toothNum = parseInt(toothId);
@@ -163,13 +164,72 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     { id: '38', ...getToothPosition(7, false, 3) },
   ];
 
+  // Helper functions for formatting tooth conditions
+  const getWholeToothConditionsText = (toothData: ToothData): string => {
+    if (!toothData || !toothData.wholeToothCode) return '';
+    const codes = normalizeWholeToothCode(toothData.wholeToothCode);
+    return codes.length > 0 ? codes.join('-') : '';
+  };
+
+  const getSurfaceConditionsText = (toothData: ToothData): string => {
+    if (!toothData || !toothData.surfaces || toothData.surfaces.length === 0) return '';
+    const surfaceConditions = toothData.surfaces
+      .filter(s => s.code && s.code !== '')
+      .map(s => `${s.surface} ${s.code}`)
+      .join(' ');
+    return surfaceConditions;
+  };
+
+  const getToothConditionText = (toothData: ToothData | undefined): string => {
+    if (!toothData) return '—';
+    const wholeToothText = getWholeToothConditionsText(toothData);
+    const surfaceText = getSurfaceConditionsText(toothData);
+    const parts = [surfaceText, wholeToothText].filter(Boolean);
+    return parts.length > 0 ? parts.join(' - ') : '—';
+  };
+
+  // Combine all teeth for table view
+  const allTeeth = [...upperTeeth, ...lowerTeeth];
+
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:p-4">
       <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">
           Odontogram
         </h3>
         
+        <div className="flex justify-center mb-4">
+          <div className="inline-flex rounded-md border border-gray-300 bg-white p-1">
+            <button
+              onClick={() => setViewMode('diagram')}
+              className={`p-1.5 rounded transition-colors ${
+                viewMode === 'diagram'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+              aria-label="Switch to diagram view"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+              aria-label="Switch to table view"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {viewMode === 'diagram' && (
         <div className="overflow-x-auto -mx-3 sm:mx-0">
           <svg
             viewBox="0 -10 400 120"
@@ -319,6 +379,44 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
             
           </svg>
         </div>
+        )}
+
+        {viewMode === 'table' && (
+          <div className="overflow-x-auto -mx-3 sm:mx-0">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="w-20 px-2 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200">
+                    Tooth Code
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Tooth Condition
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {allTeeth.map((tooth) => {
+                  const toothData = teethData[tooth.id];
+                  const conditionText = getToothConditionText(toothData);
+                  return (
+                    <tr
+                      key={tooth.id}
+                      onClick={() => isEditable && onToothClick(tooth.id)}
+                      className={isEditable ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}
+                    >
+                      <td className="w-20 px-2 py-2 text-xs font-medium text-gray-900 border-r border-gray-200">
+                        {tooth.id}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-gray-700">
+                        {conditionText}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
