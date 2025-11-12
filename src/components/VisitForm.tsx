@@ -7,6 +7,7 @@ import Drawer from "./Drawer";
 import { useDrawer } from "hooks/useDrawer";
 import { PatientListComponent, PatientRegistrationComponent, PatientVisitsComponent } from "./PatientComponent";
 import { EditorComponent } from "./EditorComponent";
+import { formatDate } from "@utils/common";
 
 interface PatientVisitRegistrationProps {
   journeyPointID: number;
@@ -58,7 +59,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
   };
 
   return (
-    <>
+    <div className="min-h-[90vh] flex flex-col">
       <div className="bg-white overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r px-8 py-6">
@@ -70,8 +71,9 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
           {/* Patient Selection Section */}
           {activeSection === 'patient' && (
             <div className="space-y-6">
-              <div className="">                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid lg:grid-cols-[2fr_3fr] gap-6">                
+                {/* Left Column - Patient Selection */}
+                <div className="flex flex-col gap-2">
                   <div className="p-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Select Patient *
@@ -143,47 +145,44 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                   </div>
 
                   {selectedPatient && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="bg-white border border-gray-200 rounded-lg m-6 p-6">
                       <h4 className="font-medium text-gray-900 mb-2">Selected Patient</h4>
                       <div className="text-sm text-gray-600 space-y-1">
                         <p><span className="font-medium">Name:</span> {selectedPatient.name}</p>
                         <p><span className="font-medium">NIK:</span> {selectedPatient.nik}</p>
-                        <p><span className="font-medium">DOB:</span> {selectedPatient.date_of_birth}</p>
+                        <p>
+                          <span className="font-medium">DOB:</span>{" "}
+                          {selectedPatient.date_of_birth
+                            ? formatDate(selectedPatient.date_of_birth)
+                            : ""}
+                        </p>
                         <p><span className="font-medium">Sex:</span> {selectedPatient.sex}</p>
                       </div>
                     </div>
                   )}
-                  
-                  <div className="col-span-full border-t">
-                    <EditorComponent
+                </div>
+                
+                {/* Right Column - Editor Component */}
+                <div className="group border border-gray-200 rounded-lg p-4 focus-within:border-blue-400 transition-colors">
+                  <div className="mb-2">
+                    <svg 
+                      className="w-5 h-5 text-gray-500 animate-pulse group-hover:animate-none group-hover:scale-110 group-hover:text-blue-500 transition-all duration-200" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </div>
+                  <EditorComponent
                     id='notes'
                     readOnly={false}
                     placeHolder="Describe the reason for this visit, symptoms, concerns, etc."
-                      onChange={(notes: Record<string, any>) => {
-                        setValue('notes', notes);
-                      }}
-                    className="w-full h-32 col-span-full overflow-hidden
-                               border-gray-200 
-                              rounded-md 
-                              bg-white 
-                              px-3 py-2 
-                              text-sm text-gray-900 
-                              placeholder:text-gray-400 
-                              transition-all duration-200 ease-in-out
-                              hover:border-gray-300 
-                              hover:shadow-sm
-                              focus:outline-none 
-                              focus:ring-1 
-                              focus:ring-purple-500 
-                              focus:border-purple-500 
-                              focus:shadow-sm
-                              disabled:bg-gray-50 
-                              disabled:text-gray-500 
-                              disabled:cursor-not-allowed"
+                    onChange={(notes: Record<string, any>) => {
+                      setValue('notes', notes);
+                    }}
+                    className="min-h-[300px]"
                   />
-                  </div>
-                  
-
                 </div>
               </div>
             </div>
@@ -256,7 +255,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
           isInDrawer={true}
         />
       </Drawer>
-    </>
+    </div>
   );
 }
 
