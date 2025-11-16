@@ -4,7 +4,8 @@ import { NavLink } from 'react-router-dom';
 
 interface NavListProps {
     name: string;
-    request: () => Promise<NavListItem[]>
+    request: () => Promise<NavListItem[]>;
+    onNavClick?: () => void;
 }
 
 export const NavList = (paramProps:NavListProps) => {
@@ -74,7 +75,7 @@ export const NavList = (paramProps:NavListProps) => {
                         <div className="px-3 py-2 text-sm text-red-600">{error}</div>
                     ) : (
                         items.map((item) => (
-                            <GetNavLink key={item.id} id={item.id} name={item.name} pageURL={item.pageURL} />
+                            <GetNavLink key={item.id} id={item.id} name={item.name} pageURL={item.pageURL} onNavClick={paramProps.onNavClick} />
                         ))
                     )}
                 </div>
@@ -91,10 +92,11 @@ export interface NavListItem {
 }
 
 
-const GetNavLink = (props:{pageURL:string, id:number, name:string}) => {
+const GetNavLink = (props:{pageURL:string, id:number, name:string, onNavClick?: () => void}) => {
     return (
         <NavLink 
             to={props.pageURL}
+            onClick={props.onNavClick}
             className={({ isActive }) => 
                 `block px-3 py-2 text-sm text-gray-600 rounded-md transition-colors duration-200 ${
                     isActive 

@@ -1,26 +1,85 @@
 import { NavLink } from "react-router-dom";
 import Login from "./Login";
 import { NavList, NavListItem } from "./NavList";
-import { GetJourneyBoards } from "@requests/journey";
 import { JourneyBoard } from "@models/journey";
 import { useAuthState } from "hooks/useAuthCallback";
 import UserComponent from "./UserComponent";
+import { useEffect } from "react";
+import { getJourneyBoardsCached } from "hooks/useJourneyBoards";
 
+interface ColumnNavProps {
+  isMobileNavOpen?: boolean;
+  setIsMobileNavOpen?: (open: boolean) => void;
+}
 
-function ColumnNav() {
+function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavProps) {
   const { isAuthenticated, isLoading } = useAuthState();
 
+  // Prevent body scroll when mobile nav is open
+  useEffect(() => {
+    if (isMobileNavOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileNavOpen]);
+
+  const handleNavClick = () => {
+    // Close mobile nav when a nav item is clicked (mobile only)
+    if (setIsMobileNavOpen && window.innerWidth < 1024) {
+      setIsMobileNavOpen(false);
+    }
+  };
+
+  const handleBackdropClick = () => {
+    if (setIsMobileNavOpen) {
+      setIsMobileNavOpen(false);
+    }
+  };
+
   return (
-    <div className="bg-white border-r border-gray-200 flex-shrink-0 h-screen w-64 flex flex-col sticky top-0">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0">
-        <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
-      </div>
+    <>
+      {/* Backdrop overlay - mobile only */}
+      {isMobileNavOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
+          onClick={handleBackdropClick}
+        />
+      )}
+      
+      {/* Navigation */}
+      <div className={`
+        bg-white border-r border-gray-200 flex-shrink-0 h-screen flex flex-col
+        fixed lg:sticky top-0 left-0 z-50
+        w-full lg:w-64
+        transform transition-transform duration-300 ease-in-out
+        ${isMobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0 flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
+          {/* Close button - mobile only */}
+          {setIsMobileNavOpen && (
+            <button
+              onClick={() => setIsMobileNavOpen(false)}
+              className="lg:hidden text-gray-500 hover:text-gray-700 focus:outline-none"
+              aria-label="Close menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
       
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <NavLink 
-          to="/institution" 
+          to="/institution"
+          onClick={handleNavClick}
           className={({ isActive }) => 
             `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
               isActive 
@@ -36,7 +95,8 @@ function ColumnNav() {
         </NavLink>
         
         <NavLink 
-          to="/patient" 
+          to="/patient"
+          onClick={handleNavClick}
           className={({ isActive }) => 
             `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
               isActive 
@@ -52,7 +112,8 @@ function ColumnNav() {
         </NavLink>
         
         <NavLink 
-          to="/inventory" 
+          to="/inventory"
+          onClick={handleNavClick}
           className={({ isActive }) => 
             `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
               isActive 
@@ -68,7 +129,8 @@ function ColumnNav() {
         </NavLink>
         
         <NavLink 
-          to="/product-replenishment" 
+          to="/product-replenishment"
+          onClick={handleNavClick}
           className={({ isActive }) => 
             `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
               isActive 
@@ -83,7 +145,7 @@ function ColumnNav() {
           Product Replenishment
         </NavLink>
         
-        <NavList name="Journey Board" request={requestJourneyBoard} />
+        <NavList name="Journey Board" request={requestJourneyBoard} onNavClick={handleNavClick} />
       </nav>
       
       {/* Footer */}
@@ -99,6 +161,7 @@ function ColumnNav() {
         )}
       </div>
     </div>
+    </>
   );
 }
 
@@ -107,7 +170,7 @@ export default ColumnNav;
 
 const requestJourneyBoard = async (): Promise<NavListItem[]> => {
   try {
-    const journeyBoardList = await GetJourneyBoards();
+    const journeyBoardList = await getJourneyBoardsCached();
     return journeyBoardList.map((board: JourneyBoard): NavListItem => {
       return {
         id: board.id,
