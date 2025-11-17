@@ -389,7 +389,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
-          <h3 className="text-sm font-medium">
+          <h3 className="text-xs sm:text-sm font-medium">
             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </h3>
           <button
@@ -467,7 +467,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
           {/* Filter Icon */}
           <div className="flex items-center text-gray-500">
             <FunnelIcon className="h-5 w-5 mr-2" />
-            <span className="text-sm font-medium">Filters</span>
+            <span className="text-xs sm:text-sm font-medium">Filters</span>
           </div>
 
           {/* Filter Dropdowns */}
@@ -477,7 +477,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
                 <button
                   onClick={() => toggleDropdown(config.key)}
                   className={`
-                    flex items-center px-3 py-2 text-sm font-medium rounded-md border transition-all duration-200
+                    flex items-center px-3 py-2 text-xs sm:text-sm font-medium rounded-md border transition-all duration-200
                     ${activeFilters[config.key] 
                       ? 'bg-blue-50 border-blue-200 text-blue-700' 
                       : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
@@ -524,7 +524,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
                               key={option.value}
                               onClick={() => handleFilterChange(config.key, option.value)}
                               className={`
-                                w-full text-left px-3 py-2 text-sm rounded-md transition-colors duration-150
+                                w-full text-left px-3 py-2 text-xs sm:text-sm rounded-md transition-colors duration-150
                                 ${activeFilters[config.key] === option.value
                                   ? 'bg-blue-50 text-blue-700'
                                   : 'text-gray-700 hover:bg-gray-50'
@@ -548,7 +548,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
         {Object.keys(activeFilters).length > 0 && (
           <button
             onClick={clearAllFilters}
-            className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors duration-150"
+            className="flex items-center px-3 py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors duration-150"
           >
             <XMarkIcon className="h-4 w-4 mr-1" />
             Clear all

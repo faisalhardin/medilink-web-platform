@@ -209,7 +209,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
             <div className='bg-white p-6'>
                 <div className='flex items-center mb-6'>
                     <div>
-                        <h2 className='text-xl font-semibold'>
+                        <h2 className='text-xl sm:text-2xl lg:text-3xl font-semibold'>
                             {patient.name}
                         </h2>
                         <p>
