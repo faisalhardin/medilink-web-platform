@@ -410,7 +410,7 @@ export const ProductAssignmentPanel = ({
   return (
     <>
       <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-medium mb-4">Assign Products</h3>
+        <h3 className="text-base sm:text-lg font-medium mb-4">Assign Products</h3>
 
         {/* Search and assign section with improved search panel */}
         <div className="mb-4">
@@ -425,7 +425,7 @@ export const ProductAssignmentPanel = ({
             />
 
             {isSearching && (
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs sm:text-sm">
                 Searching...
               </div>
             )}
@@ -439,7 +439,7 @@ export const ProductAssignmentPanel = ({
                     onClick={() => product.quantity && product.quantity > 0 ? handleResultClick(product) : null}
                   >
                     <div className="font-medium">{product.name}</div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-xs sm:text-sm text-gray-600">
                       Stock: {product.quantity} {product.unit_type}
                     </div>
                   </li>
@@ -572,14 +572,14 @@ const ProductOrderConfirmation = ({
       {/* Footer */}
       {products.length > 0 && (
         <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
-          <div className="flex justify-between text-base font-medium text-gray-900">
+          <div className="flex justify-between text-sm sm:text-base font-medium text-gray-900">
             <p>Subtotal</p>
             <p>{formatPrice(subTotal)}</p>
           </div>
           <div className="mt-6">
             <button
               onClick={onMakeOrder}
-              className="flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-sm sm:text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
               Checkout
             </button>

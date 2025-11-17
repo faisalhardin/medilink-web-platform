@@ -60,7 +60,7 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
       `}>
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
+          <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">Dashboard</h1>
           {/* Close button - mobile only */}
           {setIsMobileNavOpen && (
             <button
@@ -81,7 +81,7 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
           to="/institution"
           onClick={handleNavClick}
           className={({ isActive }) => 
-            `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+            `flex items-center px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
               isActive 
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
                 : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
@@ -98,7 +98,7 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
           to="/patient"
           onClick={handleNavClick}
           className={({ isActive }) => 
-            `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+            `flex items-center px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
               isActive 
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
                 : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
@@ -115,7 +115,7 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
           to="/inventory"
           onClick={handleNavClick}
           className={({ isActive }) => 
-            `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+            `flex items-center px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
               isActive 
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
                 : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
@@ -132,7 +132,7 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
           to="/product-replenishment"
           onClick={handleNavClick}
           className={({ isActive }) => 
-            `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+            `flex items-center px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
               isActive 
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
                 : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'

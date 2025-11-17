@@ -185,7 +185,7 @@ const InventoryComponent = () => {
   return (
     <div className="p-6 w-full">
       <div className="flex justify-between items-center mb-6">
-        <Typography variant="h4" className="font-bold">Inventory Management</Typography>
+        <Typography variant="h4" className="text-2xl sm:text-3xl lg:text-4xl font-bold">Inventory Management</Typography>
         <Button 
           variant="contained" 
           startIcon={<Add />}
@@ -202,8 +202,8 @@ const InventoryComponent = () => {
           <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <InventoryIcon className="text-blue-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">{totalProducts}</Typography>
-              <Typography variant="body2" className="text-gray-600">Total Products</Typography>
+              <Typography variant="h5" className="text-base sm:text-lg font-bold">{totalProducts}</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Total Products</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -212,8 +212,8 @@ const InventoryComponent = () => {
         <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <ShoppingCart className="text-green-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">{totalItems}</Typography>
-              <Typography variant="body2" className="text-gray-600">Items</Typography>
+              <Typography variant="h5" className="text-base sm:text-lg font-bold">{totalItems}</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Items</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -222,8 +222,8 @@ const InventoryComponent = () => {
         <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <Warning className="text-amber-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">{lowStockCount}</Typography>
-              <Typography variant="body2" className="text-gray-600">Low Stock</Typography>
+              <Typography variant="h5" className="text-base sm:text-lg font-bold">{lowStockCount}</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Low Stock</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -232,8 +232,8 @@ const InventoryComponent = () => {
         <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <AttachMoney fontSize="large" className="text-emerald-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">{formatPrice(inventoryValue)}</Typography>
-              <Typography variant="body2" className="text-gray-600">Total Value</Typography>
+              <Typography variant="h5" className="text-lg sm:text-xl font-bold">{formatPrice(inventoryValue)}</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Total Value</Typography>
             </CardContent>
           </Card>
         </Grid>

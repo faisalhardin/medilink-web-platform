@@ -82,14 +82,14 @@ const UserComponent = () => {
                                 className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
                             />
                         ) : (
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold">
                                 {getInitials(userInfo.name)}
                             </div>
                         )}
                     </div>
                     {/* User Info */}
                     <div className="text-left">
-                        <p className="text-sm font-medium text-gray-900 truncate max-w-32">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-32">
                             {userInfo.name}
                         </p>
                         <p className="text-xs text-gray-500 truncate max-w-32">
@@ -121,7 +121,7 @@ const UserComponent = () => {
                         <div className="space-y-2">
                             <button
                                 onClick={handleLogout}
-                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors duration-200"
+                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-xs sm:text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors duration-200"
                             >
                                 <svg
                                     className="w-4 h-4"

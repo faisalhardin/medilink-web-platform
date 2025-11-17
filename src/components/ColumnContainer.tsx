@@ -74,7 +74,7 @@ function ColumnContainer({
       opacity-40
       border-2
       border-pink-500
-      w-[350px]
+      w-[300px]
       h-[500px]
       max-h-[500px]
       rounded-md
@@ -91,7 +91,7 @@ function ColumnContainer({
       style={style}
       className="
       bg-white
-      w-[350px]
+      w-[300px]
       h-[500px]
       max-h-[500px]
       rounded-xl
@@ -153,13 +153,13 @@ function ColumnContainer({
           {!editMode && (
             <span  onClick={() => {
               setEditMode(true);
-            }} className="w-full text-white font-semibold truncate">
+            }} className="w-full text-white font-semibold text-sm sm:text-base lg:text-lg truncate">
               {column.name}
             </span>
           )}
           {editMode && (
             <input
-              className="bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 border border-white border-opacity-30 focus:border-white rounded-lg outline-none px-3 py-1 text-sm font-semibold transition-all duration-200"
+              className="bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 border border-white border-opacity-30 focus:border-white rounded-lg outline-none px-3 py-1 text-xs sm:text-sm font-semibold transition-all duration-200"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               autoFocus
@@ -247,7 +247,7 @@ function ColumnContainer({
           "
         >
           <PlusIcon />
-          <span className="font-medium text-sm">Add task</span>
+          <span className="font-medium text-xs sm:text-sm">Add task</span>
         </div>
       )}
     </div>

@@ -75,7 +75,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetail, activeTab,
                                 <button
                                     onClick={saveNote}
                                     disabled={!isChanged}
-                                    className={`px-6 py-2 text-sm font-medium rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2
+                                    className={`px-6 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2
                                         ${isChanged 
                                             ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 cursor-pointer border border-blue-600'
                                             : 'bg-transparent border border-gray-400 text-gray-400 cursor-not-allowed'
