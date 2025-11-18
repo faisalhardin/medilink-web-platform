@@ -14,7 +14,18 @@ interface PatientListComponentProps {
 export function PatientListComponent({ onPatientSelect, isInDrawer = false }: PatientListComponentProps): JSX.Element {
     const [patients, setPatients] = useState<PatientModel[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
     const { register, handleSubmit } = useForm<GetPatientParam>();
+
+    // Track window size reactively
+    useEffect(() => {
+        const handleResize = () => {
+            setIsDesktop(window.innerWidth >= 1024);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const onSubmit = async (params: GetPatientParam) => {
         try {
@@ -163,7 +174,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                             ? 'bg-blue-100 text-blue-800'
                                                             : 'bg-pink-100 text-pink-800'
                                                         }`}>
-                                                        {patient.sex === 'male' ? '♂' : '♀'} {patient.sex}
+                                                        {patient.sex === 'male' ? '♂' : '♀'}
                                                     </span>
                                                     {patient.blood_type && (
                                                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -255,7 +266,18 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
 
                                 {/* Desktop Layout: Horizontal */}
                                 {!isInDrawer && (
-                                    <div className="flex items-center justify-between">
+                                    <div 
+                                        className="flex items-center justify-between"
+                                    >
+                                        <a 
+                                            className="flex-1 lg:pointer-events-none lg:cursor-default" 
+                                            href={`/patient-detail/${patient.uuid}`}
+                                            onClick={(e) => {
+                                                if (isDesktop) {
+                                                    e.preventDefault();
+                                                }
+                                            }}
+                                        >
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-4">
                                                 {/* Patient Avatar */}
@@ -275,7 +297,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                                 ? 'bg-blue-100 text-blue-800'
                                                                 : 'bg-pink-100 text-pink-800'
                                                             }`}>
-                                                            {patient.sex === 'male' ? '♂' : '♀'} {patient.sex}
+                                                            {patient.sex === 'male' ? '♂' : '♀'} <span className="hidden md:inline ml-1">{patient.sex}</span>
                                                         </span>
                                                         {patient.blood_type && (
                                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -284,7 +306,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                         )}
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs sm:text-sm text-gray-600">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs text-gray-600">
                                                         <div className="flex items-center space-x-2">
                                                             <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -330,9 +352,10 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                 </div>
                                             </div>
                                         </div>
+                                        </a>
 
                                         {/* Action Button */}
-                                        <div className="flex-shrink-0 ml-4">
+                                        { isDesktop && <div className="flex-shrink-0 ml-4">
                                             {onPatientSelect ? (
                                                 <button
                                                     onClick={(e) => {
@@ -359,7 +382,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                     View Details
                                                 </a>
                                             )}
-                                        </div>
+                                        </div>}
                                     </div>
                                 )}
                             </div>
