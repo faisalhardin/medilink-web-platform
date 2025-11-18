@@ -165,13 +165,127 @@ const ProductReplenishment = () => {
 
   return (
     <div className="p-6 w-full">
-      <div className="flex justify-between items-center mb-6">
-        <Typography variant="h4" className="font-bold">Product Replenishment</Typography>
-        <Box className="flex items-center gap-2">
-          <InventoryIcon className="text-blue-600" />
-          <Typography variant="h6" className="text-gray-600">
-            {replenishmentItems.length} items selected
+      <div className="flex justify-end lg:justify-between items-center mb-6">
+        <Typography variant="h4" className="hidden lg:block font-bold">Product Replenishment</Typography>
+        {/* 
+          On mobile (screen width < 1024px), make this clickable.
+          On click, scroll/move to the replenishment panel (assume it has id="replenishment-panel")
+        */}
+        <Box
+          className={`flex items-center gap-3 transition-all duration-300 ${
+            replenishmentItems.length > 0 
+              ? 'bg-gradient-to-r from-blue-50 to-indigo-50 lg:bg-none rounded-xl lg:rounded-none px-4 py-3 lg:px-3 lg:py-2 border border-blue-200/60 lg:border-b-0 lg:border-t-0 lg:border-l-0 lg:border-r-0 lg:border-blue-300 backdrop-blur-sm lg:backdrop-blur-none' 
+              : 'px-2 py-2'
+          }`}
+          sx={{
+            cursor: {
+              xs: 'pointer',
+              lg: 'default'
+            },
+            position: 'relative',
+            boxShadow: {
+              xs: replenishmentItems.length > 0 ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : 'none',
+              lg: 'none'
+            },
+            '&:hover': replenishmentItems.length > 0 ? {
+              transform: {'xs': 'translateY(-2px)', 'lg': 'none'},
+              transition: 'all 0.3s ease-in-out'
+            } : {}
+          }}
+          onClick={() => {
+            if (window.innerWidth < 1024) {
+              const panel = document.getElementById('replenishment-panel');
+              if (panel) {
+                panel.scrollIntoView({ behavior: 'smooth' });
+              }
+            }
+          }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <InventoryIcon 
+              className={`transition-all duration-300 ${
+                replenishmentItems.length > 0 
+                  ? 'text-blue-600' 
+                  : 'text-gray-400'
+              }`}
+              sx={{
+                fontSize: {
+                  xs: '1.75rem',
+                  lg: '1.5rem'
+                }
+              }}
+            />
+            {replenishmentItems.length > 0 && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '-2px',
+                  right: '-2px',
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: {
+                    xs: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    lg: '#3b82f6'
+                  },
+                  border: '2px solid white',
+                  display: {
+                    xs: 'block',
+                    lg: 'none'
+                  }
+                }}
+              />
+            )}
+          </Box>
+          <Typography 
+            variant="h6" 
+            className={`transition-all duration-300 ${
+              replenishmentItems.length > 0 
+                ? 'text-blue-700 lg:text-blue-600 font-semibold lg:font-normal tracking-tight' 
+                : 'text-gray-600'
+            }`}
+            sx={{
+              fontSize: {
+                xs: replenishmentItems.length > 0 ? '1.1rem' : '1rem',
+                lg: '1rem'
+              },
+              fontWeight: {
+                xs: replenishmentItems.length > 0 ? 600 : 400,
+                lg: 400
+              }
+            }}
+          >
+            {replenishmentItems.length} {replenishmentItems.length === 1 ? 'item' : 'items'} selected
           </Typography>
+          {replenishmentItems.length > 0 && window.innerWidth < 1024 && (
+            <Chip 
+              label="Tap to view" 
+              size="small" 
+              sx={{
+                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                height: '24px',
+                animation: 'verticalBounce 2s ease-in-out infinite',
+                '@keyframes verticalBounce': {
+                  '0%, 100%': { transform: 'translateY(0)' },
+                  '50%': { transform: 'translateY(-4px)' }
+                },
+                '&:hover': {
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            />
+          )}
         </Box>
       </div>
 
@@ -248,7 +362,7 @@ const ProductReplenishment = () => {
               <Divider className="mb-4" />
 
               {/* Replenishment Items */}
-              <Box className="flex-1 overflow-y-auto mb-4">
+              <Box id="replenishment-panel" className="flex-1 overflow-y-auto mb-4">
                 {replenishmentItems.length === 0 ? (
                   <Typography className="text-center py-8 text-gray-500">
                     No items selected for replenishment
