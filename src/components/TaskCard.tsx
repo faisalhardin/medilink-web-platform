@@ -114,7 +114,7 @@ function TaskCard({ task, deleteTask }: Props) {
       
       {/* Patient Name */}
       <div className="flex-1 w-full relative">
-        <p className="text-sm font-medium text-gray-900 leading-tight">
+        <p className="text-xs sm:text-sm font-medium text-gray-900 leading-tight">
           {getTitle(task.sex)} {task.patient_name}
         </p>
         <p className="text-xs text-gray-400 mt-1">
@@ -175,7 +175,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
       >
         <div className="py-1">
                       <MenuItem>
-              <div className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden hover:bg-blue-100 hover:text-blue-700">
+              <div className="block px-4 py-2 text-xs sm:text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden hover:bg-blue-100 hover:text-blue-700">
                 <ModalLink to={`/patient-visit/${taskId}`} className="block w-full">
                   Edit Task
                 </ModalLink>
@@ -190,7 +190,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
                 e.stopPropagation();
                 deleteTask(taskId);
               }}
-              className="block w-full px-4 py-2 text-left text-sm text-red-600 data-focus:bg-red-50 data-focus:text-red-700 data-focus:outline-hidden hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
+              className="block w-full px-4 py-2 text-left text-xs sm:text-sm text-red-600 data-focus:bg-red-50 data-focus:text-red-700 data-focus:outline-hidden hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
             >
               <div className="flex items-center gap-2">
                 <TrashIcon/>

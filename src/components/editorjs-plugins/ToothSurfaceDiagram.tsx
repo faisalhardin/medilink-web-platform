@@ -204,9 +204,9 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full lg:max-w-md mx-auto">
       <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+        <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 text-center">
             Surface Selection
         </h4>
         

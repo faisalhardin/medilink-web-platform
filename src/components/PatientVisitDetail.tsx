@@ -205,11 +205,11 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     }
 
     return (
-        <div className='flex-1 p-6 h-screen'>
+        <div className='flex-1 lg:p-6 h-screen'>
             <div className='bg-white p-6'>
                 <div className='flex items-center mb-6'>
                     <div>
-                        <h2 className='text-xl font-semibold'>
+                        <h2 className='text-xl sm:text-2xl lg:text-3xl font-semibold'>
                             {patient.name}
                         </h2>
                         <p>
@@ -232,19 +232,9 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         })}
                     </ul>
                 </div>
-
-                <div className="flex">
-                    <div className="w-9/12 pr-4">
-                        <PatientVisitlDetailNotes
-                            visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
-                            activeTab={activeTab}
-                            patientVisit={patientVisit}
-                            journeyPoints={boardJourneyPoints}
-                            upsertVisitDetailFunc={upsertVisitDetail}
-                            updateVisitFunc={updateProductOrder}
-                        />
-                    </div>
-                    <div className='w-3/12'>
+                <div className="flex flex-col lg:flex-row">
+                    {/* Product assignment panel - appears first on small screens */}
+                    <div className='w-full lg:w-3/12 order-1 lg:order-2 mb-4 lg:mb-0'>
                         <ProductAssignmentPanel
                             patientVisit={patientVisit}
                             journeyPointId={activeTab.id as string}
@@ -258,6 +248,17 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                                 })
                             }}
                             updatedOrderedProduct={setTrxProduct}
+                        />
+                    </div>
+                    {/* Notes panel - appears second on small screens */}
+                    <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1">
+                        <PatientVisitlDetailNotes
+                            visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
+                            activeTab={activeTab}
+                            patientVisit={patientVisit}
+                            journeyPoints={boardJourneyPoints}
+                            upsertVisitDetailFunc={upsertVisitDetail}
+                            updateVisitFunc={updateProductOrder}
                         />
                     </div>
                 </div>

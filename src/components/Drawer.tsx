@@ -117,7 +117,7 @@ export const Drawer: React.FC<DrawerProps> = ({
             {(title || showCloseButton) && (
               <div className="flex items-start justify-between px-4 py-6 sm:px-6 border-b border-gray-200">
                 {title && (
-                  <h2 className="text-lg font-medium text-gray-900">{title}</h2>
+                  <h2 className="text-lg sm:text-xl font-medium text-gray-900">{title}</h2>
                 )}
                 {showCloseButton && (
                   <div className={`${title ? 'ml-3' : ''} flex h-7 items-center`}>

@@ -14,7 +14,18 @@ interface PatientListComponentProps {
 export function PatientListComponent({ onPatientSelect, isInDrawer = false }: PatientListComponentProps): JSX.Element {
     const [patients, setPatients] = useState<PatientModel[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
     const { register, handleSubmit } = useForm<GetPatientParam>();
+
+    // Track window size reactively
+    useEffect(() => {
+        const handleResize = () => {
+            setIsDesktop(window.innerWidth >= 1024);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const onSubmit = async (params: GetPatientParam) => {
         try {
@@ -70,7 +81,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                 {...register('name')}
                                 type="text"
                                 placeholder="Enter patient name"
-                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
                         <div>
@@ -79,7 +90,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                 {...register('nik')}
                                 type="text"
                                 placeholder="Enter NIK"
-                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
                         <div>
@@ -87,14 +98,14 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                             <input
                                 {...register('date_of_birth')}
                                 type="date"
-                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
                         <div className="flex items-end">
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-blue-600 text-white px-3 py-1.5 sm:py-2 text-sm rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="w-full bg-blue-600 text-white px-3 py-1.5 sm:py-2 text-sm sm:text-base rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center">
@@ -130,7 +141,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                         </div>
-                        <h3 className="text-sm font-medium text-gray-900 mb-2">No patients found</h3>
+                        <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">No patients found</h3>
                         <p className="text-xs sm:text-sm text-gray-500">Try adjusting your search criteria</p>
                     </div>
                 ) : (
@@ -155,7 +166,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
 
                                             {/* Patient Name and Badges */}
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="text-base font-semibold text-gray-900 mb-2">
+                                                <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">
                                                     {patient.name}
                                                 </h4>
                                                 <div className="flex flex-wrap gap-2 mb-3">
@@ -163,7 +174,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                             ? 'bg-blue-100 text-blue-800'
                                                             : 'bg-pink-100 text-pink-800'
                                                         }`}>
-                                                        {patient.sex === 'male' ? '♂' : '♀'} {patient.sex}
+                                                        {patient.sex === 'male' ? '♂' : '♀'}
                                                     </span>
                                                     {patient.blood_type && (
                                                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -175,7 +186,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                         </div>
 
                                         {/* Patient Details - Vertical Stack */}
-                                        <div className="space-y-2 text-sm text-gray-600">
+                                        <div className="space-y-2 text-xs sm:text-sm text-gray-600">
                                             <div className="flex items-center space-x-3">
                                                 <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -229,7 +240,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                         e.stopPropagation();
                                                         onPatientSelect(patient);
                                                     }}
-                                                    className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                    className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                                 >
                                                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -240,7 +251,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                             ) : (
                                                 <a
                                                     href={`/patient-detail/${patient.uuid}`}
-                                                    className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                    className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm sm:text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                                 >
                                                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -255,7 +266,18 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
 
                                 {/* Desktop Layout: Horizontal */}
                                 {!isInDrawer && (
-                                    <div className="flex items-center justify-between">
+                                    <div 
+                                        className="flex items-center justify-between"
+                                    >
+                                        <a 
+                                            className="flex-1 lg:pointer-events-none lg:cursor-default" 
+                                            href={`/patient-detail/${patient.uuid}`}
+                                            onClick={(e) => {
+                                                if (isDesktop) {
+                                                    e.preventDefault();
+                                                }
+                                            }}
+                                        >
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-4">
                                                 {/* Patient Avatar */}
@@ -268,14 +290,14 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                 {/* Patient Info */}
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center space-x-3 mb-2">
-                                                        <h4 className="text-lg font-semibold text-gray-900 truncate">
+                                                        <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                                                             {patient.name}
                                                         </h4>
                                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${patient.sex === 'male'
                                                                 ? 'bg-blue-100 text-blue-800'
                                                                 : 'bg-pink-100 text-pink-800'
                                                             }`}>
-                                                            {patient.sex === 'male' ? '♂' : '♀'} {patient.sex}
+                                                            {patient.sex === 'male' ? '♂' : '♀'} <span className="hidden md:inline ml-1">{patient.sex}</span>
                                                         </span>
                                                         {patient.blood_type && (
                                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -284,7 +306,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                         )}
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs text-gray-600">
                                                         <div className="flex items-center space-x-2">
                                                             <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -320,7 +342,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                     </div>
 
                                                     {patient.phone_number && (
-                                                        <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600">
+                                                        <div className="mt-3 flex items-center space-x-2 text-xs sm:text-sm text-gray-600">
                                                             <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                                             </svg>
@@ -330,16 +352,17 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                 </div>
                                             </div>
                                         </div>
+                                        </a>
 
                                         {/* Action Button */}
-                                        <div className="flex-shrink-0 ml-4">
+                                        { isDesktop && <div className="flex-shrink-0 ml-4">
                                             {onPatientSelect ? (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         onPatientSelect(patient);
                                                     }}
-                                                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm sm:text-base leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                                 >
                                                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -350,7 +373,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                             ) : (
                                                 <a
                                                     href={`/patient-detail/${patient.uuid}`}
-                                                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm sm:text-base leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                                 >
                                                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -359,7 +382,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                     View Details
                                                 </a>
                                             )}
-                                        </div>
+                                        </div>}
                                     </div>
                                 )}
                             </div>
@@ -508,8 +531,8 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">No visits found</h3>
-                    <p className="text-sm text-gray-500">This patient hasn't had any visits yet.</p>
+                    <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">No visits found</h3>
+                    <p className="text-xs sm:text-sm text-gray-500">This patient hasn't had any visits yet.</p>
                 </div>
             </div>
         );

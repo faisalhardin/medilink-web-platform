@@ -82,14 +82,14 @@ const UserComponent = () => {
                                 className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
                             />
                         ) : (
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold">
                                 {getInitials(userInfo.name)}
                             </div>
                         )}
                     </div>
                     {/* User Info */}
                     <div className="text-left">
-                        <p className="text-sm font-medium text-gray-900 truncate max-w-32">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-32">
                             {userInfo.name}
                         </p>
                         <p className="text-xs text-gray-500 truncate max-w-32">
@@ -114,14 +114,14 @@ const UserComponent = () => {
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
-                <div className="absolute left-full bottom-0 ml-3 z-50">
+                <div className="absolute bottom-full mb-2 left-0 lg:left-full lg:bottom-0 lg:ml-3 z-50 w-full lg:w-auto">
                     {/* Dialog bubble container */}
-                    <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 min-w-64 w-80 p-4">
+                    <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 w-full lg:min-w-64 lg:w-80 p-4">
                         {/* Action buttons */}
                         <div className="space-y-2">
                             <button
                                 onClick={handleLogout}
-                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors duration-200"
+                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-xs sm:text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors duration-200"
                             >
                                 <svg
                                     className="w-4 h-4"

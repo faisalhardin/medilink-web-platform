@@ -189,8 +189,8 @@ function KanbanBoard() {
           {isShowAddColumnPanel ? (
             <div className="
               h-[120px]
-              w-[350px]
-              min-w-[350px]
+              w-[300px]
+              min-w-[300px]
               bg-white
               border-2
               border-blue-300
@@ -229,7 +229,7 @@ function KanbanBoard() {
               />
               
               {createColumnError && (
-                <div className="text-red-600 text-sm">
+                <div className="text-red-600 text-xs sm:text-sm">
                   {createColumnError}
                 </div>
               )}
@@ -297,8 +297,8 @@ function KanbanBoard() {
               }}
               className="
         h-[60px]
-        w-[350px]
-        min-w-[350px]
+        w-[300px]
+        min-w-[300px]
         cursor-pointer
         rounded-lg
         bg-gradient-to-r

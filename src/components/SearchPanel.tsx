@@ -70,7 +70,7 @@ const SearchPanel: React.FC = () => {
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search..."
-          className="w-full p-2.5 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500"
+          className="w-full p-2.5 border border-gray-300 rounded-md text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500"
           onFocus={() => setShowResults(searchResults.length > 0)}
         />
         

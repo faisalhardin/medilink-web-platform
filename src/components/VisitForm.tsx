@@ -63,7 +63,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
       <div className="bg-white overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r px-8 py-6">
-          <h2 className="text-2xl font-bold ">Patient Visit Registration</h2>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold ">Patient Visit Registration</h2>
           <p className=" mt-1">Complete patient admission and clinical assessment</p>
         </div>        
 
@@ -75,7 +75,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                 {/* Left Column - Patient Selection */}
                 <div className="flex flex-col gap-2">
                   <div className="p-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                       Select Patient *
                     </label>
                     <div className="flex gap-3">
@@ -109,7 +109,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                             </svg>
                           </button>
                           {/* Custom Tooltip */}
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs sm:text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                             Register new patient
                             <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                           </div>
@@ -140,14 +140,14 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                       
                     </div>
                     {errors.patient_uuid && (
-                      <p className="mt-1 text-sm text-red-600">{errors.patient_uuid.message}</p>
+                      <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.patient_uuid.message}</p>
                     )}
                   </div>
 
                   {selectedPatient && (
                     <div className="bg-white border border-gray-200 rounded-lg m-6 p-6">
                       <h4 className="font-medium text-gray-900 mb-2">Selected Patient</h4>
-                      <div className="text-sm text-gray-600 space-y-1">
+                      <div className="text-xs sm:text-sm text-gray-600 space-y-1">
                         <p><span className="font-medium">Name:</span> {selectedPatient.name}</p>
                         <p><span className="font-medium">NIK:</span> {selectedPatient.nik}</p>
                         <p>

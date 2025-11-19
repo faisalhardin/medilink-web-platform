@@ -184,12 +184,12 @@ const InventoryComponent = () => {
   
   return (
     <div className="p-6 w-full">
-      <div className="flex justify-between items-center mb-6">
-        <Typography variant="h4" className="font-bold">Inventory Management</Typography>
+      <div className="hidden sm:flex flex-col sm:flex-row justify-end lg:justify-between items-center mb-6 gap-3">
+        <Typography variant="h4" className="hidden lg:block text-2xl sm:text-3xl lg:text-4xl font-bold ">Inventory Management</Typography>
         <Button 
           variant="contained" 
           startIcon={<Add />}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="block w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
           onClick={openAddProductModal}
         >
           Add New Product
@@ -198,46 +198,54 @@ const InventoryComponent = () => {
       
       {/* Dashboard Cards */}
       <Grid container spacing={2} className="mb-6">
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={6} md={3}>
           <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <InventoryIcon className="text-blue-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">{totalProducts}</Typography>
-              <Typography variant="body2" className="text-gray-600">Total Products</Typography>
+              <Typography variant="h5" className="text-base sm:text-lg font-bold">{totalProducts}</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Total Products</Typography>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={3}>
-        <Card className="shadow-sm h-full">
+        <Grid item xs={6} sm={6} md={3}>
+          <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <ShoppingCart className="text-green-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">{totalItems}</Typography>
-              <Typography variant="body2" className="text-gray-600">Items</Typography>
+              <Typography variant="h5" className="text-base sm:text-lg font-bold">{totalItems}</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Items</Typography>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={3}>
-        <Card className="shadow-sm h-full">
+        <Grid item xs={6} sm={6} md={3}>
+          <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <Warning className="text-amber-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">{lowStockCount}</Typography>
-              <Typography variant="body2" className="text-gray-600">Low Stock</Typography>
+              <Typography variant="h5" className="text-base sm:text-lg font-bold">{lowStockCount}</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Low Stock</Typography>
             </CardContent>
           </Card>
         </Grid>
-        
+        <Grid item xs={6} sm={6} md={3} className="block sm:hidden" onClick={openAddProductModal}>
+          <Card className="shadow-sm h-full">
+            <CardContent className="flex flex-col justify-center items-center p-4 h-full bg-blue-600 hover:bg-blue-700">
+              <Add className="text-white text-3xl mb-2" />
+              <Typography variant="body2" className="text-base text-white">New Product</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
         <Grid item xs={12} sm={6} md={3}>
         <Card className="shadow-sm h-full">
             <CardContent className="flex flex-col items-center p-4 h-full">
               <AttachMoney fontSize="large" className="text-emerald-600 text-3xl mb-2" />
-              <Typography variant="h5" className="font-bold">{formatPrice(inventoryValue)}</Typography>
-              <Typography variant="body2" className="text-gray-600">Total Value</Typography>
+              <Typography variant="h5" className="text-lg sm:text-xl font-bold">{formatPrice(inventoryValue)}</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Total Value</Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
+      
       
       {/* Search and Filter */}
       <Box className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">

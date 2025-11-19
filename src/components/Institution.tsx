@@ -38,7 +38,7 @@ const InstitutionProfileComponent = () => {
       <Card className="mb-6 p-6 shadow-md">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <Typography variant="h4" className="text-2xl font-bold">
+            <Typography variant="h4" className="text-xl sm:text-2xl lg:text-3xl font-bold">
               {institution?.name}
             </Typography>
             <Typography variant="subtitle1" className="text-gray-600">
@@ -86,7 +86,7 @@ const InstitutionProfileComponent = () => {
         <Paper className="p-6 shadow-md">
           <div className="flex flex-col items-center space-y-3">
             <People className="text-5xl text-blue-600" />
-            <Typography variant="h4" className="text-3xl font-bold">
+            <Typography variant="h4" className="text-2xl sm:text-3xl font-bold">
               {stats.totalStaff}
             </Typography>
             <Typography variant="subtitle1" className="text-gray-600">
@@ -98,7 +98,7 @@ const InstitutionProfileComponent = () => {
         <Paper className="p-6 shadow-md">
           <div className="flex flex-col items-center space-y-3">
             <LocalHospital className="text-5xl text-blue-600" />
-            <Typography variant="h4" className="text-3xl font-bold">
+            <Typography variant="h4" className="text-2xl sm:text-3xl font-bold">
               {stats.totalPatients}
             </Typography>
             <Typography variant="subtitle1" className="text-gray-600">
@@ -110,7 +110,7 @@ const InstitutionProfileComponent = () => {
         <Paper className="p-6 shadow-md">
           <div className="flex flex-col items-center space-y-3">
             <CalendarMonth className="text-5xl text-blue-600" />
-            <Typography variant="h4" className="text-3xl font-bold">
+            <Typography variant="h4" className="text-2xl sm:text-3xl font-bold">
               {stats.monthlyVisits}
             </Typography>
             <Typography variant="subtitle1" className="text-gray-600">
@@ -122,7 +122,7 @@ const InstitutionProfileComponent = () => {
         <Paper className="p-6 shadow-md">
           <div className="flex flex-col items-center space-y-3">
             <TrendingUp className="text-5xl text-blue-600" />
-            <Typography variant="h4" className="text-3xl font-bold">
+            <Typography variant="h4" className="text-2xl sm:text-3xl font-bold">
               {stats.patientSatisfaction}%
             </Typography>
             <Typography variant="subtitle1" className="text-gray-600">
@@ -135,7 +135,7 @@ const InstitutionProfileComponent = () => {
       {/* Product & Stock Management Section */}
       {/* <Card className="p-6 shadow-md mb-6">
         <div className="flex justify-between items-center mb-4">
-          <Typography variant="h6" className="text-xl font-semibold">
+          <Typography variant="h6" className="text-lg sm:text-xl font-semibold">
             Inventory Overview
           </Typography>
           <div className="flex gap-3">
@@ -169,7 +169,7 @@ const InstitutionProfileComponent = () => {
               <Typography variant="body1" className="font-medium">
                 Total Products
               </Typography>
-              <Typography variant="h6" className="text-xl font-bold">
+              <Typography variant="h6" className="text-lg sm:text-xl font-bold">
                 1,245
               </Typography>
             </div>
@@ -183,7 +183,7 @@ const InstitutionProfileComponent = () => {
               <Typography variant="body1" className="font-medium">
                 In Stock Items
               </Typography>
-              <Typography variant="h6" className="text-xl font-bold">
+              <Typography variant="h6" className="text-lg sm:text-xl font-bold">
                 8,392
               </Typography>
             </div>
@@ -197,7 +197,7 @@ const InstitutionProfileComponent = () => {
               <Typography variant="body1" className="font-medium">
                 Inventory Value
               </Typography>
-              <Typography variant="h6" className="text-xl font-bold">
+              <Typography variant="h6" className="text-lg sm:text-xl font-bold">
                 $1.2M
               </Typography>
             </div>
@@ -208,7 +208,7 @@ const InstitutionProfileComponent = () => {
       {/* Department Statistics & Certifications */}
       {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card className="p-6 shadow-md">
-          <Typography variant="h6" className="text-xl font-semibold mb-4">
+          <Typography variant="h6" className="text-lg sm:text-xl font-semibold mb-4">
             Department Overview
           </Typography>
           <div className="space-y-6">
@@ -224,7 +224,7 @@ const InstitutionProfileComponent = () => {
                     value={dept.utilizationRate}
                     className="w-full h-2 rounded"
                   />
-                  <Typography variant="body2" className="text-sm">
+                  <Typography variant="body2" className="text-xs sm:text-sm">
                     {dept.utilizationRate}% utilization
                   </Typography>
                 </div>
@@ -234,7 +234,7 @@ const InstitutionProfileComponent = () => {
         </Card>
 
         <Card className="p-6 shadow-md">
-          <Typography variant="h6" className="text-xl font-semibold mb-4">
+          <Typography variant="h6" className="text-lg sm:text-xl font-semibold mb-4">
             Certifications & Compliance
           </Typography>
           <TableContainer>
@@ -304,7 +304,7 @@ const InstitutionProfileComponent = () => {
       {/* Subscription & Usage */}
       {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6 shadow-md">
-          <Typography variant="h6" className="text-xl font-semibold mb-4">
+          <Typography variant="h6" className="text-lg sm:text-xl font-semibold mb-4">
             Subscription Details
           </Typography>
           <List>
@@ -342,7 +342,7 @@ const InstitutionProfileComponent = () => {
         </Card>
 
         <Card className="p-6 shadow-md">
-          <Typography variant="h6" className="text-xl font-semibold mb-4">
+          <Typography variant="h6" className="text-lg sm:text-xl font-semibold mb-4">
             Usage Analytics
           </Typography>
           <div className="space-y-6">

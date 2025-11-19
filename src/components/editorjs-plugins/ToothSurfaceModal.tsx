@@ -305,7 +305,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-xl font-semibold text-gray-900">
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900">
             Tooth {toothId} - Surface Marking
           </h3>
           <button
@@ -334,7 +334,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
             <div className="space-y-6">
               {/* Whole Tooth Condition - Tag Input */}
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Whole Tooth Condition(s)
                 </label>
                 <div className="relative">
@@ -408,7 +408,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                           }
                         }}
                         placeholder={wholeToothCodes.length === 0 ? "Type to search conditions..." : ""}
-                        className="flex-1 min-w-[120px] outline-none text-sm bg-transparent"
+                        className="flex-1 min-w-[120px] outline-none text-sm sm:text-base bg-transparent"
                       />
                     </div>
                   </div>
@@ -428,7 +428,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                                 handleSuggestionClick(code.code);
                               }}
                               onMouseEnter={() => setHighlightedIndex(index)}
-                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                              className={`w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-gray-100 transition-colors ${
                                 isHighlighted ? 'bg-gray-100' : ''
                               }`}
                             >
@@ -441,7 +441,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                           );
                         })
                       ) : (
-                        <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                        <div className="px-3 py-2 text-xs sm:text-sm text-gray-500 text-center">
                           {tagInputValue.trim() ? 'No matching conditions found' : 'All conditions selected'}
                         </div>
                       )}
@@ -456,14 +456,14 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
               {/* Surface-specific controls */}
               {selectedSurface && (
                 <div className="border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-gray-900 mb-3">
+                  <h4 className="text-base sm:text-lg font-medium text-gray-900 mb-3">
                     {selectedSurface} - {SURFACE_NAMES[selectedSurface as keyof typeof SURFACE_NAMES]}
                   </h4>
                   
                   <div className="space-y-4">
                     {/* Surface condition */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                         Condition
                       </label>
                       <select
@@ -482,7 +482,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
 
                     {/* Surface notes */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                         Notes
                       </label>
                       <textarea
@@ -499,7 +499,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
 
               {/* General notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   General Notes
                 </label>
                 <textarea
@@ -533,13 +533,13 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 text-sm sm:text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 text-sm sm:text-base font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Save Changes
           </button>

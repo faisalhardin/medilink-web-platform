@@ -194,7 +194,7 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:p-4">
       <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">
+        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 text-center">
           Odontogram
         </h3>
         
