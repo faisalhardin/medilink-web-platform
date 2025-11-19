@@ -30,7 +30,7 @@ export interface RegisterPatient {
   address: string;
 }
 
-export interface GetPatientParam {
+export interface GetPatientParam extends CommonQueryParams {
   patient_ids?: string;
   date_of_birth?: string;
   name?: string;
