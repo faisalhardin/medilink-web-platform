@@ -52,7 +52,7 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
       
       {/* Navigation */}
       <div className={`
-        bg-white border-r border-gray-200 flex-shrink-0 h-screen flex flex-col
+        bg-white border-r border-gray-200 flex-shrink-0 h-dvh flex flex-col
         fixed lg:sticky top-0 left-0 z-50
         w-full lg:w-64
         transform transition-transform duration-300 ease-in-out
