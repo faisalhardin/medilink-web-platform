@@ -114,9 +114,9 @@ const UserComponent = () => {
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
-                <div className="absolute left-full bottom-0 ml-3 z-50">
+                <div className="absolute bottom-full mb-2 left-0 lg:left-full lg:bottom-0 lg:ml-3 z-50 w-full lg:w-auto">
                     {/* Dialog bubble container */}
-                    <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 min-w-64 w-80 p-4">
+                    <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 w-full lg:min-w-64 lg:w-80 p-4">
                         {/* Action buttons */}
                         <div className="space-y-2">
                             <button

@@ -382,7 +382,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
     return (
       <div className="w-full">
         {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 sm:mb-4">
           <button
             onClick={() => navigateMonth('prev')}
             className="p-1 hover:bg-gray-100 rounded"
@@ -403,21 +403,21 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
         {/* Day Headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {dayNames.map(day => (
-            <div key={day} className="text-xs text-gray-500 text-center py-1">
+            <div key={day} className="text-xs sm:text-xs text-gray-500 text-center py-1 sm:py-1">
               {day}
             </div>
           ))}
         </div>
 
         {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-0">
+        <div className="grid grid-cols-7 gap-1 sm:gap-0">
           {days.map((day, index) => (
             <button
               key={index}
               onClick={() => handleDateClick(day || 0)}
               disabled={!day}
               className={`
-                h-8 w-full text-xs transition-colors relative
+                h-12 sm:h-8 w-full text-sm sm:text-xs transition-colors relative
                 ${!day ? 'invisible' : ''}
                 ${(() => {
                   const rangePosition = getRangePosition(day || 0);
@@ -493,8 +493,18 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
 
                 {/* Dropdown Menu */}
                 {openDropdown === config.key && (
-                  <div className="absolute top-full left-0 mt-1 w-96 bg-white border border-gray-200 shadow-lg z-50">
-                    <div className="p-4">
+                  <div className="fixed sm:absolute inset-0 sm:top-full sm:left-0 sm:mt-1 sm:w-96 sm:inset-auto bg-white border border-gray-200 shadow-lg z-50 sm:rounded-lg">
+                    {/* Close button for mobile */}
+                    <div className="flex justify-end p-4 pb-0 sm:hidden">
+                      <button
+                        onClick={() => toggleDropdown(config.key)}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        aria-label="Close"
+                      >
+                        <XMarkIcon className="h-5 w-5 text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="p-4 sm:p-4">
                       {config.type === 'timeRange' ? (
                         <div className="space-y-4">
                           {/* Calendar Component */}
