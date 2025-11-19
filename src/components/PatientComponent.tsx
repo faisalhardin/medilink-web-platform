@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useForm } from 'react-hook-form';
 import { ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
 import { GetPatientParam, Patient, Patient as PatientModel, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
@@ -14,8 +14,15 @@ interface PatientListComponentProps {
 export function PatientListComponent({ onPatientSelect, isInDrawer = false }: PatientListComponentProps): JSX.Element {
     const [patients, setPatients] = useState<PatientModel[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [searchParams, setSearchParams] = useState<Partial<GetPatientParam>>({});
+    const [isSearchFormOpen, setIsSearchFormOpen] = useState(false);
+    const limit = 10;
     const { register, handleSubmit } = useForm<GetPatientParam>();
+    const listRef = useRef<HTMLDivElement>(null);
 
     // Track window size reactively
     useEffect(() => {
@@ -27,21 +34,93 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const onSubmit = async (params: GetPatientParam) => {
+    const fetchPatients = useCallback(async (params: Partial<GetPatientParam>, page: number = 1, append: boolean = false) => {
         try {
-            setIsLoading(true);
-            const filteredParams: Partial<GetPatientParam> = {};
-            if (params.name) filteredParams.name = params.name;
-            if (params.nik) filteredParams.nik = params.nik;
-            if (params.date_of_birth) filteredParams.date_of_birth = params.date_of_birth;
-            if (params.institution_id) filteredParams.institution_id = params.institution_id;
+            if (append) {
+                setIsLoadingMore(true);
+            } else {
+                setIsLoading(true);
+            }
 
-            const data = await ListPatients(Object.keys(filteredParams).length ? filteredParams : null);
-            setPatients(data);
+            const requestParams: Partial<GetPatientParam> = {
+                ...params,
+                limit,
+                offset: (page - 1) * limit
+            };
+
+            const data = await ListPatients(Object.keys(requestParams).length ? requestParams : null);
+            
+            if (append) {
+                setPatients(prev => [...prev, ...data]);
+            } else {
+                setPatients(data);
+            }
+
+            // If returned data is less than limit, we've reached the end
+            setHasMore(data.length === limit);
         } catch (err) {
             console.error(err);
         } finally {
             setIsLoading(false);
+            setIsLoadingMore(false);
+        }
+    }, [limit]);
+
+    // Infinite scroll for mobile/drawer
+    useEffect(() => {
+        if (isInDrawer || !isDesktop) {
+            const handleScroll = () => {
+                if (!listRef.current || isLoadingMore || !hasMore) return;
+
+                const { scrollTop, scrollHeight, clientHeight } = listRef.current;
+                // Load more when user scrolls to within 200px of bottom
+                if (scrollHeight - scrollTop - clientHeight < 200) {
+                    if (!isLoadingMore && hasMore) {
+                        const nextPage = currentPage + 1;
+                        setCurrentPage(nextPage);
+                        fetchPatients(searchParams, nextPage, true);
+                    }
+                }
+            };
+
+            const listElement = listRef.current;
+            if (listElement) {
+                listElement.addEventListener('scroll', handleScroll);
+                return () => listElement.removeEventListener('scroll', handleScroll);
+            }
+        }
+    }, [isInDrawer, isDesktop, isLoadingMore, hasMore, currentPage, searchParams, fetchPatients]);
+
+    const onSubmit = async (params: GetPatientParam) => {
+        const filteredParams: Partial<GetPatientParam> = {};
+        if (params.name) filteredParams.name = params.name;
+        if (params.nik) filteredParams.nik = params.nik;
+        if (params.date_of_birth) filteredParams.date_of_birth = params.date_of_birth;
+        if (params.institution_id) filteredParams.institution_id = params.institution_id;
+
+        setSearchParams(filteredParams);
+        setCurrentPage(1);
+        setHasMore(true);
+        // Reset scroll position for infinite scroll
+        if (listRef.current) {
+            listRef.current.scrollTop = 0;
+        }
+        await fetchPatients(filteredParams, 1, false);
+    };
+
+    const handleNextPage = () => {
+        if (hasMore && !isLoading) {
+            const nextPage = currentPage + 1;
+            setCurrentPage(nextPage);
+            fetchPatients(searchParams, nextPage, false);
+        }
+    };
+
+    const handlePrevPage = () => {
+        if (currentPage > 1 && !isLoading) {
+            const prevPage = currentPage - 1;
+            setCurrentPage(prevPage);
+            fetchPatients(searchParams, prevPage, false);
         }
     };
 
@@ -72,8 +151,32 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
         <div className={`w-full h-full overflow-auto bg-gray-50 ${isInDrawer ? 'p-3' : 'p-3 sm:p-6'}`}>
             {/* Search Form */}
             <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${isInDrawer ? 'p-3 mb-4' : 'p-3 sm:p-6 mb-4 sm:mb-6'}`}>
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Search Patients</h2>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
+                {/* Header with Toggle Button (Mobile) */}
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900">Search Patients</h2>
+                    <button
+                        type="button"
+                        onClick={() => setIsSearchFormOpen(!isSearchFormOpen)}
+                        className="sm:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        aria-label="Toggle search form"
+                    >
+                        {isSearchFormOpen ? (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                        ) : (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        )}
+                    </button>
+                </div>
+                <form 
+                    onSubmit={handleSubmit(onSubmit)} 
+                    className={`space-y-3 sm:space-y-4 transition-all duration-300 ease-in-out ${
+                        isSearchFormOpen ? 'block' : 'hidden sm:block'
+                    }`}
+                >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <div>
                             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -126,15 +229,16 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
             </div>
 
             {/* Patient List */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm border h-auto border-gray-200 overflow-hidden">
                 <div className={`border-b border-gray-200 ${isInDrawer ? 'px-3 py-3' : 'px-3 sm:px-6 py-3 sm:py-4'}`}>
                     <h3 className="text-base sm:text-lg font-semibold text-gray-900">Patient Results</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                        {patients.length} patient{patients.length !== 1 ? 's' : ''} found
-                    </p>
                 </div>
 
-                {patients.length === 0 ? (
+                <div 
+                    ref={listRef}
+                    className={`${(isInDrawer || !isDesktop) ? 'max-h-[calc(100vh-300px)] overflow-y-auto' : ''}`}
+                >
+                    {patients.length === 0 ? (
                     <div className="p-6 sm:p-12 text-center">
                         <div className="text-gray-400 mb-4">
                             <svg className="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -145,7 +249,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                         <p className="text-xs sm:text-sm text-gray-500">Try adjusting your search criteria</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-200">
+                    <div className="divide-y divide-gray-200 h-full sm:h-auto">
                         {patients.map((patient, index) => (
                             <div
                                 key={patient.uuid}
@@ -157,31 +261,18 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                 {isInDrawer && (
                                     <div>
                                         <div className="flex items-start space-x-3 mb-3">
-                                            {/* Patient Avatar */}
-                                            <div className="flex-shrink-0">
-                                                <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-base">
-                                                    {patient.name.charAt(0).toUpperCase()}
-                                                </div>
-                                            </div>
 
                                             {/* Patient Name and Badges */}
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">
+                                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                                                <span className="text-sm sm:text-base font-semibold text-gray-900">
                                                     {patient.name}
-                                                </h4>
-                                                <div className="flex flex-wrap gap-2 mb-3">
-                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${patient.sex === 'male'
+                                                </span>
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${patient.sex === 'male'
                                                             ? 'bg-blue-100 text-blue-800'
                                                             : 'bg-pink-100 text-pink-800'
                                                         }`}>
                                                         {patient.sex === 'male' ? '♂' : '♀'}
                                                     </span>
-                                                    {patient.blood_type && (
-                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                            {patient.blood_type}
-                                                        </span>
-                                                    )}
-                                                </div>
                                             </div>
                                         </div>
 
@@ -280,19 +371,13 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                         >
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-4">
-                                                {/* Patient Avatar */}
-                                                <div className="flex-shrink-0">
-                                                    <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
-                                                        {patient.name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                </div>
 
                                                 {/* Patient Info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center space-x-3 mb-2">
-                                                        <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                                                <div className="flex-1 min-w-0 mx-3">
+                                                    <div className="flex items-center space-x-3 mb-1">
+                                                        <p className="sm:text-sm text-lg font-semibold text-gray-900 truncate">
                                                             {patient.name}
-                                                        </h4>
+                                                        </p>
                                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${patient.sex === 'male'
                                                                 ? 'bg-blue-100 text-blue-800'
                                                                 : 'bg-pink-100 text-pink-800'
@@ -306,7 +391,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                         )}
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs text-gray-600">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-1 text-xs text-gray-600">
                                                         <div className="flex items-center space-x-2">
                                                             <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -387,6 +472,50 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                 )}
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Infinite Scroll Loading Indicator */}
+                {(isInDrawer || !isDesktop) && isLoadingMore && (
+                    <div className="flex justify-center items-center py-4">
+                        <svg className="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="ml-2 text-xs sm:text-sm text-gray-600">Loading more...</span>
+                    </div>
+                )}
+
+                {/* End of List Indicator */}
+                {(isInDrawer || !isDesktop) && !hasMore && patients.length > 0 && (
+                    <div className="text-center py-4 text-xs sm:text-sm text-gray-500">
+                        No more patients to load
+                    </div>
+                )}
+                </div>
+
+                {/* Pagination Controls for Desktop */}
+                {!isInDrawer && isDesktop && patients.length > 0 && (
+                    <div className="border-t border-gray-200 px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+                        <div className="text-xs sm:text-sm text-gray-600">
+                            Page {currentPage} • Showing {patients.length} patient{patients.length !== 1 ? 's' : ''}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handlePrevPage}
+                                disabled={currentPage === 1 || isLoading}
+                                className="px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={handleNextPage}
+                                disabled={!hasMore || isLoading}
+                                className="px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
