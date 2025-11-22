@@ -8,6 +8,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { ModalLink } from "./ModalLink";
 import { formatDateTimeHHmm } from "@utils/common";
+import { t } from "i18next";
 
 interface Props {
   task: PatientVisitTask;
@@ -177,7 +178,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
                       <MenuItem>
               <div className="block px-4 py-2 text-xs sm:text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden hover:bg-blue-100 hover:text-blue-700">
                 <ModalLink to={`/patient-visit/${taskId}`} className="block w-full">
-                  Edit Task
+                  {t('patient.editVisit')}
                 </ModalLink>
               </div>
             </MenuItem>
@@ -194,7 +195,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
             >
               <div className="flex items-center gap-2">
                 <TrashIcon/>
-                Archive Task
+                {t('patient.archiveVisit')}
               </div>
             </button>
           </MenuItem>

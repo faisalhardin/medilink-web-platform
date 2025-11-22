@@ -1,5 +1,6 @@
 // src/components/InventoryEditForm.tsx
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   TextField,
   Button,
@@ -29,6 +30,7 @@ interface InventoryEditFormProps {
 }
 
 const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit, onCancel }) => {
+  const { t } = useTranslation();
   const { closeModal } = useModal();
   const [formData, setFormData] = useState({
     id: product.id || 0,
@@ -138,15 +140,15 @@ const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit
     const newErrors: Record<string, string> = {};
 
     if (!formData.name || !formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('patient.nameRequired');
     }
 
     if (formData.price && isNaN(parseFloat(formData.price))) {
-      newErrors.price = 'Price must be a number';
+      newErrors.price = t('inventory.priceMustBeNumber');
     }
     
     if (!formData.unit_type || !formData.unit_type.trim()) {
-      newErrors.unit_type = 'Unit type is required';
+      newErrors.unit_type = t('inventory.unitTypeRequired');
     }
     
     setErrors(newErrors);
@@ -181,7 +183,7 @@ const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit
   return (
     <div className="p-2">
       <Typography variant="h6" className="mb-4 font-semibold">
-        Edit Product Information
+        {t('inventory.editProduct')}
       </Typography>
       <Divider className="mb-4" />
       
@@ -190,7 +192,7 @@ const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Product Name"
+              label={t('inventory.productName')}
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -203,7 +205,7 @@ const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Price"
+              label={t('inventory.price')}
               name="price"
               value={formData.price}
               onChange={handleChange}
@@ -219,7 +221,7 @@ const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit
             <Box position="relative">
               <TextField
                 fullWidth
-                label="Unit Type"
+                label={t('inventory.unitType')}
                 name="unit_type"
                 value={formData.unit_type}
                 onChange={handleUnitTypeChange}
@@ -269,7 +271,7 @@ const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit
           <Grid item xs={12}>
             <FormControl component="fieldset">
               <FormLabel component="legend" className="text-gray-700 font-medium mb-2">
-                Product Type
+                {t('inventory.productType')}
               </FormLabel>
               <RadioGroup
                 value={selectedType}
@@ -280,13 +282,13 @@ const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit
                 <FormControlLabel
                   value="item"
                   control={<Radio color="primary" />}
-                  label="Physical Item"
+                  label={t('inventory.item')}
                   className="border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50"
                 />
                 <FormControlLabel
                   value="treatment"
                   control={<Radio color="primary" />}
-                  label="Treatment/Service"
+                  label={t('inventory.treatment')}
                   className="border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50"
                 />
               </RadioGroup>
@@ -300,14 +302,14 @@ const InventoryEditForm: React.FC<InventoryEditFormProps> = ({ product, onSubmit
             onClick={handleCancel}
             className="border-gray-300 text-gray-700"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button 
             type="submit" 
             variant="contained" 
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            Update Product
+            {t('common.save')}
           </Button>
         </Box>
       </form>

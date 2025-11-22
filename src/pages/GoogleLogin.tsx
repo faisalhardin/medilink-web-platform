@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useGoogleLogin } from "@react-oauth/google";
 import { storeAuthentication, storeRefreshToken } from "@utils/storage";
 import { cleanSpecificAuthStorage } from "@utils/authCleanup";
@@ -9,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 const medilinkAPIURL = import.meta.env.VITE_MEDILINK_API_BASE_URL;
 
 const GoogleLogin = () => {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -35,18 +37,18 @@ const GoogleLogin = () => {
                     // Redirect to home page after successful login
                     navigate('/');
                 } else {
-                    setError("Token not received in response.");
+                    setError(t('auth.tokenNotReceived'));
                 }
             } catch (error) {
                 console.error("Error during token retrieval:", error);
-                setError("Login failed. Please try again.");
+                setError(t('auth.loginFailed'));
             } finally {
                 setIsLoading(false);
             }
         },
         onError: (error) => {
             console.error("Login failed:", error);
-            setError("Google login failed. Please try again.");
+            setError(t('auth.googleLoginFailed'));
             setIsLoading(false);
         },
         flow: "auth-code",
@@ -61,10 +63,10 @@ const GoogleLogin = () => {
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="text-center">
                     <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-                        Sign in to your account
+                        {t('auth.signInToAccount')}
                     </h2>
                     <p className="mt-2 text-sm text-gray-600">
-                        Use your Google account to continue
+                        {t('auth.useGoogleAccount')}
                     </p>
                 </div>
             </div>
@@ -92,7 +94,7 @@ const GoogleLogin = () => {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Signing in...
+                                        {t('auth.signingIn')}
                                     </>
                                 ) : (
                                     <>
@@ -102,7 +104,7 @@ const GoogleLogin = () => {
                                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                                         </svg>
-                                        Continue with Google
+                                        {t('auth.continueWithGoogle')}
                                     </>
                                 )}
                             </button>
@@ -115,13 +117,13 @@ const GoogleLogin = () => {
                                     <div className="w-full border-t border-gray-300" />
                                 </div>
                                 <div className="relative flex justify-center text-sm">
-                                    <span className="px-2 bg-white text-gray-500">Security Notice</span>
+                                    <span className="px-2 bg-white text-gray-500">{t('auth.securityNotice')}</span>
                                 </div>
                             </div>
                             
                             <div className="mt-4 text-xs text-gray-500 text-center">
-                                <p>This will clear any existing login session and start fresh.</p>
-                                <p className="mt-1">Your data is secure and encrypted.</p>
+                                <p>{t('auth.clearSessionNotice')}</p>
+                                <p className="mt-1">{t('auth.dataSecure')}</p>
                             </div>
                         </div>
                     </div>

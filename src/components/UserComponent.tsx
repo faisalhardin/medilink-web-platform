@@ -1,15 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { cleanAllAuthStorage } from '@utils/authCleanup';
 import { getStorageUser } from '@utils/storage';
 import { notifyAuthStateChanged } from 'hooks/useAuthCallback';
 import { Logout } from '@requests/authentication';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const UserComponent = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [userInfo, setUserInfo] = useState<Record<string, any> | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         const user = getStorageUser();
@@ -93,7 +96,7 @@ const UserComponent = () => {
                             {userInfo.name}
                         </p>
                         <p className="text-xs text-gray-500 truncate max-w-32">
-                            {userInfo.institution_name ?? 'No Institution'}
+                            {userInfo.institution_name ?? t('common.noInstitution')}
                         </p>
                     </div>
                 </div>
@@ -119,6 +122,7 @@ const UserComponent = () => {
                     <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 w-full lg:min-w-64 lg:w-80 p-4">
                         {/* Action buttons */}
                         <div className="space-y-2">
+                            <LanguageSwitcher />
                             <button
                                 onClick={handleLogout}
                                 className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-xs sm:text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors duration-200"
@@ -136,7 +140,7 @@ const UserComponent = () => {
                                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                                     />
                                 </svg>
-                                <span>Sign Out</span>
+                                <span>{t('common.signOut')}</span>
                             </button>
                         </div>
                     </div>

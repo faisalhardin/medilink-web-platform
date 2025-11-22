@@ -1,5 +1,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
 import { GetPatientParam, Patient, Patient as PatientModel, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
@@ -12,6 +13,7 @@ interface PatientListComponentProps {
 }
 
 export function PatientListComponent({ onPatientSelect, isInDrawer = false }: PatientListComponentProps): JSX.Element {
+    const { t } = useTranslation();
     const [patients, setPatients] = useState<PatientModel[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -153,7 +155,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
             <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${isInDrawer ? 'p-3 mb-4' : 'p-3 sm:p-6 mb-4 sm:mb-6'}`}>
                 {/* Header with Toggle Button (Mobile) */}
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
-                    <h2 className="text-base sm:text-lg font-semibold text-gray-900">Search Patients</h2>
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('patient.searchPatients')}</h2>
                     <button
                         type="button"
                         onClick={() => setIsSearchFormOpen(!isSearchFormOpen)}
@@ -179,25 +181,25 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                 >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <div>
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{t('common.name')}</label>
                             <input
                                 {...register('name')}
                                 type="text"
-                                placeholder="Enter patient name"
+                                placeholder={t('patient.enterPatientName')}
                                 className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">NIK</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{t('patient.nik')}</label>
                             <input
                                 {...register('nik')}
                                 type="text"
-                                placeholder="Enter NIK"
+                                placeholder={t('patient.enterNik')}
                                 className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{t('patient.dateOfBirth')}</label>
                             <input
                                 {...register('date_of_birth')}
                                 type="date"
@@ -216,11 +218,11 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        <span className="hidden sm:inline">Searching...</span>
+                                        <span className="hidden sm:inline">{t('common.searching')}</span>
                                         <span className="sm:hidden">...</span>
                                     </div>
                                 ) : (
-                                    'Search'
+                                    t('common.search')
                                 )}
                             </button>
                         </div>
@@ -231,7 +233,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
             {/* Patient List */}
             <div className="bg-white rounded-lg shadow-sm border h-auto border-gray-200 overflow-hidden">
                 <div className={`border-b border-gray-200 ${isInDrawer ? 'px-3 py-3' : 'px-3 sm:px-6 py-3 sm:py-4'}`}>
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">Patient Results</h3>
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">{t('patient.patientResults')}</h3>
                 </div>
 
                 <div 
@@ -245,8 +247,8 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                         </div>
-                        <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">No patients found</h3>
-                        <p className="text-xs sm:text-sm text-gray-500">Try adjusting your search criteria</p>
+                        <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">{t('patient.noPatientsFound')}</h3>
+                        <p className="text-xs sm:text-sm text-gray-500">{t('common.tryAdjusting')}</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-200 h-full sm:h-auto">
@@ -337,7 +339,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
-                                                    Select Patient
+                                                    {t('patient.selectPatientButton')}
                                                 </button>
                                             ) : (
                                                 <a
@@ -348,7 +350,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
-                                                    View Details
+                                                    {t('common.view_details')}
                                                 </a>
                                             )}
                                         </div>
@@ -464,7 +466,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
-                                                    View Details
+                                                    {t('common.view_details')}
                                                 </a>
                                             )}
                                         </div>}
@@ -526,6 +528,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
 }
 
 export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, isInDrawer }: PatientVisitsComponentProps) => {
+    const { t } = useTranslation();
     const [patientVisits, setPatientVisits] = useState<PatientVisitDetailed[]>([]);
     const [internalPatient, setPatient] = useState<Patient | null>(patient || null);
     const [activeTab, setActiveTab] = useState<number>(0);
@@ -622,7 +625,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
 
         const isCompleted = true;
 
-        return isCompleted ? 'Completed' : 'In Progress';
+        return isCompleted ? t('journey.completed') : t('journey.inProgress');
     };
 
     // Helper function to format currency
@@ -672,29 +675,29 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
         <div className="p-6 w-full">
             <div className="mb-6">
                 <div>
-                    <h2 className="text-lg font-semibold text-gray-900 mb-2">{internalPatient?.name}'s Visits</h2>
-                    <div className="flex items-center space-x-4 mb-4">
-                        <p className="text-sm text-gray-500">{internalPatient?.uuid}</p>
-                        <span className="text-xs text-gray-400">{formatDate(internalPatient?.date_of_birth || '')}</span>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('patient.visitsOf', { name: internalPatient?.name || '' })}</h2>
+                    <div className="flex justify-normal items-center gap-2 mb-4">
+                        <span className="text-xs text-gray-600"> {t('patient.dateOfBirth')}:</span>
+                        <span className="text-xs text-gray-600">{formatDate(internalPatient?.date_of_birth || '')}</span>
                     </div>
                 </div>
                 {/* Horizontal Tabs */}
-                <div className="border-b border-gray-200">
-                    <nav className="-mb-px flex justify-normal overflow-x-auto px-10">
+                <div className="border-b border-gray-200 overflow-x-auto">
+                    <nav className={`-mb-px flex ${isInDrawer ? 'justify-start' : 'justify-center'} min-w-max ${isInDrawer ? 'px-0' : 'px-10'}`}>
                         {patientVisits.map((visit) => (
                             <button
                                 key={visit.id}
                                 onClick={() => setActiveTab(visit.id)}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === visit.id
+                                className={`w-24 min-w-24 max-w-24 py-2 px-1 border-b-2 font-medium transition-colors ${activeTab === visit.id
                                         ? 'border-blue-500 text-blue-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                <div className="flex flex-col items-center">
-                                    <span className="font-medium">
+                                <div className="flex flex-col items-center w-full">
+                                    <span className="font-medium text-[clamp(0.625rem,0.5rem+0.5vw,0.875rem)] leading-tight text-center break-words">
                                         Visit #{visit.id}
                                     </span>
-                                    <span className="text-xs text-gray-400 mt-1">
+                                    <span className="text-[clamp(0.5rem,0.4rem+0.4vw,0.75rem)] text-gray-400 mt-1 text-center break-words">
                                         {formatDate(visit.create_time)}
                                     </span>
                                 </div>
@@ -760,7 +763,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                         </svg>
                                                     </div>
                                                     <h4 className="text-base font-semibold text-gray-900">
-                                                        Products Ordered
+                                                        {t('product.products_ordered')}
                                                     </h4>
                                                 </div>
                                                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -885,6 +888,7 @@ interface PatientRegistrationComponentProps {
 }
 
 export function PatientRegistrationComponent({ isInDrawer = false, onPatientSelect }: PatientRegistrationComponentProps) {
+    const { t } = useTranslation();
     const { register, handleSubmit, formState: { errors } } = useForm<RegisterPatientModel>();
 
     const onSubmit = async (data: RegisterPatientModel) => {
@@ -927,13 +931,13 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
-                                        Full Name *
+                                        {t('patient.fullName')} *
                                     </span>
                                 </label>
                                 <input
-                                    {...register('name', { required: 'Name is required' })}
+                                    {...register('name', { required: t('patient.nameRequired') })}
                                     className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
-                                    placeholder="Enter patient's full name"
+                                    placeholder={t('patient.enterPatientFullName')}
                                 />
                                 {errors.name && (
                                     <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -952,14 +956,14 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
                                         </svg>
-                                        NIK (Nomor Induk Kependudukan)
+                                        {t('patient.nikFull')}
                                     </span>
                                 </label>
                                 <input
                                     type="number"
                                     {...register('nik')}
                                     className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
-                                    placeholder="Enter NIK number"
+                                    placeholder={t('patient.enterNikNumber')}
                                 />
                             </div>
 
@@ -970,17 +974,17 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                                         </svg>
-                                        Gender
+                                        {t('common.gender')}
                                     </span>
                                 </label>
                                 <select
                                     {...register('sex')}
                                     className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
                                 >
-                                    <option value="">Select gender</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                    <option value="other">Other</option>
+                                    <option value="">{t('patient.selectGender')}</option>
+                                    <option value="male">{t('common.male')}</option>
+                                    <option value="female">{t('common.female')}</option>
+                                    <option value="other">{t('common.other')}</option>
                                 </select>
                             </div>
 
@@ -991,20 +995,20 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Religion
+                                        {t('patient.religion')}
                                     </span>
                                 </label>
                                 <select
                                     {...register('religion')}
                                     className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
                                 >
-                                    <option value="">Select religion</option>
-                                    <option value="islam">Islam</option>
-                                    <option value="katolik">Katolik</option>
-                                    <option value="protestan">Protestan</option>
-                                    <option value="budha">Budha</option>
-                                    <option value="hindu">Hindu</option>
-                                    <option value="other">Lainnya</option>
+                                    <option value="">{t('patient.selectReligion')}</option>
+                                    <option value="islam">{t('patient.islam')}</option>
+                                    <option value="katolik">{t('patient.katolik')}</option>
+                                    <option value="protestan">{t('patient.protestan')}</option>
+                                    <option value="budha">{t('patient.budha')}</option>
+                                    <option value="hindu">{t('patient.hindu')}</option>
+                                    <option value="other">{t('patient.other')}</option>
                                 </select>
                             </div>
 
@@ -1015,7 +1019,7 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                        Date of Birth *
+                                        {t('patient.dateOfBirth')} *
                                     </span>
                                 </label>
                                 <input
@@ -1028,7 +1032,7 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                         </svg>
-                                        Date of birth is required
+                                        {t('patient.dateOfBirthRequired')}
                                     </p>
                                 )}
                             </div>
@@ -1041,14 +1045,14 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        Place of Birth
+                                        {t('patient.placeOfBirth')}
                                     </span>
                                 </label>
                                 <textarea
                                     {...register('place_of_birth')}
                                     className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
                                     rows={3}
-                                    placeholder="Enter place of birth"
+                                    placeholder={t('patient.enterPlaceOfBirth')}
                                 />
                             </div>
 
@@ -1059,14 +1063,14 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                         <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                         </svg>
-                                        Address
+                                        {t('common.address')}
                                     </span>
                                 </label>
                                 <textarea
                                     {...register('address')}
                                     className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
                                     rows={3}
-                                    placeholder="Enter complete address"
+                                    placeholder={t('patient.enterCompleteAddress')}
                                 />
                             </div>
                         </div>
@@ -1080,7 +1084,7 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
-                                <span>Register Patient</span>
+                                <span>{t('patient.registerPatient')}</span>
                             </button>
                         </div>
                     </form>

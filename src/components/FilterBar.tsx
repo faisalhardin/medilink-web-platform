@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDownIcon, XMarkIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 
@@ -56,6 +57,7 @@ export const FilterPresetToday = {
 }
 
 export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
+  const { t } = useTranslation();
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dateRangeState, setDateRangeState] = useState<{
@@ -78,15 +80,29 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
 
   const timePresets: TimePreset[] = [
     {
-      label: 'Last hour',
+      label: t('filter.lastHour'),
       value: 'last_hour',
       icon: '🕐',
       startDate: () => new Date(Date.now() - 60 * 60 * 1000),
       endDate: () => new Date()
     },
-      FilterPresetToday,
     {
-      label: 'Yesterday',
+      label: t('filter.today'),
+      value: 'today',
+      icon: '📅',
+      startDate: () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
+      },
+      endDate: () => {
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        return today;
+      }
+    },
+    {
+      label: t('filter.yesterday'),
       value: 'yesterday',
       icon: '📆',
       startDate: () => {
@@ -103,7 +119,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
       }
     },
     {
-      label: 'Last 3 days',
+      label: t('filter.last3Days'),
       value: 'last_3_days',
       icon: '📊',
       startDate: () => {
@@ -115,7 +131,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
       endDate: () => new Date()
     },
     {
-      label: 'Last 7 days',
+      label: t('filter.last7Days'),
       value: 'last_7_days',
       icon: '📈',
       startDate: () => {
@@ -127,7 +143,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
       endDate: () => new Date()
     },
     {
-      label: 'Last 30 days',
+      label: t('filter.last30Days'),
       value: 'last_30_days',
       icon: '📉',
       startDate: () => {
@@ -143,7 +159,7 @@ export function FilterBar({ onFiltersChange, defaultFilters }: FilterBarProps) {
   const filterConfigs: FilterConfig[]  = [
     {
       key: 'timeRange',
-      label: 'Time Range',
+      label: t('filter.timeRange'),
       type: 'timeRange',
       icon: '🕒',
       timePresets

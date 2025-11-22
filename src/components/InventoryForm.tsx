@@ -1,5 +1,6 @@
 // src/components/AddInventoryForm.tsx
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   TextField,
   Button,
@@ -27,6 +28,7 @@ interface InventoryFormProps {
 }
 
 const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => {
+  const { t } = useTranslation();
   const { closeModal } = useModal();
   const [formData, setFormData] = useState({
     name: '',
@@ -136,23 +138,23 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
     const newErrors: Record<string, string> = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('patient.nameRequired');
     }
     
     if (formData.price && isNaN(Number(formData.price))) {
-      newErrors.price = 'Price must be a number';
+      newErrors.price = t('inventory.priceMustBeNumber');
     }
     
     if (formData.is_item) {
       if (!formData.quantity.trim()) {
-        newErrors.quantity = 'Quantity is required for items';
+        newErrors.quantity = t('inventory.quantityRequiredForItems');
       } else if (isNaN(Number(formData.quantity)) || Number(formData.quantity) < 0) {
-        newErrors.quantity = 'Quantity must be a positive number';
+        newErrors.quantity = t('inventory.quantityMustBePositive');
       }
     }
     
     if (!formData.unit_type.trim()) {
-      newErrors.unit_type = 'Unit type is required';
+      newErrors.unit_type = t('inventory.unitTypeRequired');
     }
     
     setErrors(newErrors);
@@ -185,7 +187,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
   return (
     <div className="p-2">
       <Typography variant="h6" className="mb-4 font-semibold">
-        Add New Inventory Item
+        {t('inventory.addProduct')}
       </Typography>
       <Divider className="mb-4" />
       
@@ -194,7 +196,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Product Name"
+              label={t('inventory.productName')}
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -207,7 +209,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Price"
+              label={t('inventory.price')}
               name="price"
               value={formData.price}
               onChange={handleChange}
@@ -223,7 +225,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Quantity"
+              label={t('inventory.quantity')}
               name="quantity"
               value={formData.quantity}
               onChange={handleChange}
@@ -240,7 +242,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
             <Box position="relative">
               <TextField
                 fullWidth
-                label="Unit Type"
+                label={t('inventory.unitType')}
                 name="unit_type"
                 value={formData.unit_type}
                 onChange={handleUnitTypeChange}
@@ -321,14 +323,14 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel }) => 
             onClick={handleCancel}
             className="border-gray-300 text-gray-700"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button 
             type="submit" 
             variant="contained" 
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            Add Product
+            {t('inventory.addProduct')}
           </Button>
         </Box>
       </form>

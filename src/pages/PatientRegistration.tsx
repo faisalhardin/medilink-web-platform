@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { PatientRegistrationComponent } from "@components/PatientComponent";
 
 const PatientRegistrationPage = () => {
+    const { t } = useTranslation();
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 md:p-8">
             {/* Header Section */}
@@ -10,8 +12,8 @@ const PatientRegistrationPage = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Register New Patient</h1>
-                <p className="text-gray-600">Please fill in the patient information below</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('patient.registerPatient')}</h1>
+                <p className="text-gray-600">{t('patient.fillPatientInformation')}</p>
             </div>
             <PatientRegistrationComponent />
         </div>
