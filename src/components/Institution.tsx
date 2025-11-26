@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { GetInsitution } from "@requests/institution";
 import { Institution as InstitutionModel } from "@models/institution";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@mui/icons-material";
 
 const InstitutionProfileComponent = () => {
+  const { t } = useTranslation();
   const [institution, setInstitution] = useState<InstitutionModel | null>(null);
 
   useEffect(() => {
@@ -68,7 +70,7 @@ const InstitutionProfileComponent = () => {
             className="bg-blue-600 hover:bg-blue-700"
             onClick={handleEditInstitution}
           >
-            Edit Institution
+            {t('institution.editInstitution')}
           </Button>
           <Button 
             variant="outlined" 
@@ -76,7 +78,7 @@ const InstitutionProfileComponent = () => {
             className="border-blue-600 text-blue-600 hover:bg-blue-50"
             onClick={handleManageProducts}
           >
-            Manage Products
+            {t('institution.manageProducts')}
           </Button>
         </div>
       </Card>

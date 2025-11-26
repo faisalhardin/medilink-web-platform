@@ -1,5 +1,6 @@
 // src/pages/Inventory.tsx
 import React, { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Button, TextField, IconButton, Typography, Box, FormControl, InputLabel,
@@ -20,6 +21,7 @@ import { formatPrice } from "@utils/common";
 
 
 const InventoryComponent = () => {
+  const { t } = useTranslation();
   const { openModal } = useModal();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +136,7 @@ const InventoryComponent = () => {
       setProducts(productResponse as Product[]);
     } catch (error) {
       console.error("Error refetching products:", error);
-      setError("Failed to refresh products");
+      setError(t('inventory.failedToRefresh'));
     } finally {
       setLoading(false);
     }
@@ -185,14 +187,14 @@ const InventoryComponent = () => {
   return (
     <div className="p-6 w-full">
       <div className="hidden sm:flex flex-col sm:flex-row justify-end lg:justify-between items-center mb-6 gap-3">
-        <Typography variant="h4" className="hidden lg:block text-2xl sm:text-3xl lg:text-4xl font-bold ">Inventory Management</Typography>
+        <Typography variant="h4" className="hidden lg:block text-2xl sm:text-3xl lg:text-4xl font-bold ">{t('inventory.inventoryManagement')}</Typography>
         <Button 
           variant="contained" 
           startIcon={<Add />}
           className="block w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
           onClick={openAddProductModal}
         >
-          Add New Product
+          {t('inventory.addNewProduct')}
         </Button>
       </div>
       
@@ -203,7 +205,7 @@ const InventoryComponent = () => {
             <CardContent className="flex flex-col items-center p-4 h-full">
               <InventoryIcon className="text-blue-600 text-3xl mb-2" />
               <Typography variant="h5" className="text-base sm:text-lg font-bold">{totalProducts}</Typography>
-              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Total Products</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">{t('inventory.totalProducts')}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -223,7 +225,7 @@ const InventoryComponent = () => {
             <CardContent className="flex flex-col items-center p-4 h-full">
               <Warning className="text-amber-600 text-3xl mb-2" />
               <Typography variant="h5" className="text-base sm:text-lg font-bold">{lowStockCount}</Typography>
-              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Low Stock</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">{t('inventory.lowStockItems')}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -240,7 +242,7 @@ const InventoryComponent = () => {
             <CardContent className="flex flex-col items-center p-4 h-full">
               <AttachMoney fontSize="large" className="text-emerald-600 text-3xl mb-2" />
               <Typography variant="h5" className="text-lg sm:text-xl font-bold">{formatPrice(inventoryValue)}</Typography>
-              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Total Value</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">{t('inventory.totalValue')}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -251,7 +253,7 @@ const InventoryComponent = () => {
       <Box className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
         <Box className="flex items-center gap-2 w-full sm:w-auto">
           <TextField
-            placeholder="Search products..."
+            placeholder={t('product.searchProducts')}
             variant="outlined"
             size="small"
             value={searchQuery}
@@ -276,11 +278,11 @@ const InventoryComponent = () => {
         
         <Box className="flex items-center gap-2 w-full sm:w-auto">
           <FormControl size="small" className="min-w-[150px]">
-            <InputLabel id="type-filter-label">Type</InputLabel>
+            <InputLabel id="type-filter-label">{t('inventory.productType')}</InputLabel>
             <Select
   labelId="type-filter-label"
   value={filterOptions.type}
-  label="Type"
+  label={t('inventory.productType')}
   onChange={(event: SelectChangeEvent<string>) => {
     const newOptions = {
       ...filterOptions,
@@ -289,9 +291,9 @@ const InventoryComponent = () => {
     handleFilterChange(newOptions);
   }}
 >
-              <MenuItem value="all">All Types</MenuItem>
-              <MenuItem value="item">Items Only</MenuItem>
-              <MenuItem value="treatment">Treatments Only</MenuItem>
+              <MenuItem value="all">{t('inventory.all')}</MenuItem>
+              <MenuItem value="item">{t('inventory.item')}</MenuItem>
+              <MenuItem value="treatment">{t('inventory.treatment')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -308,11 +310,11 @@ const InventoryComponent = () => {
           <TableHead className="bg-white">
             <TableRow>
               <TableCell className="font-semibold">ID</TableCell>
-              <TableCell className="font-semibold">Name</TableCell>
-              <TableCell className="font-semibold">Type</TableCell>
-              <TableCell className="font-semibold">Price</TableCell>
-              <TableCell className="font-semibold">Quantity</TableCell>
-              <TableCell className="font-semibold">Unit</TableCell>
+              <TableCell className="font-semibold">{t('common.name')}</TableCell>
+              <TableCell className="font-semibold">{t('inventory.productType')}</TableCell>
+              <TableCell className="font-semibold">{t('inventory.price')}</TableCell>
+              <TableCell className="font-semibold">{t('inventory.quantity')}</TableCell>
+              <TableCell className="font-semibold">{t('inventory.unitType')}</TableCell>
               <TableCell className="font-semibold">Status</TableCell>
               <TableCell className="font-semibold">Actions</TableCell>
             </TableRow>
@@ -321,13 +323,13 @@ const InventoryComponent = () => {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={8} align="center" className="py-8">
-                  Loading products...
+                  {t('common.loading')}
                 </TableCell>
               </TableRow>
             ): products?.length === 0 ?  (
               <TableRow>
                 <TableCell colSpan={8} align="center" className="py-8">
-                  No products found
+                  {t('inventory.noProducts')}
                 </TableCell>
               </TableRow>
             ) : (

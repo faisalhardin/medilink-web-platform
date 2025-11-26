@@ -9,6 +9,7 @@ import { convertProductToCheckoutProduct, formatPrice} from '@utils/common'
 import { useDrawer } from 'hooks/useDrawer';
 import { Drawer } from '@components/Drawer';
 import CloseIcon from 'assets/icons/CloseIcon';
+import { t } from 'i18next';
 
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
@@ -128,7 +129,7 @@ const ProductQuantityPanel = ({
       {/* Price Box with Thousand Separators */}
       {panelClass === 'product-panel-item-m' && 
       <div className="flex items-center justify-end gap-2 text-xs">
-        <span className="text-gray-600">Price:</span>
+        <span className="text-gray-600">{t('product.price')}:</span>
         <div className="flex items-center border rounded">
           <input
             className="px-2 py-0.5 w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -410,7 +411,7 @@ export const ProductAssignmentPanel = ({
   return (
     <>
       <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-base sm:text-lg font-medium mb-4">Assign Products</h3>
+        <h3 className="text-base sm:text-lg font-medium mb-4">{t('product.assignProduct')}</h3>
 
         {/* Search and assign section with improved search panel */}
         <div className="mb-4">
@@ -418,7 +419,7 @@ export const ProductAssignmentPanel = ({
             <input
               type="text"
               className="w-full border rounded px-2 py-1"
-              placeholder="Search products..."
+              placeholder={t('product.searchProducts')}
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => setShowResults(searchResults.length > 0)}
@@ -489,7 +490,7 @@ export const ProductAssignmentPanel = ({
       <Drawer
         isOpen={cartDrawer.isOpen}
         onClose={cartDrawer.closeDrawer}
-        title="Product Order Confirmation"
+        title={t('product.productOrderConfirmation')}
         maxWidth="md"
         position="right"
       >

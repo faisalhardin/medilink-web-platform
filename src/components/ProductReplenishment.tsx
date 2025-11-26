@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -25,6 +26,7 @@ import { Product } from '@models/product';
 import { ListProducts } from '@requests/products';
 import { formatPrice } from '@utils/common';
 import { ResupplyProduct } from '@requests/institution';
+import { t } from 'i18next';
 
 interface ReplenishmentItem {
   id: number;
@@ -38,6 +40,7 @@ interface ReplenishmentItem {
 }
 
 const ProductReplenishment = () => {
+  const { t } = useTranslation();
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [replenishmentItems, setReplenishmentItems] = useState<ReplenishmentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -166,7 +169,7 @@ const ProductReplenishment = () => {
   return (
     <div className="p-6 w-full">
       <div className="flex justify-end lg:justify-between items-center mb-6">
-        <Typography variant="h4" className="hidden lg:block font-bold">Product Replenishment</Typography>
+        <Typography variant="h4" className="hidden lg:block font-bold">{t('product.productReplenishment')}</Typography>
         {/* 
           On mobile (screen width < 1024px), make this clickable.
           On click, scroll/move to the replenishment panel (assume it has id="replenishment-panel")
@@ -262,11 +265,14 @@ const ProductReplenishment = () => {
               }
             }}
           >
-            {replenishmentItems.length} {replenishmentItems.length === 1 ? 'item' : 'items'} selected
+            {replenishmentItems.length === 1 
+              ? t('inventory.itemsSelected', { count: replenishmentItems.length, item: t('inventory.item') })
+              : t('inventory.itemsSelectedPlural', { count: replenishmentItems.length, items: t('inventory.items') })
+            }
           </Typography>
           {replenishmentItems.length > 0 && window.innerWidth < 1024 && (
             <Chip 
-              label="Tap to view" 
+              label={t('product.tapToView')} 
               size="small" 
               sx={{
                 background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
@@ -301,14 +307,14 @@ const ProductReplenishment = () => {
           <Card className="h-full">
             <CardContent>
               <Typography variant="h6" className="font-semibold mb-4">
-                Available Products
+                {t('product.availableProducts')}
               </Typography>
               
               {/* Search Bar */}
               <Box className="mb-4">
                 <TextField
                   fullWidth
-                  placeholder="Search products..."
+                  placeholder={t('product.searchProducts')}
                   variant="outlined"
                   size="small"
                   value={searchQuery}
@@ -330,7 +336,7 @@ const ProductReplenishment = () => {
                   </Box>
                 ) : availableProducts.length === 0 ? (
                   <Typography className="text-center py-8 text-gray-500">
-                    No products found
+                    {t('product.noProductsAvailable')}
                   </Typography>
                 ) : (
                   availableProducts
@@ -356,7 +362,7 @@ const ProductReplenishment = () => {
           <Card className="h-full">
             <CardContent className="flex flex-col">
               <Typography variant="h6" className="font-semibold mb-4">
-                Replenishment List
+                {t('product.replenishmentList')}
               </Typography>
               
               <Divider className="mb-4" />
@@ -365,7 +371,7 @@ const ProductReplenishment = () => {
               <Box id="replenishment-panel" className="flex-1 overflow-y-auto mb-4">
                 {replenishmentItems.length === 0 ? (
                   <Typography className="text-center py-8 text-gray-500">
-                    No items selected for replenishment
+                    {t('product.noItemsSelectedForReplenishment')}
                   </Typography>
                 ) : (
                   replenishmentItems.map((item) => (
@@ -394,7 +400,7 @@ const ProductReplenishment = () => {
                       onClick={handleMakeOrder}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
-                      Resupply Order
+                      {t('product.submitReplenishment')}
                     </Button>
                   </Box>
                 </>
@@ -424,7 +430,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onMove, isInReplenis
           </Typography>
           <Box className="flex items-center gap-2 mt-1">
             <Typography variant="body2" className="text-gray-600">
-              Stock: {product.quantity} {product.unit_type}
+              {t('product.stock')}: {product.quantity} {product.unit_type}
             </Typography>
             <Chip 
               size="small" 

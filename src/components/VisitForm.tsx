@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { InsertPatientVisit } from "@requests/patient";
 import { Patient as PatientModel, InsertPatientVisitPayload } from "@models/patient";
@@ -14,6 +15,7 @@ interface PatientVisitRegistrationProps {
 }
 
 export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationProps) {
+  const { t } = useTranslation();
   const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm<InsertPatientVisitPayload>({
     defaultValues: {
       journey_point_id: journeyPointID,
@@ -63,8 +65,8 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
       <div className="bg-white overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r px-8 py-6">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold ">Patient Visit Registration</h2>
-          <p className=" mt-1">Complete patient admission and clinical assessment</p>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold ">{t('patient.patientVisitRegistration')}</h2>
+          <p className=" mt-1">{t('patient.completeAdmission')}</p>
         </div>        
 
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -76,7 +78,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                 <div className="flex flex-col gap-2">
                   <div className="p-6">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                      Select Patient *
+                      {t('patient.selectPatientLabel')}
                     </label>
                     <div className="flex gap-3">
                       <div className="relative flex-1">
@@ -85,7 +87,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                           className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                           onClick={patientDrawer.openDrawer}
                         >
-                          <option value="" disabled hidden>Choose patient from database</option>
+                          <option value="" disabled hidden>{t('patient.choosePatientFromDatabase')}</option>
                           {selectedPatient && (
                             <option value={selectedPatient.uuid}>{selectedPatient.name}</option>
                           )}
@@ -101,7 +103,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                           <button
                             type="button"
                             className="flex items-center justify-center w-full h-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
-                            title="Add new patient"
+                            title={t('patient.registerNewPatient')}
                             onClick={registerPatientDrawer.openDrawer}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-7 h-7">
@@ -110,7 +112,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                           </button>
                           {/* Custom Tooltip */}
                           <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs sm:text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                            Register new patient
+                            {t('patient.registerNewPatient')}
                             <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                           </div>
                         </div>
@@ -130,7 +132,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                         </button>
                         {/* Custom Tooltip */}
                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                          View patient's medical records
+                          {t('patient.viewPatientMedicalRecords')}
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                         </div>
                       </div>
@@ -140,23 +142,23 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                       
                     </div>
                     {errors.patient_uuid && (
-                      <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.patient_uuid.message}</p>
+                      <p className="mt-1 text-xs sm:text-sm text-red-600">{t('patient.patientSelectionRequired')}</p>
                     )}
                   </div>
 
                   {selectedPatient && (
                     <div className="bg-white border border-gray-200 rounded-lg m-6 p-6">
-                      <h4 className="font-medium text-gray-900 mb-2">Selected Patient</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">{t('patient.selectedPatient')}</h4>
                       <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                        <p><span className="font-medium">Name:</span> {selectedPatient.name}</p>
-                        <p><span className="font-medium">NIK:</span> {selectedPatient.nik}</p>
+                        <p><span className="font-medium">{t('common.name')}:</span> {selectedPatient.name}</p>
+                        <p><span className="font-medium">{t('patient.nik')}:</span> {selectedPatient.nik}</p>
                         <p>
-                          <span className="font-medium">DOB:</span>{" "}
+                          <span className="font-medium">{t('patient.dob')}:</span>{" "}
                           {selectedPatient.date_of_birth
                             ? formatDate(selectedPatient.date_of_birth)
                             : ""}
                         </p>
-                        <p><span className="font-medium">Sex:</span> {selectedPatient.sex}</p>
+                        <p><span className="font-medium">{t('common.sex')}:</span> {selectedPatient.sex}</p>
                       </div>
                     </div>
                   )}
@@ -177,7 +179,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                   <EditorComponent
                     id='notes'
                     readOnly={false}
-                    placeHolder="Describe the reason for this visit, symptoms, concerns, etc."
+                    placeHolder={t('patient.describeVisitReason')}
                     onChange={(notes: Record<string, any>) => {
                       setValue('notes', notes);
                     }}
@@ -202,10 +204,10 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Admitting Patient...
+                    {t('patient.admittingPatient')}
                   </div>
                 ) : (
-                  'Admit Patient'
+                  t('patient.admitPatient')
                 )}
               </button>
             </div>
@@ -217,7 +219,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
       <Drawer
         isOpen={patientDrawer.isOpen}
         onClose={patientDrawer.closeDrawer}
-        title="Select Patient"
+        title={t('patient.selectPatient')}
         maxWidth="lg"
         position="right"
       >
@@ -233,7 +235,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
       <Drawer
         isOpen={registerPatientDrawer.isOpen}
         onClose={registerPatientDrawer.closeDrawer}
-        title="Register Patient"
+        title={t('patient.registerPatient')}
         maxWidth="lg"
         position="right"
       >
@@ -245,7 +247,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
       <Drawer
         isOpen={viewPatientRecordDrawer.isOpen}
         onClose={viewPatientRecordDrawer.closeDrawer}
-        title="View Patient Record"
+        title={t('patient.viewPatientRecord')}
         maxWidth="lg"
         position="right"
       >

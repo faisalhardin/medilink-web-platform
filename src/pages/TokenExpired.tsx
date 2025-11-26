@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from "react";
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
 import { getAuthStatus } from "@utils/authCleanup";
 
 const TokenExpired = () => {
+    const { t } = useTranslation();
     const [countdown, setCountdown] = useState(5);
     const [isRedirecting, setIsRedirecting] = useState(false);
     const navigate = useNavigate();
@@ -69,10 +71,10 @@ const TokenExpired = () => {
                     </div>
                     
                     <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
-                        Session Expired
+                        {t('auth.sessionExpired')}
                     </h2>
                     <p className="text-sm text-gray-600 mb-8">
-                        Your session has expired for security reasons. Please sign in again to continue.
+                        {t('auth.sessionExpiredMessage')}
                     </p>
                 </div>
             </div>
@@ -83,12 +85,12 @@ const TokenExpired = () => {
                         {/* Countdown Timer */}
                         <div className="text-center">
                             <div className="text-2xl font-bold text-gray-900 mb-2">
-                                {isRedirecting ? "Redirecting..." : countdown}
+                                {isRedirecting ? t('auth.redirecting') : countdown}
                             </div>
                             <p className="text-sm text-gray-500">
                                 {isRedirecting 
-                                    ? "Taking you to the login page..." 
-                                    : "Redirecting to login page in"
+                                    ? t('auth.takingToLogin')
+                                    : t('auth.redirectingToLogin')
                                 }
                             </p>
                         </div>
@@ -106,10 +108,10 @@ const TokenExpired = () => {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Redirecting...
+                                        {t('auth.redirecting')}
                                     </>
                                 ) : (
-                                    "Go to Login Now"
+                                    t('auth.goToLoginNow')
                                 )}
                             </button>
 
@@ -118,7 +120,7 @@ const TokenExpired = () => {
                                 disabled={isRedirecting}
                                 className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                             >
-                                Try Again
+                                {t('auth.tryAgain')}
                             </button>
                         </div>
 
@@ -132,13 +134,13 @@ const TokenExpired = () => {
                                 </div>
                                 <div className="ml-3">
                                     <h3 className="text-sm font-medium text-blue-800">
-                                        Why did this happen?
+                                        {t('auth.whyDidThisHappen')}
                                     </h3>
                                     <div className="mt-2 text-sm text-blue-700">
                                         <ul className="list-disc list-inside space-y-1">
-                                            <li>Your session expired for security reasons</li>
-                                            <li>You've been inactive for too long</li>
-                                            <li>Your token was invalid or corrupted</li>
+                                            <li>{t('auth.sessionExpiredSecurity')}</li>
+                                            <li>{t('auth.inactiveTooLong')}</li>
+                                            <li>{t('auth.tokenInvalid')}</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -148,7 +150,7 @@ const TokenExpired = () => {
                         {/* Help Section */}
                         <div className="text-center">
                             <p className="text-xs text-gray-500">
-                                Need help? Contact support or check your internet connection.
+                                {t('auth.needHelp')}
                             </p>
                         </div>
                     </div>

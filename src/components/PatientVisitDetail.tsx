@@ -10,6 +10,7 @@ import { convertProductsToCheckoutProducts} from '@utils/common'
 import { GetJourneyPoints } from '@requests/journey';
 import { JourneyPoint } from '@models/journey';
 import { Id } from 'types';
+import { t } from 'i18next';
 
 
 export interface journeyTab {
@@ -213,7 +214,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             {patient.name}
                         </h2>
                         <p>
-                            {patient.sex}
+                        {t('common.' + String(patient.sex)).toLowerCase()}
                         </p>
                     </div>
                 </div>
