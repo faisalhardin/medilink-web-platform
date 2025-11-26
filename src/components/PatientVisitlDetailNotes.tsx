@@ -3,6 +3,7 @@ import { EditorComponent } from './EditorComponent';
 import { PatientVisit, PatientVisitDetail, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { journeyTab } from './PatientVisitDetail';
 import { JourneyPoint } from '@models/journey';
+import { t } from 'i18next';
 
 interface patientVisitProps {
     patientVisit: PatientVisit,
@@ -81,7 +82,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetail, activeTab,
                                             : 'bg-transparent border border-gray-400 text-gray-400 cursor-not-allowed'
                                         }`}
                                 >
-                                    Save Notes
+                                    {t('patient.saveNotes')}
                                 </button>
                             </div>
                     </div>

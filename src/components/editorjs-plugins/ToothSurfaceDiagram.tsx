@@ -1,6 +1,7 @@
 import React from 'react';
 import { ToothSurfaceDiagramProps, Surface } from './types';
 import { getSurfacesForToothType, normalizeWholeToothCode } from './odontogramCodes';
+import { t } from 'i18next';
 
 
 const getOcclusalToothPath = () => {
@@ -207,7 +208,7 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
     <div className="w-full lg:max-w-md mx-auto">
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 text-center">
-            Surface Selection
+            {t('editor.odontogram.surfaceSelection')}
         </h4>
         
         <div className="relative">
@@ -306,7 +307,7 @@ export const ToothSurfaceDiagram: React.FC<ToothSurfaceDiagramProps> = ({
         
         {/* Instructions */}
         <div className="mt-4 text-xs text-gray-600 text-center">
-          Click on a surface to mark it with a condition
+          {t('editor.odontogram.clickOnSurfaceToMark')}
         </div>
       </div>
     </div>

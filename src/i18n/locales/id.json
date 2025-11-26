@@ -38,7 +38,7 @@
     "patient": "Pasien",
     "inventory": "Inventori",
     "productReplenishment": "Pengisian Produk",
-    "journeyBoard": "Papan Perjalanan",
+    "journeyBoard": "Journey Board",
     "closeMenu": "Tutup menu",
     "openMenu": "Buka menu"
   },
@@ -92,7 +92,8 @@
     "yearsOld": "tahun",
     "selectPatientButton": "Pilih Pasien",
     "patientDetail": "Detail Pasien",
-    "fillPatientInformation": "Silakan isi informasi pasien di bawah ini"
+    "fillPatientInformation": "Silakan isi informasi pasien di bawah ini",
+    "saveNotes": "Simpan Catatan"
   },
   "inventory": {
     "inventoryManagement": "Manajemen Inventori",
@@ -122,7 +123,8 @@
     "quantityRequiredForItems": "Jumlah wajib diisi untuk barang",
     "quantityMustBePositive": "Jumlah harus berupa angka positif",
     "unitTypeRequired": "Jenis satuan wajib diisi",
-    "updateProduct": "Perbarui Produk"
+    "updateProduct": "Perbarui Produk",
+    "totalValue": "Total Nilai"
   },
   "product": {
     "productReplenishment": "Pengisian Produk",
@@ -139,7 +141,9 @@
     "replenishmentList": "Daftar Pengisian",
     "stock": "Stok",
     "noItemsSelectedForReplenishment": "Tidak ada item yang dipilih untuk pengisian",
-    "tapToView": "Klik untuk melihat"
+    "tapToView": "Klik untuk melihat",
+    "assignProduct": "Produk yang Dipesan",
+    "productOrderConfirmation": "Konfirmasi Pemesanan Produk"
   },
   "institution": {
     "institutionProfile": "Profil Institusi",
@@ -196,5 +200,126 @@
   },
   "pages": {
     "home": "Halaman Beranda"
+  },
+  "editor": {
+    "odontogram": {
+      "clickOnSurfaceToMark": "Klik pada permukaan untuk menandai dengan kondisi",
+      "title": "Odontogram",
+      "tooth": "Gigi",
+      "unknownTooth": "Gigi tidak diketahui",
+      "surfaceMarking": "Penanda Permukaan",
+      "condition": "Kondisi",
+      "selectCondition": "Pilih kondisi",
+      "status": "Status",
+      "notes": "Catatan",
+      "generalNotes": "Catatan Umum",
+      "wholeToothConditions": "Kondisi Seluruh Gigi",
+      "addNotesForTooth": "Tambahkan catatan umum untuk gigi ini...",
+      "addNotesForSurface": "Tambahkan catatan untuk permukaan ini...",
+      "typeToSearchConditions": "Ketik untuk mencari kondisi...",
+      "noMatchingConditions": "Tidak ada kondisi yang cocok ditemukan",
+      "allConditionsSelected": "Semua kondisi telah dipilih",
+      "typeToSearchHint": "Ketik untuk mencari dan memilih beberapa kondisi. Tekan Enter untuk menambahkan, atau klik saran.",
+      "saveChanges": "Simpan Perubahan",
+      "surfaceSelection": "Pilihan Permukaan",
+      "statuses": {
+        "normal": "Normal",
+        "attention": "Perhatian",
+        "urgent": "Mendesak"
+      },
+      "conditions": {
+        "healthy": "Sehat",
+        "cavity": "Lubang",
+        "filling": "Tambalan",
+        "crown": "Mahkota",
+        "bridge": "Jembatan",
+        "implant": "Implan",
+        "missing": "Hilang",
+        "rootCanal": "Perawatan Saluran Akar",
+        "extractionNeeded": "Perlu Pencabutan",
+        "other": "Lainnya"
+      },
+      "toothNames": {
+        "11": "Gigi Seri Tengah Atas Kanan",
+        "12": "Gigi Seri Lateral Atas Kanan",
+        "13": "Gigi Taring Atas Kanan",
+        "14": "Gigi Premolar Pertama Atas Kanan",
+        "15": "Gigi Premolar Kedua Atas Kanan",
+        "16": "Gigi Geraham Besar Pertama Atas Kanan",
+        "17": "Gigi Geraham Besar Kedua Atas Kanan",
+        "18": "Gigi Geraham Bungsu Atas Kanan",
+        "21": "Gigi Seri Tengah Atas Kiri",
+        "22": "Gigi Seri Lateral Atas Kiri",
+        "23": "Gigi Taring Atas Kiri",
+        "24": "Gigi Premolar Pertama Atas Kiri",
+        "25": "Gigi Premolar Kedua Atas Kiri",
+        "26": "Gigi Geraham Besar Pertama Atas Kiri",
+        "27": "Gigi Geraham Besar Kedua Atas Kiri",
+        "28": "Gigi Geraham Bungsu Atas Kiri",
+        "31": "Gigi Seri Tengah Bawah Kiri",
+        "32": "Gigi Seri Lateral Bawah Kiri",
+        "33": "Gigi Taring Bawah Kiri",
+        "34": "Gigi Premolar Pertama Bawah Kiri",
+        "35": "Gigi Premolar Kedua Bawah Kiri",
+        "36": "Gigi Geraham Besar Pertama Bawah Kiri",
+        "37": "Gigi Geraham Besar Kedua Bawah Kiri",
+        "38": "Gigi Geraham Bungsu Bawah Kiri",
+        "41": "Gigi Seri Tengah Bawah Kanan",
+        "42": "Gigi Seri Lateral Bawah Kanan",
+        "43": "Gigi Taring Bawah Kanan",
+        "44": "Gigi Premolar Pertama Bawah Kanan",
+        "45": "Gigi Premolar Kedua Bawah Kanan",
+        "46": "Gigi Geraham Besar Pertama Bawah Kanan",
+        "47": "Gigi Geraham Besar Kedua Bawah Kanan",
+        "48": "Gigi Geraham Bungsu Bawah Kanan"
+      },
+      "surfaceNames": {
+        "M": "Mesial",
+        "D": "Distal",
+        "V": "Vestibular",
+        "L": "Lingual",
+        "O": "Oklusal",
+        "I": "Insisal"
+      },
+      "odontogramCodes": {
+        "sou": "Sehat",
+        "non": "Tidak Ada Informasi",
+        "une": "Belum Tumbuh",
+        "pre": "Tumbuh Sebagian",
+        "imx": "Impaksi",
+        "ano": "Anomali",
+        "car": "Karies",
+        "cfr": "Fraktur Mahkota",
+        "nvt": "Non Vital",
+        "nca": "Karies Non Kavitas",
+        "fra": "Fraktur",
+        "rrx": "Radiks",
+        "per": "Persisten",
+        "una": "Tidak Dapat Dievaluasi",
+        "mis": "Hilang",
+        "mam": "Hilang Ante Mortem",
+        "mpm": "Hilang Post Mortem",
+        "amf": "Tambalan Amalgam",
+        "gif": "Glass Ionomer",
+        "cof": "Komposit",
+        "tif": "Sementara",
+        "fis": "Fissure Sealant",
+        "inl": "Inlay",
+        "onl": "Onlay",
+        "fmc": "Mahkota Logam Penuh",
+        "poc": "Mahkota Porselen",
+        "mpc": "Mahkota Logam-Porselen",
+        "gmc": "Mahkota Logam Emas",
+        "rct": "Perawatan Saluran Akar",
+        "ipx": "Implan",
+        "meb": "Jembatan Logam",
+        "pob": "Jembatan Porselen",
+        "pon": "Pontik",
+        "abu": "Abutmen",
+        "prd": "Gigi Tiruan Sebagian",
+        "acr": "Akrilik",
+        "fld": "Gigi Tiruan Lengkap"
+      }
+    }
   }
 }

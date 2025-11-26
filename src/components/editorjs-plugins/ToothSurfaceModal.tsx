@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { ToothSurfaceModalProps, ToothData, Surface } from './types';
 import { ODONTOGRAM_CODES_MAP, getCodesBySurface, getWholeToothCodes, SURFACE_NAMES, normalizeWholeToothCode } from './odontogramCodes';
 import { ToothSurfaceDiagram } from './ToothSurfaceDiagram';
@@ -11,6 +12,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
   onClose,
   onSave
 }) => {
+  const { t } = useTranslation();
   const [selectedSurface, setSelectedSurface] = useState<Surface | undefined>();
   const [wholeToothCodes, setWholeToothCodes] = useState<string[]>([]);
   const [surfaceConditions, setSurfaceConditions] = useState<{ [key in Surface]?: string }>({});
@@ -25,6 +27,16 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
   const wasFocusedRef = useRef<boolean>(false);
   const tagInputRef = useRef<HTMLInputElement | null>(null);
   const tagInputWasFocusedRef = useRef<boolean>(false);
+
+  // Helper function to get translated code name
+  const getTranslatedCodeName = (code: string): string => {
+    return t(`editor.odontogram.odontogramCodes.${code}`, { defaultValue: ODONTOGRAM_CODES_MAP[code]?.name || code });
+  };
+
+  // Helper function to get translated surface name
+  const getTranslatedSurfaceName = (surface: Surface): string => {
+    return t(`editor.odontogram.surfaceNames.${surface}`, { defaultValue: SURFACE_NAMES[surface] || surface });
+  };
 
   // Initialize form data when modal opens or toothId changes
   useEffect(() => {
@@ -180,7 +192,8 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
       filteredCodes = filteredCodes.filter(code => {
         const codeLower = code.code.toLowerCase();
         const nameLower = code.name.toLowerCase();
-        return codeLower.includes(searchTerm) || nameLower.includes(searchTerm);
+        const translatedName = getTranslatedCodeName(code.code).toLowerCase();
+        return codeLower.includes(searchTerm) || nameLower.includes(searchTerm) || translatedName.includes(searchTerm);
       });
     }
     
@@ -306,7 +319,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900">
-            Tooth {toothId} - Surface Marking
+            {t('editor.odontogram.tooth')} {toothId} - {t(`editor.odontogram.toothNames.${toothId}`) || t('editor.odontogram.unknownTooth')}
           </h3>
           <button
             onClick={onClose}
@@ -335,7 +348,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
               {/* Whole Tooth Condition - Tag Input */}
               <div className="relative">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                  Whole Tooth Condition(s)
+                  {t('editor.odontogram.wholeToothConditions')}
                 </label>
                 <div className="relative">
                   {/* Input field with chips */}
@@ -361,9 +374,9 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                             {code}
                             
                             {/* Custom tooltip - shows only on hover */}
-                            {codeData?.name && (
+                            {codeData && (
                               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg hidden [.chip-tooltip-group:hover_&]:block pointer-events-none whitespace-nowrap z-50">
-                                {codeData.name}
+                                {getTranslatedCodeName(code)}
                                 {/* Arrow */}
                                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                                   <div className="border-4 border-transparent border-t-gray-900"></div>
@@ -407,7 +420,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                             tagInputWasFocusedRef.current = false;
                           }
                         }}
-                        placeholder={wholeToothCodes.length === 0 ? "Type to search conditions..." : ""}
+                        placeholder={wholeToothCodes.length === 0 ? t('editor.odontogram.typeToSearchConditions') : ""}
                         className="flex-1 min-w-[120px] outline-none text-sm sm:text-base bg-transparent"
                       />
                     </div>
@@ -435,21 +448,21 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                               <span className="font-medium">{code.code}</span>
                               <span className="text-gray-500 ml-2">-</span>
                               <span className="text-gray-700 ml-2">
-                                {highlightMatch(code.name, tagInputValue)}
+                                {highlightMatch(getTranslatedCodeName(code.code), tagInputValue)}
                               </span>
                             </button>
                           );
                         })
                       ) : (
                         <div className="px-3 py-2 text-xs sm:text-sm text-gray-500 text-center">
-                          {tagInputValue.trim() ? 'No matching conditions found' : 'All conditions selected'}
+                          {tagInputValue.trim() ? t('editor.odontogram.noMatchingConditions') : t('editor.odontogram.allConditionsSelected')}
                         </div>
                       )}
                     </div>
                   )}
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Type to search and select multiple conditions. Press Enter to add, or click a suggestion.
+                  {t('editor.odontogram.typeToSearchHint')}
                 </p>
               </div>
 
@@ -457,24 +470,24 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
               {selectedSurface && (
                 <div className="border border-gray-200 rounded-lg p-4">
                   <h4 className="text-base sm:text-lg font-medium text-gray-900 mb-3">
-                    {selectedSurface} - {SURFACE_NAMES[selectedSurface as keyof typeof SURFACE_NAMES]}
+                    {selectedSurface} - {getTranslatedSurfaceName(selectedSurface)}
                   </h4>
                   
                   <div className="space-y-4">
                     {/* Surface condition */}
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                        Condition
+                        {t('editor.odontogram.condition')}
                       </label>
                       <select
                         value={getSelectedSurfaceCode()}
                         onChange={(e) => handleSurfaceConditionChange(selectedSurface, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Select condition</option>
+                        <option value="">{t('editor.odontogram.selectCondition')}</option>
                         {getAvailableCodesForSurface(selectedSurface).map(code => (
                           <option key={code.code} value={code.code}>
-                            {code.code} - {code.name}
+                            {code.code} - {getTranslatedCodeName(code.code)}
                           </option>
                         ))}
                       </select>
@@ -483,14 +496,14 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                     {/* Surface notes */}
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                        Notes
+                        {t('editor.odontogram.notes')}
                       </label>
                       <textarea
                         value={getSelectedSurfaceNotes()}
                         onChange={(e) => handleSurfaceNotesChange(selectedSurface, e.target.value)}
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Add notes for this surface..."
+                        placeholder={t('editor.odontogram.addNotesForSurface')}
                       />
                     </div>
                   </div>
@@ -500,7 +513,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
               {/* General notes */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                  General Notes
+                  {t('editor.odontogram.generalNotes')}
                 </label>
                 <textarea
                   ref={textareaRef}
@@ -521,8 +534,8 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
                     wasFocusedRef.current = false;
                   }}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Add general notes for this tooth..."
+                  className="w-full text-xs sm:text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={t('editor.odontogram.addNotesForTooth')}
                 />
               </div>
             </div>
@@ -535,13 +548,13 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 text-sm sm:text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSave}
             className="px-4 py-2 text-sm sm:text-base font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Save Changes
+            {t('editor.odontogram.saveChanges')}
           </button>
         </div>
       </div>

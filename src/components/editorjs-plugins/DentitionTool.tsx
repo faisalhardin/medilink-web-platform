@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import i18n from '../../i18n/config';
 import { DentitionDiagram } from './DentitionDiagram';
 import { ToothSurfaceModal } from './ToothSurfaceModal';
 import { OdontogramData, ToothData, OdontogramToolConfig } from './types';
@@ -14,7 +15,7 @@ export default class DentitionTool {
 
   static get toolbox() {
     return {
-      title: 'Odontogram',
+      title: i18n.t('editor.odontogram.title'),
       icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
         <path d="M8 12h8"/>

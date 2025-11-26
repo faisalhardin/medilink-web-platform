@@ -93,7 +93,8 @@
     "yearsOld": "years old",
     "selectPatientButton": "Select Patient",
     "patientDetail": "Patient Detail",
-    "fillPatientInformation": "Please fill in the patient information below"
+    "fillPatientInformation": "Please fill in the patient information below",
+    "saveNotes": "Save Notes"
   },
   "inventory": {
     "inventoryManagement": "Inventory Management",
@@ -123,7 +124,8 @@
     "quantityRequiredForItems": "Quantity is required for items",
     "quantityMustBePositive": "Quantity must be a positive number",
     "unitTypeRequired": "Unit type is required",
-    "updateProduct": "Update Product"
+    "updateProduct": "Update Product",
+    "totalValue": "Total Value"
   },
   "product": {
     "productReplenishment": "Product Replenishment",
@@ -139,7 +141,10 @@
     "availableProducts": "Available Products",
     "replenishmentList": "Replenishment List",
     "stock": "Stock",
-    "noItemsSelectedForReplenishment": "No items selected for replenishment"
+    "noItemsSelectedForReplenishment": "No items selected for replenishment",
+    "assignProduct": "Assign Product",
+    "productOrderConfirmation": "Product Order Confirmation",
+    "price": "Price"
   },
   "institution": {
     "institutionProfile": "Institution Profile",
@@ -196,5 +201,126 @@
   },
   "pages": {
     "home": "Home Page"
+  },
+  "editor": {
+    "odontogram": {
+      "clickOnSurfaceToMark": "Click on a surface to mark it with a condition",
+      "title": "Odontogram",
+      "tooth": "Tooth",
+      "unknownTooth": "Unknown tooth",
+      "surfaceMarking": "Surface Marking",
+      "condition": "Condition",
+      "selectCondition": "Select condition",
+      "status": "Status",
+      "notes": "Notes",
+      "generalNotes": "General Notes",
+      "wholeToothConditions": "Whole Tooth Condition(s)",
+      "addNotesForTooth": "Add general notes for this tooth...",
+      "addNotesForSurface": "Add notes for this surface...",
+      "typeToSearchConditions": "Type to search conditions...",
+      "noMatchingConditions": "No matching conditions found",
+      "allConditionsSelected": "All conditions selected",
+      "typeToSearchHint": "Type to search and select multiple conditions. Press Enter to add, or click a suggestion.",
+      "saveChanges": "Save Changes",
+      "surfaceSelection": "Surface Selection",
+      "statuses": {
+        "normal": "Normal",
+        "attention": "Attention",
+        "urgent": "Urgent"
+      },
+      "conditions": {
+        "healthy": "Healthy",
+        "cavity": "Cavity",
+        "filling": "Filling",
+        "crown": "Crown",
+        "bridge": "Bridge",
+        "implant": "Implant",
+        "missing": "Missing",
+        "rootCanal": "Root Canal",
+        "extractionNeeded": "Extraction Needed",
+        "other": "Other"
+      },
+      "toothNames": {
+        "11": "Upper Right Central Incisor",
+        "12": "Upper Right Lateral Incisor",
+        "13": "Upper Right Canine",
+        "14": "Upper Right First Premolar",
+        "15": "Upper Right Second Premolar",
+        "16": "Upper Right First Molar",
+        "17": "Upper Right Second Molar",
+        "18": "Upper Right Third Molar",
+        "21": "Upper Left Central Incisor",
+        "22": "Upper Left Lateral Incisor",
+        "23": "Upper Left Canine",
+        "24": "Upper Left First Premolar",
+        "25": "Upper Left Second Premolar",
+        "26": "Upper Left First Molar",
+        "27": "Upper Left Second Molar",
+        "28": "Upper Left Third Molar",
+        "31": "Lower Left Central Incisor",
+        "32": "Lower Left Lateral Incisor",
+        "33": "Lower Left Canine",
+        "34": "Lower Left First Premolar",
+        "35": "Lower Left Second Premolar",
+        "36": "Lower Left First Molar",
+        "37": "Lower Left Second Molar",
+        "38": "Lower Left Third Molar",
+        "41": "Lower Right Central Incisor",
+        "42": "Lower Right Lateral Incisor",
+        "43": "Lower Right Canine",
+        "44": "Lower Right First Premolar",
+        "45": "Lower Right Second Premolar",
+        "46": "Lower Right First Molar",
+        "47": "Lower Right Second Molar",
+        "48": "Lower Right Third Molar"
+      },
+      "surfaceNames": {
+        "M": "Mesial",
+        "D": "Distal",
+        "V": "Vestibular",
+        "L": "Lingual",
+        "O": "Occlusal",
+        "I": "Incisal"
+      },
+      "odontogramCodes": {
+        "sou": "Sound",
+        "non": "No Information",
+        "une": "Unerupted",
+        "pre": "Partial Erupted",
+        "imx": "Impacted",
+        "ano": "Anomali",
+        "car": "Caries",
+        "cfr": "Crown Fractured",
+        "nvt": "Non Vital",
+        "nca": "Non-Cavitated Caries",
+        "fra": "Fracture",
+        "rrx": "Radix",
+        "per": "Persistent",
+        "una": "Unavaluable",
+        "mis": "Missing",
+        "mam": "Missing Ante Mortem",
+        "mpm": "Missing Post Mortem",
+        "amf": "Amalgam Filling",
+        "gif": "Glass Ionomer",
+        "cof": "Composite",
+        "tif": "Temporary",
+        "fis": "Fissure Sealant",
+        "inl": "Inlay",
+        "onl": "Onlay",
+        "fmc": "Full Metal Crown",
+        "poc": "Porcelain Crown",
+        "mpc": "Metal-Porcelain Crown",
+        "gmc": "Gold Metal Crown",
+        "rct": "Root Canal Treatment",
+        "ipx": "Implant",
+        "meb": "Metal Bridge",
+        "pob": "Porcelain Bridge",
+        "pon": "Pontic",
+        "abu": "Abutment",
+        "prd": "Partial Denture",
+        "acr": "Acrylic",
+        "fld": "Full Denture"
+      }
+    }
   }
 }

@@ -242,7 +242,7 @@ const InventoryComponent = () => {
             <CardContent className="flex flex-col items-center p-4 h-full">
               <AttachMoney fontSize="large" className="text-emerald-600 text-3xl mb-2" />
               <Typography variant="h5" className="text-lg sm:text-xl font-bold">{formatPrice(inventoryValue)}</Typography>
-              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">Total Value</Typography>
+              <Typography variant="body2" className="text-xs sm:text-sm text-gray-600">{t('inventory.totalValue')}</Typography>
             </CardContent>
           </Card>
         </Grid>
