@@ -31,7 +31,16 @@
     "female": "Female",
     "other": "Other",
     "error": "Error",
-    "view_details": "View Details"
+    "view_details": "View Details",
+    "page": "Page",
+    "of": "of",
+    "showing": "Showing",
+    "results": "results",
+    "previous": "Previous",
+    "next": "Next",
+    "firstPage": "First Page",
+    "lastPage": "Last Page",
+    "rowsPerPage": "Rows per page"
   },
   "navigation": {
     "dashboard": "Dashboard",

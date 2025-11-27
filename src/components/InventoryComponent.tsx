@@ -9,7 +9,8 @@ import {
 } from "@mui/material";
 import {
   Add, Edit, Delete, FilterList, Search,
-  Warning, Inventory as InventoryIcon, ShoppingCart, AttachMoney
+  Warning, Inventory as InventoryIcon, ShoppingCart, AttachMoney,
+  FirstPage, ChevronLeft, ChevronRight
 } from "@mui/icons-material";
 import { useModal } from "../context/ModalContext";
 import InventoryForm from "../components/InventoryForm";
@@ -26,6 +27,7 @@ const InventoryComponent = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,11 +40,13 @@ const InventoryComponent = () => {
   // Initialize state from URL parameters
   const [filterOptions, setFilterOptions] = useState(() => {
     const queryParams = new URLSearchParams(location.search);
+    const limit = parseInt(queryParams.get("limit") || "10", 10);
+    const offset = parseInt(queryParams.get("offset") || "0", 10);
     return {
       showLowStock: queryParams.get("lowStock") === "true",
       type: queryParams.get("type") || "all", // "all", "item", "treatment"
-      page: parseInt(queryParams.get("page") || "1", 10),
-      limit: parseInt(queryParams.get("limit") || "10", 10), // Default to 10 if not in URL
+      offset: offset,
+      limit: limit,
     };
   });
   
@@ -56,10 +60,10 @@ const InventoryComponent = () => {
       const urlParams = new URLSearchParams();
       if (searchQuery) urlParams.set("name", searchQuery);
       if (filterOptions.showLowStock) urlParams.set("lowStock", "true");
-      // Only add type, page, and limit to URL if they are not the default values
-      if (filterOptions.type !== "item") urlParams.set("type", filterOptions.type);
-      if (filterOptions.page !== 1) urlParams.set("page", filterOptions.page.toString());
-      if (filterOptions.limit !== 9) urlParams.set("limit", filterOptions.limit.toString());
+      // Only add type, offset, and limit to URL if they are not the default values
+      if (filterOptions.type !== "all") urlParams.set("type", filterOptions.type);
+      if (filterOptions.offset !== 0) urlParams.set("offset", filterOptions.offset.toString());
+      if (filterOptions.limit !== 10) urlParams.set("limit", filterOptions.limit.toString());
 
 
       // Use replace to avoid adding to history stack for filter changes
@@ -85,11 +89,16 @@ const InventoryComponent = () => {
         }
         // Note: "all" type means neither is_item nor is_treatment is set
 
-        params.page = filterOptions.page;
+        params.offset = filterOptions.offset;
         params.limit = filterOptions.limit;
 
         const productResponse = await ListProducts(params);
-        setProducts(productResponse as Product[]);
+        const productsArray = productResponse as Product[];
+        setProducts(productsArray);
+        
+        // Determine if there are more items
+        // If returned array length equals limit, there might be more items
+        setHasMore(productsArray.length === filterOptions.limit);
       } catch (error) {
         console.error("Error fetching products:", error);
         setError("Failed to load products");
@@ -128,12 +137,15 @@ const InventoryComponent = () => {
       params.is_item = false;
       params.is_treatment = true;
     }
-    params.page = filterOptions.page;
+    params.offset = filterOptions.offset;
     params.limit = filterOptions.limit;
     setLoading(true);
     try {
       const productResponse = await ListProducts(params);
-      setProducts(productResponse as Product[]);
+      const productsArray = productResponse as Product[];
+      setProducts(productsArray);
+      // Determine if there are more items
+      setHasMore(productsArray.length === filterOptions.limit);
     } catch (error) {
       console.error("Error refetching products:", error);
       setError(t('inventory.failedToRefresh'));
@@ -171,12 +183,36 @@ const InventoryComponent = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
+    // Reset to first page (offset 0) when search changes
+    setFilterOptions(prev => ({ ...prev, offset: 0 }));
   };
 
   // Handle filter changes
   const handleFilterChange = (newOptions: typeof filterOptions) => {
-    setFilterOptions(newOptions);
+    // Reset to first page (offset 0) when filters change
+    setFilterOptions({ ...newOptions, offset: 0 });
   };
+
+  // Pagination handlers
+  const handleFirstPage = () => {
+    setFilterOptions(prev => ({ ...prev, offset: 0 }));
+  };
+
+  const handlePreviousPage = () => {
+    if (filterOptions.offset > 0) {
+      const newOffset = Math.max(0, filterOptions.offset - filterOptions.limit);
+      setFilterOptions(prev => ({ ...prev, offset: newOffset }));
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasMore) {
+      setFilterOptions(prev => ({ ...prev, offset: prev.offset + prev.limit }));
+    }
+  };
+
+  const startItem = filterOptions.offset + 1;
+  const endItem = filterOptions.offset + products.length;
   
   // Calculate inventory statistics
   const totalProducts = products?.length || 0;
@@ -380,6 +416,45 @@ const InventoryComponent = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination Controls */}
+      {!loading && products.length > 0 && (
+        <Box className="flex items-center justify-end gap-2 mt-4 px-2">
+          <Typography variant="body2" className="text-sm text-gray-600 mr-4">
+            {t('common.showing')} {startItem}-{endItem} {t('common.results')}
+          </Typography>
+          
+          <IconButton
+            onClick={handleFirstPage}
+            disabled={filterOptions.offset === 0}
+            className="text-gray-600 hover:text-gray-900 disabled:opacity-30"
+            title={t('common.firstPage')}
+            size="small"
+          >
+            <FirstPage />
+          </IconButton>
+          
+          <IconButton
+            onClick={handlePreviousPage}
+            disabled={filterOptions.offset === 0}
+            className="text-gray-600 hover:text-gray-900 disabled:opacity-30"
+            title={t('common.previous')}
+            size="small"
+          >
+            <ChevronLeft />
+          </IconButton>
+          
+          <IconButton
+            onClick={handleNextPage}
+            disabled={!hasMore}
+            className="text-gray-600 hover:text-gray-900 disabled:opacity-30"
+            title={t('common.next')}
+            size="small"
+          >
+            <ChevronRight />
+          </IconButton>
+        </Box>
+      )}
     </div>
   );
 };
