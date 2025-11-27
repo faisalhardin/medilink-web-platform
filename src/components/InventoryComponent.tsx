@@ -10,7 +10,7 @@ import {
 import {
   Add, Edit, Delete, FilterList, Search,
   Warning, Inventory as InventoryIcon, ShoppingCart, AttachMoney,
-  FirstPage, LastPage, ChevronLeft, ChevronRight
+  FirstPage, ChevronLeft, ChevronRight
 } from "@mui/icons-material";
 import { useModal } from "../context/ModalContext";
 import InventoryForm from "../components/InventoryForm";
@@ -211,8 +211,6 @@ const InventoryComponent = () => {
     }
   };
 
-  // Calculate current page number for display (1-based)
-  const currentPage = Math.floor(filterOptions.offset / filterOptions.limit) + 1;
   const startItem = filterOptions.offset + 1;
   const endItem = filterOptions.offset + products.length;
   
