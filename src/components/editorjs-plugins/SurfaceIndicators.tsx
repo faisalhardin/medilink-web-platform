@@ -470,25 +470,6 @@ export const SurfaceIndicators: React.FC<SurfaceIndicatorsProps> = ({
           renderSurfaceIndicator(surface.surface, surface)
         )}
       
-      {/* Surface notation labels */}
-      {/* {toothData.surfaces
-        .filter(surface => applicableSurfaces.includes(surface.surface))
-        .map(surface => {
-          const pos = surfacePositions[surface.surface];
-          return (
-            <text
-              key={`label-${surface.surface}`}
-              x={pos.x}
-              y={pos.y - 2}
-              textAnchor="top"
-              className="text-xs font-bold fill-black pointer-events-none"
-              style={{ fontSize: '8px' }}
-            >
-              {surface.surface}
-            </text>
-          );
-        })} */}
-      
       {/* Whole tooth symbols - all stacked vertically by position */}
       {renderAllWholeToothSymbols()}
     </g>

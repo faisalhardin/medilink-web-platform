@@ -10,6 +10,7 @@ import {
   generateToothCodeInsertEvent,
   generateToothCodeRemoveEvent,
   generateToothSurfaceCodeSetEvent,
+  generateToothSurfaceCodeRemoveEvent,
   generateToothGeneralNoteUpdateEvent,
   generateToothSurfaceNoteUpdateEvent,
 } from './odontogramEventGenerator';
@@ -171,6 +172,10 @@ export default class OdontogramToolV2 {
     this.renderComponent();
   }
 
+  private normalizeNote(note: string | undefined | null): string {
+    return note || '';
+  }
+
   private generateEventsForToothChange(toothData: ToothData): OdontogramEvent[] {
     const events: OdontogramEvent[] = [];
     const context: EventContext = {
@@ -203,22 +208,42 @@ export default class OdontogramToolV2 {
       }
     }
 
-    // Generate events for surfaces
+    // Generate events for surfaces (additions and updates)
     toothData.surfaces.forEach(surface => {
       const oldSurface = oldToothData?.surfaces.find(s => s.surface === surface.surface);
       
+      // If surface code changed or is new, generate set event
       if (!oldSurface || oldSurface.code !== surface.code) {
         events.push(generateToothSurfaceCodeSetEvent(toothData.id, surface.surface, surface.code, context));
       }
 
-      if (surface.notes !== oldSurface?.notes) {
-        events.push(generateToothSurfaceNoteUpdateEvent(toothData.id, surface.surface, surface.notes || '', context));
+      // If surface notes changed, generate note update event
+      const oldSurfaceNote = this.normalizeNote(oldSurface?.notes);
+      const newSurfaceNote = this.normalizeNote(surface.notes);
+      
+      if (newSurfaceNote !== oldSurfaceNote) {
+        events.push(generateToothSurfaceNoteUpdateEvent(toothData.id, surface.surface, newSurfaceNote, context));
       }
     });
 
-    // Generate event for general notes
-    if (toothData.generalNotes !== oldToothData?.generalNotes) {
-      events.push(generateToothGeneralNoteUpdateEvent(toothData.id, toothData.generalNotes || '', context));
+    // Generate events for removed surfaces
+    if (oldToothData?.surfaces) {
+      oldToothData.surfaces.forEach(oldSurface => {
+        const stillExists = toothData.surfaces.find(s => s.surface === oldSurface.surface);
+        
+        // If old surface no longer exists in new data, generate remove event
+        if (!stillExists) {
+          events.push(generateToothSurfaceCodeRemoveEvent(toothData.id, oldSurface.surface, context));
+        }
+      });
+    }
+
+    // Generate event for general notes only if there's a real change
+    const oldNote = this.normalizeNote(oldToothData?.generalNotes);
+    const newNote = this.normalizeNote(toothData.generalNotes);
+    
+    if (newNote !== oldNote) {
+      events.push(generateToothGeneralNoteUpdateEvent(toothData.id, newNote, context));
     }
 
     return events;
@@ -355,43 +380,7 @@ const OdontogramToolV2Component: React.FC<OdontogramToolV2ComponentProps> = ({
   const displayData = currentState;
 
   return (
-    <div className="odontogram-v2-container">
-      {config.readOnly && (
-        <div style={{
-          backgroundColor: '#fee2e2',
-          border: '1px solid #ef4444',
-          borderRadius: '6px',
-          padding: '12px 16px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px',
-          color: '#991b1b'
-        }}>
-          <svg 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            style={{ flexShrink: 0 }}
-          >
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          <div>
-            <strong>{i18n.t('editor.odontogram.readOnlyTitle', 'Read-Only Mode')}</strong>
-            <div style={{ fontSize: '13px', marginTop: '2px', opacity: 0.9 }}>
-              {i18n.t('editor.odontogram.readOnlyMessage', 'This odontogram cannot be edited in the current context.')}
-            </div>
-          </div>
-        </div>
-      )}
-      
+    <div className="odontogram-v2-container">      
       {!canSave && !config.readOnly && (
         <div style={{
           backgroundColor: '#fef3c7',

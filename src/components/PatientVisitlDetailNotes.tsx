@@ -65,7 +65,7 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetail, activeTab,
                     <div className='relative group'>
                         <EditorComponent key={editorId}
                             id={editorId}
-                            readOnly={false}
+                            readOnly={activeTab.id != patientVisit.journey_point_id}
                             data={visitDetail?.notes}
                             placeHolder="Write your notes here..."
                             className="min-h-[300px]"

@@ -155,76 +155,12 @@ const DentitionToolComponent: React.FC<DentitionToolComponentProps> = ({
   isModalOpen
 }) => {
   return (
-    <>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '12px' 
-      }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '4px 10px',
-          backgroundColor: '#e0e7ff',
-          border: '1px solid #818cf8',
-          borderRadius: '4px',
-          fontSize: '12px',
-          fontWeight: '600',
-          color: '#3730a3'
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          Version 1.0
-        </div>
-      </div>
-
-      {config.readOnly && (
-        <div style={{
-          backgroundColor: '#fef3c7',
-          border: '1px solid #f59e0b',
-          borderRadius: '6px',
-          padding: '12px 16px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px',
-          color: '#92400e'
-        }}>
-          <svg 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            style={{ flexShrink: 0 }}
-          >
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          <div>
-            <strong>{i18n.t('editor.odontogram.legacyReadOnlyTitle', 'Legacy Odontogram (Read-Only)')}</strong>
-            <div style={{ fontSize: '13px', marginTop: '2px', opacity: 0.9 }}>
-              {i18n.t('editor.odontogram.legacyReadOnlyMessage', 'This is a legacy odontogram and cannot be edited. Create a new odontogram block to enable editing with the latest features.')}
-            </div>
-          </div>
-        </div>
-      )}
-      
+    <>     
       <DentitionDiagram
         teethData={data.teeth || {}}
         onToothClick={onToothClick}
         isEditable={!config.readOnly}
-        version={config.version || '1.0'}
+        version={'1.0'}
       />
       
       {isModalOpen && selectedToothId && (
