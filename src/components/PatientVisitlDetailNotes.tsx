@@ -69,7 +69,10 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetail, activeTab,
                             data={visitDetail?.notes}
                             placeHolder="Write your notes here..."
                             className="min-h-[300px]"
-                            onChange={handleNoteChange} />
+                            onChange={handleNoteChange}
+                            patientUuid={patientVisit.patient.uuid}
+                            visitId={patientVisit.id}
+                            journeyPointId={activeTab.id as string} />
 
                         {/* Save button - appears below editor */}
                         <div className='flex justify-end mt-4'>

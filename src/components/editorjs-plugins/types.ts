@@ -28,6 +28,24 @@ export interface OdontogramData {
 
 export interface OdontogramToolConfig {
   readOnly?: boolean;
+  version?: string;
+}
+
+// V2 specific types for CRDT-based odontogram
+export interface OdontogramDataV2 extends OdontogramData {
+  version: "2.0";
+  patientUuid?: string;
+  visitId?: number;
+  journeyPointId?: string;
+  maxSequenceNumber?: number;
+  maxLogicalTimestamp?: number;
+}
+
+export interface OdontogramToolConfigV2 extends OdontogramToolConfig {
+  patientUuid?: string;
+  visitId?: number;
+  journeyPointId?: string;
+  onSnapshotUpdate?: (snapshot: OdontogramDataV2) => void;
 }
 
 export interface ToothSurfaceModalProps {
@@ -42,6 +60,7 @@ export interface DentitionDiagramProps {
   teethData?: { [key: string]: ToothData };
   onToothClick: (toothId: string) => void;
   isEditable: boolean;
+  version: string;
 }
 
 export interface ToothSurfaceDiagramProps {

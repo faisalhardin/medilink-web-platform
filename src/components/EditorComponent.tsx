@@ -2,7 +2,7 @@ import EditorJS, { BlockToolConstructable } from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import EditorjsList from '@editorjs/list';
 import Paragraph from '@editorjs/paragraph';
-import DentitionTool from './editorjs-plugins/DentitionTool';
+import OdontogramRouter from './editorjs-plugins/OdontogramRouter';
 import { useEffect, useRef } from 'react'
 
 interface EditorComponentProps {
@@ -12,10 +12,25 @@ interface EditorComponentProps {
   readOnly?: boolean
   onChange?: (data: any) => void; // Custom change function
   className?: string
+  // Visit context for odontogram v2.0
+  patientUuid?: string;
+  visitId?: number;
+  journeyPointId?: string;
 }
 
-export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChange, className }: EditorComponentProps) => {
+export const EditorComponent = ({ 
+  id, 
+  data, 
+  readOnly=true, 
+  placeHolder, 
+  onChange, 
+  className,
+  patientUuid,
+  visitId,
+  journeyPointId,
+}: EditorComponentProps) => {
   const editorInstance = useRef<EditorJS | null>(null);
+
   useEffect(() => {
     const initEditor = async (editorData?: any) => {
       if (!editorInstance.current) {
@@ -33,9 +48,13 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
                 },
               },
               odontogram: {
-                class: DentitionTool,
+                class: OdontogramRouter,
                 config: {
                   readOnly: readOnly,
+                  patientUuid,
+                  visitId,
+                  journeyPointId,
+                  version: '2.0',
                 },
               },
             },
@@ -101,7 +120,7 @@ export const EditorComponent = ({ id,  data, readOnly=true, placeHolder, onChang
         editorInstance.current = null;
       }
     };
-  }, [id, readOnly]);
+  }, [id, readOnly, patientUuid, visitId, journeyPointId]);
       
   return (
     <div >
