@@ -65,11 +65,14 @@ export const PatientVisitlDetailNotes = ({ patientVisit, visitDetail, activeTab,
                     <div className='relative group'>
                         <EditorComponent key={editorId}
                             id={editorId}
-                            readOnly={false}
+                            readOnly={activeTab.id != patientVisit.journey_point_id}
                             data={visitDetail?.notes}
                             placeHolder="Write your notes here..."
                             className="min-h-[300px]"
-                            onChange={handleNoteChange} />
+                            onChange={handleNoteChange}
+                            patientUuid={patientVisit.patient.uuid}
+                            visitId={patientVisit.id}
+                            journeyPointId={activeTab.id as string} />
 
                         {/* Save button - appears below editor */}
                         <div className='flex justify-end mt-4'>

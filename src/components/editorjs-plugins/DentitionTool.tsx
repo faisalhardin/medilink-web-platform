@@ -4,6 +4,7 @@ import i18n from '../../i18n/config';
 import { DentitionDiagram } from './DentitionDiagram';
 import { ToothSurfaceModal } from './ToothSurfaceModal';
 import { OdontogramData, ToothData, OdontogramToolConfig } from './types';
+import { normalizeOdontogramData } from './odontogramDataNormalizer';
 
 export default class DentitionTool {
   private data: OdontogramData;
@@ -26,7 +27,10 @@ export default class DentitionTool {
   }
 
   constructor({ data, config }: { data?: OdontogramData; config?: OdontogramToolConfig }) {
-    this.data = data || { teeth: {} };
+    // Normalize data to use client-side colors and patterns
+    const normalizedData = data ? normalizeOdontogramData(data) : { teeth: {} };
+    this.data = normalizedData;
+    
     // Ensure teeth object exists even if data was provided
     if (!this.data.teeth) {
       this.data.teeth = {};
@@ -35,13 +39,20 @@ export default class DentitionTool {
   }
 
   render() {
-    this.wrapper = document.createElement('div');
-    this.wrapper.className = 'dentition-tool-wrapper';
-    
-    this.root = createRoot(this.wrapper);
-    this.renderComponent();
-    
-    return this.wrapper;
+    try {
+      this.wrapper = document.createElement('div');
+      this.wrapper.className = 'dentition-tool-wrapper';
+      
+      this.root = createRoot(this.wrapper);
+      this.renderComponent();
+      
+      return this.wrapper;
+    } catch (error) {
+      console.error('[DentitionTool] Error in render:', error);
+      const fallback = document.createElement('div');
+      fallback.textContent = 'Error rendering odontogram v1.0';
+      return fallback;
+    }
   }
 
   private renderComponent() {
@@ -144,11 +155,12 @@ const DentitionToolComponent: React.FC<DentitionToolComponentProps> = ({
   isModalOpen
 }) => {
   return (
-    <>
+    <>     
       <DentitionDiagram
         teethData={data.teeth || {}}
         onToothClick={onToothClick}
         isEditable={!config.readOnly}
+        version={'1.0'}
       />
       
       {isModalOpen && selectedToothId && (

@@ -50,7 +50,7 @@ export async function ListProducts(params?: ListProductParams): Promise<CommonRe
         throw new Error;
       }
       const responseData = response.data;
-      return responseData.data;
+      return responseData.data || [];
     } catch (error) {
         throw error;
     }

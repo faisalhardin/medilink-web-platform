@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { DentitionDiagramProps, Surface, ToothData } from './types';
 import { SurfaceIndicators } from './SurfaceIndicators';
 import { getSurfacesForToothType, ODONTOGRAM_CODES_MAP, normalizeWholeToothCode } from './odontogramCodes';
+import i18n from 'i18n/config';
 
 export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
   teethData = {},
   onToothClick,
-  isEditable
+  isEditable,
+  version
 }) => {
   const [viewMode, setViewMode] = useState<'diagram' | 'table'>('diagram');
   // Determine tooth type based on tooth ID
@@ -417,7 +419,112 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
             </table>
           </div>
         )}
+        <div className="text-xxs text-gray-500 text-center mt-2 flex items-center justify-end gap-2">
+          <ReadOnlyBanner isReadOnly={!isEditable} />
+          <VersionBanner version={version} />
+        </div>
       </div>
     </div>
   );
 };
+
+const VersionBanner: React.FC<{ version: string }> = ({ version }) => {
+  if (version === '1.0') {
+    return <LegacyReadOnlyBanner version={version} />;
+  }
+  return (
+    <div className='relative group'>
+      <div className='flex items-center gap-1' style={{ cursor: 'help' }}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+        Version {version}
+      </div>      
+    </div>
+  )
+}
+
+
+const ReadOnlyBanner: React.FC<{ isReadOnly: boolean }> = ({ isReadOnly }) => {
+  if (isReadOnly) {
+    return (
+      <div 
+        style={{
+          backgroundColor: '#fee2e2',
+          border: '1px solid #ef4444',
+          borderRadius: '6px',
+          padding: '2px 2px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          color: '#991b1b',
+        }}
+      >
+        <svg
+          width="8"
+          height="8"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ flexShrink: 0 }}
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <div className='text-xxs'>
+          <strong>{i18n.t('editor.odontogram.readOnlyTitle', 'Read-Only')}</strong>
+        </div>
+      </div>
+    )
+   }
+
+}
+
+const LegacyReadOnlyBanner: React.FC<{ version: string }> = ({ version }) => {
+    return (
+      <div 
+        style={{
+          backgroundColor: '#fef3c7',
+          border: '1px solid #f59e0b',
+          borderRadius: '6px',
+          padding: '2px 2px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          color: '#92400e',
+          cursor: 'default'
+        }}
+        title={i18n.t(
+          'editor.odontogram.legacyVersionTooltip', 
+          'Legacy version',
+          { version }
+        )}
+      >
+        <svg 
+          width="8" 
+          height="8" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          style={{ flexShrink: 0 }}
+        >
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <div className='text-xxs'>
+          Version {version}
+        </div>
+      </div>
+    )
+  
+}
