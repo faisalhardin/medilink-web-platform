@@ -212,9 +212,16 @@ export default class OdontogramToolV2 {
     toothData.surfaces.forEach(surface => {
       const oldSurface = oldToothData?.surfaces.find(s => s.surface === surface.surface);
       
-      // If surface code changed or is new, generate set event
+      // Handle surface code changes
       if (!oldSurface || oldSurface.code !== surface.code) {
-        events.push(generateToothSurfaceCodeSetEvent(toothData.id, surface.surface, surface.code, context));
+        // If code was removed (old had code, new is empty), generate remove event
+        if (oldSurface && oldSurface.code && oldSurface.code !== '' && (!surface.code || surface.code === '')) {
+          events.push(generateToothSurfaceCodeRemoveEvent(toothData.id, surface.surface, context));
+        } 
+        // If code was added or changed (new code is not empty), generate set event
+        else if (surface.code && surface.code !== '') {
+          events.push(generateToothSurfaceCodeSetEvent(toothData.id, surface.surface, surface.code, context));
+        }
       }
 
       // If surface notes changed, generate note update event

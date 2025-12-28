@@ -11,6 +11,19 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
   version
 }) => {
   const [viewMode, setViewMode] = useState<'diagram' | 'table'>('diagram');
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRowExpansion = (toothId: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(toothId)) {
+        newSet.delete(toothId);
+      } else {
+        newSet.add(toothId);
+      }
+      return newSet;
+    });
+  };
   // Determine tooth type based on tooth ID
   const getToothType = (toothId: string): 'incisor' | 'canine' | 'premolar' | 'molar' => {
     const toothNum = parseInt(toothId);
@@ -188,6 +201,12 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
     const surfaceText = getSurfaceConditionsText(toothData);
     const parts = [surfaceText, wholeToothText].filter(Boolean);
     return parts.length > 0 ? parts.join(' - ') : '—';
+  };
+
+  const hasNotes = (toothData: ToothData | undefined): boolean => {
+    if (!toothData) return false;
+    if (toothData.generalNotes && toothData.generalNotes.trim()) return true;
+    return toothData.surfaces.some(s => s.notes && s.notes.trim());
   };
 
   // Combine all teeth for table view
@@ -396,23 +415,84 @@ export const DentitionDiagram: React.FC<DentitionDiagramProps> = ({
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white">
                 {allTeeth.map((tooth) => {
                   const toothData = teethData[tooth.id];
                   const conditionText = getToothConditionText(toothData);
+                  const isExpanded = expandedRows.has(tooth.id);
+                  const showNotes = hasNotes(toothData);
+                  
                   return (
-                    <tr
-                      key={tooth.id}
-                      onClick={() => isEditable && onToothClick(tooth.id)}
-                      className={isEditable ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}
-                    >
-                      <td className="w-20 px-2 py-2 text-xs font-medium text-gray-900 border-r border-gray-200">
-                        {tooth.id}
-                      </td>
-                      <td className="px-3 py-2 text-xs text-gray-700">
-                        {conditionText}
-                      </td>
-                    </tr>
+                    <React.Fragment key={tooth.id}>
+                      {/* Main row */}
+                      <tr className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="w-20 px-2 py-2 text-xs font-medium text-gray-900 border-r border-gray-200">
+                          <div className="flex items-center gap-2">
+                            
+                            {tooth.id}
+                            {showNotes && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRowExpansion(tooth.id);
+                                }}
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                                aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
+                              >
+                                <svg 
+                                  className="w-4 h-4 transition-transform" 
+                                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td 
+                          className={`px-3 py-2 text-xs text-gray-700 ${isEditable ? 'cursor-pointer' : ''}`}
+                          onClick={() => isEditable && onToothClick(tooth.id)}
+                        >
+                          {conditionText}
+                        </td>
+                      </tr>
+                      
+                      {/* Expandable notes row */}
+                      {isExpanded && showNotes && (
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <td colSpan={2} className="px-2 py-3">
+                            <div className="space-y-2 text-xs">
+                              {/* General Notes */}
+                              {toothData?.generalNotes && toothData.generalNotes.trim() && (
+                                <div>
+                                  <span className="font-semibold text-gray-700">General Notes:</span>
+                                  <div className="text-gray-600 mt-1 ml-2 whitespace-pre-wrap">{toothData.generalNotes}</div>
+                                </div>
+                              )}
+                              
+                              {/* Surface Notes */}
+                              {toothData?.surfaces.some(s => s.notes && s.notes.trim()) && (
+                                <div>
+                                  <span className="font-semibold text-gray-700">Surface Notes:</span>
+                                  <div className="mt-1 ml-2 space-y-1">
+                                    {toothData.surfaces
+                                      .filter(s => s.notes && s.notes.trim())
+                                      .map(surface => (
+                                        <div key={surface.surface} className="text-gray-600">
+                                          <span className="font-medium">{surface.surface}:</span> {surface.notes}
+                                        </div>
+                                      ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
