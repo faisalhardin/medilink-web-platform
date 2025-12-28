@@ -129,21 +129,35 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
       ...prev,
       [surface]: notes
     }));
+    console.log("surfaceNotes", surfaceNotes);
   };
 
   const handleSave = () => {
-    // Build surfaces array
-    const surfaces = Object.entries(surfaceConditions)
-      .filter(([_, code]) => code && code !== '')
-      .map(([surface, code]) => {
-        const codeData = ODONTOGRAM_CODES_MAP[code];
+    // Build surfaces array - include surfaces that have either a code OR notes
+    // Get all unique surfaces from both conditions and notes
+    const allSurfaces = new Set<Surface>([
+      ...Object.keys(surfaceConditions) as Surface[],
+      ...Object.keys(surfaceNotes) as Surface[]
+    ]);
+
+    const surfaces = Array.from(allSurfaces)
+      .filter((surface) => {
+        const hasCode = surfaceConditions[surface] && surfaceConditions[surface] !== '';
+        const hasNotes = surfaceNotes[surface] && surfaceNotes[surface].trim() !== '';
+        return hasCode || hasNotes; // Include if has code OR notes
+      })
+      .map((surface) => {
+        const code = surfaceConditions[surface] || '';
+        const notes = surfaceNotes[surface] || '';
+        const codeData = code ? ODONTOGRAM_CODES_MAP[code] : null;
+        
         return {
           surface: surface as Surface,
-          code: code!,
-          condition: codeData?.name || code!,
+          code: code || '', // Allow empty code if notes exist
+          condition: codeData?.name || code || '',
           color: codeData?.color || '#000000',
           pattern: codeData?.pattern || 'solid',
-          notes: surfaceNotes[surface as Surface] || ''
+          notes: notes
         };
       });
 
