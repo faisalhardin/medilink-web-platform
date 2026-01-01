@@ -143,7 +143,7 @@ export const ToothSurfaceModal: React.FC<ToothSurfaceModalProps> = ({
     const surfaces = Array.from(allSurfaces)
       .filter((surface) => {
         const hasCode = surfaceConditions[surface] && surfaceConditions[surface] !== '';
-        const hasNotes = surfaceNotes[surface] && surfaceNotes[surface].trim() !== '';
+        const hasNotes = surfaceNotes[surface] && surfaceNotes[surface] !== null && surfaceNotes[surface]?.trim() !== '';
         return hasCode || hasNotes; // Include if has code OR notes
       })
       .map((surface) => {
