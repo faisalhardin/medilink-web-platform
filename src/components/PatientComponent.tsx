@@ -97,7 +97,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
     const onSubmit = async (params: GetPatientParam) => {
         const filteredParams: Partial<GetPatientParam> = {};
         if (params.name) filteredParams.name = params.name;
-        if (params.phone_number) filteredParams.phone_number = normalizeIndonesianPhone(params.phone_number);
+        if (params.phone_number) filteredParams.phone_number = params.phone_number;
         if (params.date_of_birth) filteredParams.date_of_birth = params.date_of_birth;
         if (params.institution_id) filteredParams.institution_id = params.institution_id;
 
@@ -315,15 +315,13 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                 <span>{patient.place_of_birth || 'N/A'}</span>
                                             </div>
 
-                                            {patient.phone_number && (
-                                                <div className="flex items-center space-x-3">
-                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                    </svg>
-                                                    <span className="font-medium text-gray-700">Phone:</span>
-                                                    <span>{patient.phone_number}</span>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center space-x-3">
+                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                </svg>
+                                                <span className="font-medium text-gray-700">Phone:</span>
+                                                <span>{patient.phone_number || 'N/A'}</span>
+                                            </div>
                                         </div>
 
                                         {/* Action Button - Full Width on Mobile */}
@@ -394,7 +392,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                         )}
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-1 text-xs text-gray-600">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-1 text-xs text-gray-600">
                                                         <div className="flex items-center space-x-2">
                                                             <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -427,16 +425,16 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                                                                 {patient.place_of_birth || 'N/A'}
                                                             </span>
                                                         </div>
-                                                    </div>
 
-                                                    {patient.phone_number && (
-                                                        <div className="mt-3 flex items-center space-x-2 text-xs sm:text-sm text-gray-600">
+                                                        <div className="flex items-center space-x-2">
                                                             <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                                             </svg>
-                                                            <span className="truncate">{patient.phone_number}</span>
+                                                            <span className="truncate">
+                                                                {patient.phone_number || 'N/A'}
+                                                            </span>
                                                         </div>
-                                                    )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
