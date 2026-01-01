@@ -160,3 +160,30 @@ export const formatDateForAPI = (dateStr: string) => {
   };
   return dateStr;
 };
+
+export function isValidIndonesianPhone(phone: string): boolean {
+  const normalized = phone.replace(/\s|-/g, '');
+
+  const regex = /^(?:\+62|62|0|)8[1-9][0-9]{7,15}$/;
+  return regex.test(normalized);
+}
+
+export function isValidIndonesianNIK(nik: string): boolean {
+  const normalized = nik.replace(/\s|-/g, '');
+  const regex = /^\d*[0-9]{16}$/;
+  return regex.test(normalized);
+}
+
+export function normalizeIndonesianPhone(phone: string): string {
+  let p = phone.replace(/\s|-/g, '');
+  if (!isValidIndonesianPhone(p)) {
+    return '';
+  }
+
+  const idxOfEight = p.indexOf('8');
+  p = '0' + p.slice(idxOfEight);
+
+
+
+  return p;
+}
