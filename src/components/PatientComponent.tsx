@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
 import { GetPatientParam, Patient, Patient as PatientModel, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { EditorComponent } from "./EditorComponent";
+import { isValidIndonesianNIK, isValidIndonesianPhone, normalizeIndonesianPhone } from "@utils/common";
 
 interface PatientListComponentProps {
     journey_board_id?: number;
@@ -96,7 +97,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
     const onSubmit = async (params: GetPatientParam) => {
         const filteredParams: Partial<GetPatientParam> = {};
         if (params.name) filteredParams.name = params.name;
-        if (params.nik) filteredParams.nik = params.nik;
+        if (params.phone_number) filteredParams.phone_number = normalizeIndonesianPhone(params.phone_number);
         if (params.date_of_birth) filteredParams.date_of_birth = params.date_of_birth;
         if (params.institution_id) filteredParams.institution_id = params.institution_id;
 
@@ -190,11 +191,11 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                             />
                         </div>
                         <div>
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{t('patient.nik')}</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{t('patient.phoneNumber')}</label>
                             <input
-                                {...register('nik')}
+                                {...register('phone_number')}
                                 type="text"
-                                placeholder={t('patient.enterNik')}
+                                placeholder={t('patient.enterPhoneNumber')}
                                 className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
@@ -891,9 +892,18 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
     const { t } = useTranslation();
     const { register, handleSubmit, formState: { errors } } = useForm<RegisterPatientModel>();
 
+
+    const normalizeRegisterPatientPayload = (data: RegisterPatientModel) => {
+        return {
+            ...data,
+            phone_number: normalizeIndonesianPhone(data.phone_number),
+        };
+    }
+
     const onSubmit = async (data: RegisterPatientModel) => {
+        const normalizePayload = normalizeRegisterPatientPayload(data);
         try {
-            const resp = await RegisterPatientRequest(data);
+            const resp = await RegisterPatientRequest(normalizePayload);
             onPatientSelect?.({
                 uuid: resp.uuid,
                 nik: resp.nik,
@@ -960,11 +970,59 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                     </span>
                                 </label>
                                 <input
-                                    type="number"
-                                    {...register('nik')}
+                                    type="text"
+                                    {...register('nik', {
+                                        validate: (value) => {
+                                            if (!value || value.trim() === '') {
+                                                return true; // Allow empty NIK (optional field)
+                                            }
+                                            return isValidIndonesianNIK(value) || t('patient.invalidNIK', { defaultValue: 'Please enter a valid Indonesian NIK' });
+                                        }
+                                    })}
                                     className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
                                     placeholder={t('patient.enterNikNumber')}
                                 />
+                                {errors.nik && (
+                                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        {errors.nik?.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Phone Number Field */}
+                            <div className={`${isInDrawer ? '' : 'col-span-1 md:col-span-2'}`}>
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                        {t('patient.phoneNumber')}
+                                    </span>
+                                </label>
+                                <input
+                                    type="text"
+                                    {...(register('phone_number', {
+                                        validate: (value) => {
+                                            if (!value || value.trim() === '') {
+                                                return true;
+                                            }
+                                            return isValidIndonesianPhone(value) || t('patient.invalidPhoneNumber', { defaultValue: 'Please enter a valid Indonesian phone number' });
+                                        }
+                                    }))}
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border ${errors.phone_number ? 'border-red-500' : 'border-gray-300'} ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
+                                    placeholder={t('patient.enterPhoneNumber')}
+                                />
+                                {errors.phone_number && (
+                                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        {errors.phone_number.message}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Sex Field */}

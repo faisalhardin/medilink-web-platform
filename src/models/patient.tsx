@@ -28,12 +28,14 @@ export interface RegisterPatient {
   place_of_birth: string;
   religion: string;
   address: string;
+  phone_number: string;
 }
 
 export interface GetPatientParam extends CommonQueryParams {
   patient_ids?: string;
   date_of_birth?: string;
   name?: string;
+  phone_number?: string;
   institution_id?: number;
   nik?: string;
 }
