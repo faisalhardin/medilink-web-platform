@@ -129,7 +129,7 @@ export const formatDateTimeWithOffset = (date: Date): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
 }
 
-export const formatDateForAPI = (dateStr: string) => {
+export const formatDateTimeForAPI = (dateStr: string) => {
   if (!dateStr) return '';
   
   // If it's already in ISO format with timezone, return as is
@@ -160,6 +160,14 @@ export const formatDateForAPI = (dateStr: string) => {
   };
   return dateStr;
 };
+
+export function formatDateForAPI(dateStr: string): string {
+  if (!dateStr) return '';
+  // Matches YYYY-MM-DD from the start of the string
+  const match = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : dateStr;
+}
+
 
 export function isValidIndonesianPhone(phone: string): boolean {
   const normalized = phone.replace(/\s|-/g, '');

@@ -104,7 +104,7 @@
     "age": "Usia",
     "yearsOld": "tahun",
     "selectPatientButton": "Pilih Pasien",
-    "patientDetail": "Detail Pasien",
+    "patientDetail": "Detail Pasien {{name}}",
     "fillPatientInformation": "Silakan isi informasi pasien di bawah ini",
     "saveNotes": "Simpan Catatan"
   },
