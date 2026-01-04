@@ -25,6 +25,47 @@ export const RegisterPatientRequest = async (patientForm: RegisterPatient): Prom
     }
 }
 
+export const GetPatientByUUID = async (patient_uuid: string): Promise<Patient> => {
+    try {
+        const response = await authedClient.get(
+            `${PATIENT_PATH}/${patient_uuid}`, {
+                withCredentials: true,
+            }
+        );
+        if (response.status >= 400) {
+            throw new Error;
+        }
+        const responseData = await response.data;
+        return responseData.data;
+    }
+    catch (error) {
+        console.error("Error fetching response data:", error);
+        // Optional: throw or return a rejected promise to propagate the error
+        throw error;
+    }
+}
+
+export const UpdatePatient = async (patientData: Partial<Patient>): Promise<CommonResponse<null>> => {
+    try {
+        const response = await authedClient.put(
+            `${PATIENT_PATH}`, 
+            patientData,
+            {
+                withCredentials: true,
+            }
+        );
+        if (response.status >= 400) {
+            throw new Error;
+        }
+        const responseData = await response.data;
+        return responseData.data;
+
+    } catch (error) {
+        console.error("Error updating patient:", error);
+        throw error;
+    }
+}
+
 export const ListPatients = async (param:GetPatientParam | null): Promise<Patient[]> => {
     try {
         const response = await authedClient.get(

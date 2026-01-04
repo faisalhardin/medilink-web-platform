@@ -147,6 +147,10 @@ export interface GetPatientVisitParam extends CommonQueryParams {
   patient_uuid?: string;
 }
 
+export interface PatientDetailComponentProps {
+  patient_uuid?: string;
+}
+
 export interface PatientVisitsComponentProps extends GetPatientVisitParam {
   patient?: Patient;
   isInDrawer?: boolean;

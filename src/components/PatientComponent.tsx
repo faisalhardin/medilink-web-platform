@@ -6,6 +6,7 @@ import { ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@reque
 import { GetPatientParam, Patient, Patient as PatientModel, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { EditorComponent } from "./EditorComponent";
 import { isValidIndonesianNIK, isValidIndonesianPhone, normalizeIndonesianPhone } from "@utils/common";
+import HorizontalScroll from "./HorizontalScroll";
 
 interface PatientListComponentProps {
     journey_board_id?: number;
@@ -532,7 +533,6 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
     const [internalPatient, setPatient] = useState<Patient | null>(patient || null);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
-    // const [columnCount, setColumnCount] = useState(2);
 
     useEffect(() => {
         const fetchVisits = async () => {
@@ -563,7 +563,6 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
 
     useEffect(() => {
         if (!internalPatient && patient_uuid) {
-            // console.log("patient_uuid", patient_uuid, internalPatient);
             const fetchPatient = async () => {
                 const _patients = await ListPatients({
                     patient_ids: patient_uuid,
@@ -655,7 +654,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
 
     if (patientVisits.length === 0) {
         return (
-            <div className="p-6 w-full">
+            <div className="p-6 w-full bg-white border border-t-0 shadow-md rounded-b-lg rounded-tr-lg">
                 <div className="text-center py-12">
                     <div className="text-gray-400 mb-4">
                         <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -671,38 +670,40 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
 
 
     return (
-        <div className="p-6 w-full">
+        <div className="p-6 w-full bg-white border border-t-0 shadow-md rounded-b-lg rounded-tr-lg">
             <div className="mb-6">
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('patient.visitsOf', { name: internalPatient?.name || '' })}</h2>
-                    <div className="flex justify-normal items-center gap-2 mb-4">
-                        <span className="text-xs text-gray-600"> {t('patient.dateOfBirth')}:</span>
-                        <span className="text-xs text-gray-600">{formatDate(internalPatient?.date_of_birth || '')}</span>
-                    </div>
                 </div>
                 {/* Horizontal Tabs */}
-                <div className="border-b border-gray-200 overflow-x-auto">
-                    <nav className={`-mb-px flex ${isInDrawer ? 'justify-start' : 'justify-center'} min-w-max ${isInDrawer ? 'px-0' : 'px-10'}`}>
-                        {patientVisits.map((visit) => (
-                            <button
-                                key={visit.id}
-                                onClick={() => setActiveTab(visit.id)}
-                                className={`w-24 min-w-24 max-w-24 py-2 px-1 border-b-2 font-medium transition-colors ${activeTab === visit.id
-                                        ? 'border-blue-500 text-blue-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
-                            >
-                                <div className="flex flex-col items-center w-full">
-                                    <span className="font-medium text-[clamp(0.625rem,0.5rem+0.5vw,0.875rem)] leading-tight text-center break-words">
-                                        Visit #{visit.id}
-                                    </span>
-                                    <span className="text-[clamp(0.5rem,0.4rem+0.4vw,0.75rem)] text-gray-400 mt-1 text-center break-words">
-                                        {formatDate(visit.create_time)}
-                                    </span>
+                <div className="border-b border-gray-200">
+                    <HorizontalScroll 
+                        className="pt-2" 
+                        scrollBarPosition="top"
+                        showScrollButtons={false}
+                    >
+                        <nav className={`-mb-px flex ${isInDrawer ? 'justify-start' : 'justify-center'} min-w-max ${isInDrawer ? 'px-0' : 'px-10'}`}>
+                            {patientVisits.map((visit) => (
+                                <div
+                                    key={visit.id}
+                                    onClick={() => setActiveTab(visit.id)}
+                                    className={`w-24 min-w-24 max-w-24 py-2 px-1 border-b-4 font-medium transition-colors cursor-pointer ${activeTab === visit.id
+                                            ? 'border-blue-500 text-blue-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <div className="flex flex-col items-center w-full">
+                                        <span className="font-medium text-[clamp(0.625rem,0.5rem+0.5vw,0.875rem)] leading-tight text-center break-words">
+                                            Visit #{visit.id}
+                                        </span>
+                                        <span className="text-[clamp(0.5rem,0.4rem+0.4vw,0.75rem)] text-gray-400 mt-1 text-center break-words">
+                                            {formatDate(visit.create_time)}
+                                        </span>
+                                    </div>
                                 </div>
-                            </button>
-                        ))}
-                    </nav>
+                            ))}
+                        </nav>
+                    </HorizontalScroll>
                 </div>
             </div>
 

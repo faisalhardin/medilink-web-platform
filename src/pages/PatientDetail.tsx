@@ -1,10 +1,10 @@
-import { PatientVisitsComponent } from "@components/PatientComponent";
+import PatientDetailComponent from "@components/PatientDetailComponent";
 import { useParams } from "react-router-dom";
 
 const PatientDetail = () => {
     const { uuid } = useParams<{ uuid: string }>();
     return (
-        <PatientVisitsComponent  patient_uuid={uuid as string} limit={5} offset={1}/>
+        <PatientDetailComponent  patient_uuid={uuid as string} />
     )
 }
 
