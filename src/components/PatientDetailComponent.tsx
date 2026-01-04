@@ -4,6 +4,7 @@ import { Patient, PatientDetailComponentProps } from '@models/patient';
 import { GetPatientByUUID } from '@requests/patient';
 import { PatientVisitsComponent } from './PatientComponent';
 import PatientDetailInfo from './PatientDetailInfo';
+import FolderTab from './FolderTab';
 
 const PatientDetailComponent = ({ patient_uuid }: PatientDetailComponentProps) => {
     const { t } = useTranslation();
@@ -24,36 +25,18 @@ const PatientDetailComponent = ({ patient_uuid }: PatientDetailComponentProps) =
         <div className="p-6 w-full">
             <div className="w-full">
                 {/* Tabs - Folder Style */}
-                <div className="inline-flex  w-full">
+                <div className="inline-flex w-full">
                     <nav className="flex">
-                        <div
+                        <FolderTab
+                            label={t('patient.detail', 'Patient Detail')}
+                            isActive={activeTab === 'detail'}
                             onClick={() => setActiveTab('detail')}
-                            className={`px-7 py-2.5 text-sm transition-all relative rounded-t-xl rounded-b-none cursor-pointer ${activeTab === 'detail'
-                                    ? 'bg-white text-gray-600 font-semibold border border-b-0'
-                                    : 'bg-gray-300 text-gray-500 hover:text-gray-800'
-                                }`}
-                        >
-                            {t('patient.detail', 'Patient Detail')}
-                        {
-                            activeTab != 'detail' && (
-                                <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
-                            )
-                        }
-                        </div>
-                        <div
+                        />
+                        <FolderTab
+                            label={t('patient.visits', 'Patient Visits')}
+                            isActive={activeTab === 'visits'}
                             onClick={() => setActiveTab('visits')}
-                            className={`px-7 py-2.5 text-sm transition-all relative  rounded-t-xl rounded-b-none cursor-pointer ${activeTab === 'visits'
-                                    ? 'bg-white text-gray-600 font-semibold border border-b-0'
-                                    : 'bg-gray-300 text-gray-500 hover:text-gray-800'
-                                }`}
-                        >
-                            {t('patient.visits', 'Patient Visits')}
-                            {
-                            activeTab != 'visits' && (
-                                <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
-                            )
-                        }
-                        </div>
+                        />
                     </nav>
                 </div>
 
