@@ -573,7 +573,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
             }
             fetchPatient();
         }
-    }, []);
+    }, [patient_uuid, internalPatient]);
 
     const activeVisit = patientVisits.find(visit => visit.id === activeTab);
 
