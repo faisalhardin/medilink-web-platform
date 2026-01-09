@@ -89,7 +89,17 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
         <div className="bg-white overflow-hidden p-6 border border-t-0 shadow-md rounded-b-lg rounded-tr-lg">
             {/* Header */}
             <div className="border-b pb-6 border-gray-200 bg-gray-10 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">{patient.name}</h2>
+                {isEditing ? (
+                    <input
+                        type="text"
+                        {...register('name', { required: true })}
+                        defaultValue={patient.name}
+                        className="text-xl font-semibold text-gray-900 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder={t('patient.name', 'Patient Name')}
+                    />
+                ) : (
+                    <h2 className="text-xl font-semibold text-gray-900">{patient.name}</h2>
+                )}
                 {!isEditing && (
                     <button
                         onClick={handleEdit}
