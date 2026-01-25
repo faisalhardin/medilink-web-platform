@@ -53,7 +53,7 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
             };
 
             const data = await ListPatients(Object.keys(requestParams).length ? requestParams : null);
-            
+
             if (append) {
                 setPatients(prev => [...prev, ...data]);
             } else {
@@ -175,11 +175,10 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                         )}
                     </button>
                 </div>
-                <form 
-                    onSubmit={handleSubmit(onSubmit)} 
-                    className={`space-y-3 sm:space-y-4 transition-all duration-300 ease-in-out ${
-                        isSearchFormOpen ? 'block' : 'hidden sm:block'
-                    }`}
+                <form
+                    onSubmit={handleSubmit(onSubmit)}
+                    className={`space-y-3 sm:space-y-4 transition-all duration-300 ease-in-out ${isSearchFormOpen ? 'block' : 'hidden sm:block'
+                        }`}
                 >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <div>
@@ -238,262 +237,262 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
                     <h3 className="text-base sm:text-lg font-semibold text-gray-900">{t('patient.patientResults')}</h3>
                 </div>
 
-                <div 
+                <div
                     ref={listRef}
                     className={`${(isInDrawer || !isDesktop) ? 'max-h-[calc(100vh-300px)] overflow-y-auto' : ''}`}
                 >
                     {patients.length === 0 ? (
-                    <div className="p-6 sm:p-12 text-center">
-                        <div className="text-gray-400 mb-4">
-                            <svg className="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
+                        <div className="p-6 sm:p-12 text-center">
+                            <div className="text-gray-400 mb-4">
+                                <svg className="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">{t('patient.noPatientsFound')}</h3>
+                            <p className="text-xs sm:text-sm text-gray-500">{t('common.tryAdjusting')}</p>
                         </div>
-                        <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">{t('patient.noPatientsFound')}</h3>
-                        <p className="text-xs sm:text-sm text-gray-500">{t('common.tryAdjusting')}</p>
-                    </div>
-                ) : (
-                    <div className="divide-y divide-gray-200 h-full sm:h-auto">
-                        {patients.map((patient, index) => (
-                            <div
-                                key={patient.uuid}
-                                className={`hover:bg-gray-50 transition-colors cursor-pointer ${isInDrawer ? 'p-3' : 'p-3 sm:p-6'
-                                    } ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                                onClick={() => onPatientSelect?.(patient)}
-                            >
-                                {/* Drawer Layout: Vertical Stack */}
-                                {isInDrawer && (
-                                    <div>
-                                        <div className="flex items-start space-x-3 mb-3">
+                    ) : (
+                        <div className="divide-y divide-gray-200 h-full sm:h-auto">
+                            {patients.map((patient, index) => (
+                                <div
+                                    key={patient.uuid}
+                                    className={`hover:bg-gray-50 transition-colors cursor-pointer ${isInDrawer ? 'p-3' : 'p-3 sm:p-6'
+                                        } ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                                    onClick={() => onPatientSelect?.(patient)}
+                                >
+                                    {/* Drawer Layout: Vertical Stack */}
+                                    {isInDrawer && (
+                                        <div>
+                                            <div className="flex items-start space-x-3 mb-3">
 
-                                            {/* Patient Name and Badges */}
-                                            <div className="flex-1 min-w-0 flex items-center gap-2">
-                                                <span className="text-sm sm:text-base font-semibold text-gray-900">
-                                                    {patient.name}
-                                                </span>
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${patient.sex === 'male'
-                                                            ? 'bg-blue-100 text-blue-800'
-                                                            : 'bg-pink-100 text-pink-800'
+                                                {/* Patient Name and Badges */}
+                                                <div className="flex-1 min-w-0 flex items-center gap-2">
+                                                    <span className="text-sm sm:text-base font-semibold text-gray-900">
+                                                        {patient.name}
+                                                    </span>
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${patient.sex === 'male'
+                                                        ? 'bg-blue-100 text-blue-800'
+                                                        : 'bg-pink-100 text-pink-800'
                                                         }`}>
                                                         {patient.sex === 'male' ? '♂' : '♀'}
                                                     </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Patient Details - Vertical Stack */}
-                                        <div className="space-y-2 text-xs sm:text-sm text-gray-600">
-                                            <div className="flex items-center space-x-3">
-                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
-                                                <span className="font-medium text-gray-700">NIK:</span>
-                                                <span>{patient.nik}</span>
+                                                </div>
                                             </div>
 
-                                            <div className="flex items-center space-x-3">
-                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z" />
-                                                </svg>
-                                                <span className="font-medium text-gray-700">Age:</span>
-                                                <span>
-                                                    {patient.date_of_birth ? (
-                                                        <>
-                                                            {formatDate(patient.date_of_birth)}
-                                                            <span className="text-gray-500 ml-1">
-                                                                ({calculateAge(patient.date_of_birth)} years)
-                                                            </span>
-                                                        </>
-                                                    ) : 'N/A'}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex items-center space-x-3">
-                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                <span className="font-medium text-gray-700">Born:</span>
-                                                <span>{patient.place_of_birth || 'N/A'}</span>
-                                            </div>
-
-                                            <div className="flex items-center space-x-3">
-                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                </svg>
-                                                <span className="font-medium text-gray-700">Phone:</span>
-                                                <span>{patient.phone_number || 'N/A'}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Action Button - Full Width on Mobile */}
-                                        <div className="mt-4 flex flex-row gap-2">
-                                            {onPatientSelect ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onPatientSelect(patient);
-                                                    }}
-                                                    className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                                >
-                                                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            {/* Patient Details - Vertical Stack */}
+                                            <div className="space-y-2 text-xs sm:text-sm text-gray-600">
+                                                <div className="flex items-center space-x-3">
+                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                     </svg>
-                                                    {t('patient.selectPatientButton')}
-                                                </button>
-                                            ) : (
-                                                <a
-                                                    href={`/patient-detail/${patient.uuid}`}
-                                                    className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm sm:text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                                >
-                                                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                    {t('common.view_details')}
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                                                    <span className="font-medium text-gray-700">NIK:</span>
+                                                    <span>{patient.nik}</span>
+                                                </div>
 
-                                {/* Desktop Layout: Horizontal */}
-                                {!isInDrawer && (
-                                    <div 
-                                        className="flex items-center justify-between"
-                                    >
-                                        <a 
-                                            className="flex-1 lg:pointer-events-none lg:cursor-default" 
-                                            href={`/patient-detail/${patient.uuid}`}
-                                            onClick={(e) => {
-                                                if (isDesktop) {
-                                                    e.preventDefault();
-                                                }
-                                            }}
+                                                <div className="flex items-center space-x-3">
+                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <span className="font-medium text-gray-700">Age:</span>
+                                                    <span>
+                                                        {patient.date_of_birth ? (
+                                                            <>
+                                                                {formatDate(patient.date_of_birth)}
+                                                                <span className="text-gray-500 ml-1">
+                                                                    ({calculateAge(patient.date_of_birth)} years)
+                                                                </span>
+                                                            </>
+                                                        ) : 'N/A'}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center space-x-3">
+                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    <span className="font-medium text-gray-700">Born:</span>
+                                                    <span>{patient.place_of_birth || 'N/A'}</span>
+                                                </div>
+
+                                                <div className="flex items-center space-x-3">
+                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                    </svg>
+                                                    <span className="font-medium text-gray-700">Phone:</span>
+                                                    <span>{patient.phone_number || 'N/A'}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Action Button - Full Width on Mobile */}
+                                            <div className="mt-4 flex flex-row gap-2">
+                                                {onPatientSelect ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onPatientSelect(patient);
+                                                        }}
+                                                        className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                    >
+                                                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        {t('patient.selectPatientButton')}
+                                                    </button>
+                                                ) : (
+                                                    <a
+                                                        href={`/patient-detail/${patient.uuid}`}
+                                                        className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm sm:text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                    >
+                                                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        {t('common.view_details')}
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Desktop Layout: Horizontal */}
+                                    {!isInDrawer && (
+                                        <div
+                                            className="flex items-center justify-between"
                                         >
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center space-x-4">
+                                            <a
+                                                className="flex-1 lg:pointer-events-none lg:cursor-default"
+                                                href={`/patient-detail/${patient.uuid}`}
+                                                onClick={(e) => {
+                                                    if (isDesktop) {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
+                                            >
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center space-x-4">
 
-                                                {/* Patient Info */}
-                                                <div className="flex-1 min-w-0 mx-3">
-                                                    <div className="flex items-center space-x-3 mb-1">
-                                                        <p className="sm:text-sm text-lg font-semibold text-gray-900 truncate">
-                                                            {patient.name}
-                                                        </p>
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${patient.sex === 'male'
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : 'bg-pink-100 text-pink-800'
-                                                            }`}>
-                                                            {patient.sex === 'male' ? '♂' : '♀'} <span className="hidden md:inline ml-1">{patient.sex}</span>
-                                                        </span>
-                                                        {patient.blood_type && (
-                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                                {patient.blood_type}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                        {/* Patient Info */}
+                                                        <div className="flex-1 min-w-0 mx-3">
+                                                            <div className="flex items-center space-x-3 mb-1">
+                                                                <p className="sm:text-sm text-lg font-semibold text-gray-900 truncate">
+                                                                    {patient.name}
+                                                                </p>
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${patient.sex === 'male'
+                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                    : 'bg-pink-100 text-pink-800'
+                                                                    }`}>
+                                                                    {patient.sex === 'male' ? '♂' : '♀'} <span className="hidden md:inline ml-1">{patient.sex}</span>
+                                                                </span>
+                                                                {patient.blood_type && (
+                                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                                        {patient.blood_type}
+                                                                    </span>
+                                                                )}
+                                                            </div>
 
-                                                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-1 text-xs text-gray-600">
-                                                        <div className="flex items-center space-x-2">
-                                                            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                            </svg>
-                                                            <span className="truncate">NIK: {patient.nik}</span>
-                                                        </div>
+                                                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-1 text-xs text-gray-600">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                                    </svg>
+                                                                    <span className="truncate">NIK: {patient.nik}</span>
+                                                                </div>
 
-                                                        <div className="flex items-center space-x-2">
-                                                            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z" />
-                                                            </svg>
-                                                            <span className="truncate">
-                                                                {patient.date_of_birth ? (
-                                                                    <>
-                                                                        {formatDate(patient.date_of_birth)}
-                                                                        <span className="text-gray-400 ml-1">
-                                                                            ({calculateAge(patient.date_of_birth)} years)
-                                                                        </span>
-                                                                    </>
-                                                                ) : 'N/A'}
-                                                            </span>
-                                                        </div>
+                                                                <div className="flex items-center space-x-2">
+                                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                    <span className="truncate">
+                                                                        {patient.date_of_birth ? (
+                                                                            <>
+                                                                                {formatDate(patient.date_of_birth)}
+                                                                                <span className="text-gray-400 ml-1">
+                                                                                    ({calculateAge(patient.date_of_birth)} years)
+                                                                                </span>
+                                                                            </>
+                                                                        ) : 'N/A'}
+                                                                    </span>
+                                                                </div>
 
-                                                        <div className="flex items-center space-x-2">
-                                                            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            </svg>
-                                                            <span className="truncate">
-                                                                {patient.place_of_birth || 'N/A'}
-                                                            </span>
-                                                        </div>
+                                                                <div className="flex items-center space-x-2">
+                                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    </svg>
+                                                                    <span className="truncate">
+                                                                        {patient.place_of_birth || 'N/A'}
+                                                                    </span>
+                                                                </div>
 
-                                                        <div className="flex items-center space-x-2">
-                                                            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                            </svg>
-                                                            <span className="truncate">
-                                                                {patient.phone_number || 'N/A'}
-                                                            </span>
+                                                                <div className="flex items-center space-x-2">
+                                                                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                                    </svg>
+                                                                    <span className="truncate">
+                                                                        {patient.phone_number || 'N/A'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </a>
+
+                                            {/* Action Button */}
+                                            {isDesktop && <div className="flex-shrink-0 ml-4">
+                                                {onPatientSelect ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onPatientSelect(patient);
+                                                        }}
+                                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm sm:text-base leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                    >
+                                                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        Select
+                                                    </button>
+                                                ) : (
+                                                    <a
+                                                        href={`/patient-detail/${patient.uuid}`}
+                                                        className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm sm:text-base leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                    >
+                                                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        {t('common.view_details')}
+                                                    </a>
+                                                )}
+                                            </div>}
                                         </div>
-                                        </a>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                                        {/* Action Button */}
-                                        { isDesktop && <div className="flex-shrink-0 ml-4">
-                                            {onPatientSelect ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onPatientSelect(patient);
-                                                    }}
-                                                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm sm:text-base leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                                >
-                                                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                    Select
-                                                </button>
-                                            ) : (
-                                                <a
-                                                    href={`/patient-detail/${patient.uuid}`}
-                                                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm sm:text-base leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                                >
-                                                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                    {t('common.view_details')}
-                                                </a>
-                                            )}
-                                        </div>}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
+                    {/* Infinite Scroll Loading Indicator */}
+                    {(isInDrawer || !isDesktop) && isLoadingMore && (
+                        <div className="flex justify-center items-center py-4">
+                            <svg className="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="ml-2 text-xs sm:text-sm text-gray-600">Loading more...</span>
+                        </div>
+                    )}
 
-                {/* Infinite Scroll Loading Indicator */}
-                {(isInDrawer || !isDesktop) && isLoadingMore && (
-                    <div className="flex justify-center items-center py-4">
-                        <svg className="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span className="ml-2 text-xs sm:text-sm text-gray-600">Loading more...</span>
-                    </div>
-                )}
-
-                {/* End of List Indicator */}
-                {(isInDrawer || !isDesktop) && !hasMore && patients.length > 0 && (
-                    <div className="text-center py-4 text-xs sm:text-sm text-gray-500">
-                        No more patients to load
-                    </div>
-                )}
+                    {/* End of List Indicator */}
+                    {(isInDrawer || !isDesktop) && !hasMore && patients.length > 0 && (
+                        <div className="text-center py-4 text-xs sm:text-sm text-gray-500">
+                            No more patients to load
+                        </div>
+                    )}
                 </div>
 
                 {/* Pagination Controls for Desktop */}
@@ -677,8 +676,8 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                 </div>
                 {/* Horizontal Tabs */}
                 <div className="border-b border-gray-200">
-                    <HorizontalScroll 
-                        className="pt-2" 
+                    <HorizontalScroll
+                        className="pt-2"
                         scrollBarPosition="top"
                         showScrollButtons={false}
                     >
@@ -688,8 +687,8 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                     key={visit.id}
                                     onClick={() => setActiveTab(visit.id)}
                                     className={`w-24 min-w-24 max-w-24 py-2 px-1 border-b-4 font-medium transition-colors cursor-pointer ${activeTab === visit.id
-                                            ? 'border-blue-500 text-blue-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <div className="flex flex-col items-center w-full">
@@ -744,8 +743,8 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                         ) : (
                             <div
                                 className={`w-full ${(activeVisit.patient_journeypoints == undefined || activeVisit.patient_journeypoints?.length === 1)
-                                        ? 'max-w-2xl mx-auto'
-                                        : isInDrawer ? 'columns-1 gap-6' : 'columns-1 md:columns-2 gap-6'
+                                    ? 'max-w-2xl mx-auto'
+                                    : isInDrawer ? 'columns-1 gap-6' : 'columns-1 md:columns-2 gap-6'
                                     }`}
                             >
                                 {/* Products Card - Show first if products exist */}
@@ -758,8 +757,8 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                     <div className="h-8 w-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2.5 5h13a1 1 0 001-1V6H6" />
-                                                            <circle cx="9" cy="20" r="1" stroke="currentColor" strokeWidth={2} fill="none"/>
-                                                            <circle cx="17" cy="20" r="1" stroke="currentColor" strokeWidth={2} fill="none"/>
+                                                            <circle cx="9" cy="20" r="1" stroke="currentColor" strokeWidth={2} fill="none" />
+                                                            <circle cx="17" cy="20" r="1" stroke="currentColor" strokeWidth={2} fill="none" />
                                                         </svg>
                                                     </div>
                                                     <h4 className="text-base font-semibold text-gray-900">
@@ -818,60 +817,60 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                     </div>
                                 ) : (
                                     activeVisit.patient_journeypoints?.map((journeyPoint, index) => (
-                                    <div
-                                        key={index}
-                                        className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6 ${activeVisit.patient_journeypoints?.length === 1 ? 'w-full' : ''
-                                            }`}
-                                    >
-                                        {/* Card Header */}
-                                        <div className="p-4 border-b border-gray-100">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                        {index + 1}
+                                        <div
+                                            key={index}
+                                            className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6 ${activeVisit.patient_journeypoints?.length === 1 ? 'w-full' : ''
+                                                }`}
+                                        >
+                                            {/* Card Header */}
+                                            <div className="p-4 border-b border-gray-100">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                            {index + 1}
+                                                        </div>
+                                                        <h4 className="text-base font-semibold text-gray-900">
+                                                            {journeyPoint.name_mst_journey_point}
+                                                        </h4>
                                                     </div>
-                                                    <h4 className="text-base font-semibold text-gray-900">
-                                                        {journeyPoint.name_mst_journey_point}
-                                                    </h4>
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(journeyPoint)}`}>
+                                                        {getStatusText(journeyPoint)}
+                                                    </span>
                                                 </div>
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(journeyPoint)}`}>
-                                                    {getStatusText(journeyPoint)}
-                                                </span>
-                                            </div>
 
-                                            {/* Meta Information */}
-                                            <div className="space-y-2 text-xs text-gray-500">
-                                                <div className="flex items-center space-x-2">
-                                                    <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <span>Started {formatDateTime(journeyPoint?.create_time || '')}</span>
+                                                {/* Meta Information */}
+                                                <div className="space-y-2 text-xs text-gray-500">
+                                                    <div className="flex items-center space-x-2">
+                                                        <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <span>Started {formatDateTime(journeyPoint?.create_time || '')}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Comment Box Content */}
-                                        <div className="p-4">
-                                            <div className="bg-gray-50 rounded-lg border border-gray-200 px-2 min-h-[100px] overflow-y-auto">
-                                                <EditorComponent
-                                                    id={`editor-${journeyPoint.id}`}
-                                                    data={journeyPoint.notes}
-                                                    onChange={(_) => {
-                                                    }}
-                                                    placeHolder="Jot here..."
-                                                    readOnly={true}
-                                                />
+                                            {/* Comment Box Content */}
+                                            <div className="p-4">
+                                                <div className="bg-gray-50 rounded-lg border border-gray-200 px-2 min-h-[100px] overflow-y-auto">
+                                                    <EditorComponent
+                                                        id={`editor-${journeyPoint.id}`}
+                                                        data={journeyPoint.notes}
+                                                        onChange={(_) => {
+                                                        }}
+                                                        placeHolder="Jot here..."
+                                                        readOnly={true}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Card Footer */}
+                                            <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
+                                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                                    <span>Last updated {formatRelativeTime(journeyPoint?.create_time || '')}</span>
+                                                </div>
                                             </div>
                                         </div>
-
-                                        {/* Card Footer */}
-                                        <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
-                                            <div className="flex items-center justify-between text-xs text-gray-500">
-                                                <span>Last updated {formatRelativeTime(journeyPoint?.create_time || '')}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                    ))
                                 )}
                             </div>
                         )}
@@ -918,6 +917,7 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                 emergency_contact_phone: resp.emergency_contact_phone,
                 emergency_contact_relationship: resp.emergency_contact_relationship,
                 blood_type: resp.blood_type,
+                occupation: resp.occupation,
             });
         } catch (err) {
             console.log(err);
@@ -1128,6 +1128,24 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                                     className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
                                     rows={3}
                                     placeholder={t('patient.enterCompleteAddress')}
+                                />
+                            </div>
+
+                            {/* Occupation Field */}
+                            <div className="w-full">
+                                <label className={`block text-sm font-semibold text-gray-700 ${isInDrawer ? 'mb-2' : 'mb-3'}`}>
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        {t('patient.occupation', 'Occupation')}
+                                    </span>
+                                </label>
+                                <input
+                                    type="text"
+                                    {...register('occupation')}
+                                    className={`w-full ${isInDrawer ? 'px-3 py-2' : 'px-4 py-3'} border border-gray-300 ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white`}
+                                    placeholder={t('patient.enterOccupation', 'Enter occupation')}
                                 />
                             </div>
                         </div>

@@ -18,6 +18,7 @@ export interface Patient {
   emergency_contact_phone: string;
   emergency_contact_relationship: string;
   blood_type: string;
+  occupation: string;
 }
 
 export interface RegisterPatient {
@@ -29,6 +30,7 @@ export interface RegisterPatient {
   religion: string;
   address: string;
   phone_number: string;
+  occupation: string;
 }
 
 export interface GetPatientParam extends CommonQueryParams {
@@ -172,5 +174,5 @@ export interface UpsertPatientVisitDetailParam {
 
 export interface PatientPageProps {
   journey_board_id?: number;
-  
+
 }

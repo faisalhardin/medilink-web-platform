@@ -179,6 +179,24 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                                         )
                                     )}
                                 </div>
+                                
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">{t('patient.occupation', 'Occupation')}</label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            {...register('occupation')}
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder={t('patient.enterOccupation', 'Enter occupation')}
+                                        />
+                                    ) : (
+                                        patient.occupation ? (
+                                            <p className="text-sm text-gray-900">{patient.occupation}</p>
+                                        ) : (
+                                            <p className="text-sm text-gray-400 italic">-</p>
+                                        )
+                                    )}
+                                </div>
                             </div>
                         </div>
 

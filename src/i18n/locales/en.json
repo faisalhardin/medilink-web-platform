@@ -10,6 +10,7 @@
     "submit": "Submit",
     "cancel": "Cancel",
     "save": "Save",
+    "saving": "Saving...",
     "edit": "Edit",
     "delete": "Delete",
     "add": "Add",
@@ -107,7 +108,11 @@
     "yearsOld": "years old",
     "selectPatientButton": "Select Patient",
     "fillPatientInformation": "Please fill in the patient information below",
-    "saveNotes": "Save Notes"
+    "saveNotes": "Save Notes",
+    "occupation": "Occupation",
+    "enterOccupation": "Enter occupation",
+    "name": "Name",
+    "updateError": "Failed to update patient information. Please try again."
   },
   "inventory": {
     "inventoryManagement": "Inventory Management",
