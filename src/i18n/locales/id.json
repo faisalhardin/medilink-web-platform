@@ -10,6 +10,7 @@
     "submit": "Kirim",
     "cancel": "Batal",
     "save": "Simpan",
+    "saving": "Menyimpan...",
     "edit": "Edit",
     "delete": "Hapus",
     "add": "Tambah",
@@ -106,7 +107,11 @@
     "selectPatientButton": "Pilih Pasien",
     "patientDetail": "Detail Pasien {{name}}",
     "fillPatientInformation": "Silakan isi informasi pasien di bawah ini",
-    "saveNotes": "Simpan Catatan"
+    "saveNotes": "Simpan Catatan",
+    "occupation": "Pekerjaan",
+    "enterOccupation": "Masukkan pekerjaan",
+    "name": "Nama",
+    "updateError": "Gagal memperbarui informasi pasien. Silakan coba lagi."
   },
   "inventory": {
     "inventoryManagement": "Manajemen Inventori",
