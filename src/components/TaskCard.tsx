@@ -112,27 +112,35 @@ function TaskCard({ task, deleteTask }: Props) {
           <TaskCardDropDown taskId={task.id} deleteTask={deleteTask} />
         </div>
       </div>
-      
+
       {/* Patient Name */}
       <div className="flex-1 w-full relative">
-        <p className="text-xs sm:text-sm font-medium text-gray-900 leading-tight">
-          {getTitle(task.sex)} {task.patient_name}
+        <p className="text-xs sm:text-sm font-medium text-gray-900 leading-tight flex items-center gap-1">
+          {getGenderSymbol(task.sex)}
+          {task.patient_name}
         </p>
         <p className="text-xs text-gray-400 mt-1">
           {task.create_time ? formatDateTimeHHmm(task.create_time) : ''}
         </p>
       </div>
-      
+
     </div>
   );
 }
 
 export default TaskCard;
 
-const getTitle = (sex?: string) => {
-  if (!sex) return "";
+const getGenderSymbol = (sex?: string) => {
+  if (!sex) return null;
   const normalizedSex = sex.toLowerCase();
-  return normalizedSex === "male" ? "Bapak" : normalizedSex === "female" ? "Ibu" : "";
+
+  if (normalizedSex === "male") {
+    return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">♂</span>;
+  } else if (normalizedSex === "female") {
+    return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800">♀</span>;
+  }
+
+  return null;
 };
 
 
@@ -145,7 +153,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
-        <MenuButton 
+        <MenuButton
           className="
           inline-flex 
           w-full 
@@ -175,13 +183,13 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
         className="absolute right-0 z-30 mt-2 w-48 origin-top-right rounded-lg bg-white ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
       >
         <div className="py-1">
-                      <MenuItem>
-              <div className="block px-4 py-2 text-xs sm:text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden hover:bg-blue-100 hover:text-blue-700">
-                <ModalLink to={`/patient-visit/${taskId}`} className="block w-full">
-                  {t('patient.editVisit')}
-                </ModalLink>
-              </div>
-            </MenuItem>
+          <MenuItem>
+            <div className="block px-4 py-2 text-xs sm:text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden hover:bg-blue-100 hover:text-blue-700">
+              <ModalLink to={`/patient-visit/${taskId}`} className="block w-full">
+                {t('patient.editVisit')}
+              </ModalLink>
+            </div>
+          </MenuItem>
           <div className="border-t border-gray-100 my-1"></div>
           <MenuItem>
             <button
@@ -194,7 +202,7 @@ const TaskCardDropDown = ({ taskId, deleteTask }: TaskCardDropDownProps) => {
               className="block w-full px-4 py-2 text-left text-xs sm:text-sm text-red-600 data-focus:bg-red-50 data-focus:text-red-700 data-focus:outline-hidden hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
             >
               <div className="flex items-center gap-2">
-                <TrashIcon/>
+                <TrashIcon />
                 {t('patient.archiveVisit')}
               </div>
             </button>
