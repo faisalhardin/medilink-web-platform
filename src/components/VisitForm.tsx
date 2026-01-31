@@ -123,7 +123,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                         <div className="relative group">
                           <button
                             type="button"
-                            className="flex items-center justify-center h-full w-full bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                            className="flex items-center justify-center w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg flex-shrink-0"
                             onClick={viewPatientRecordDrawer.openDrawer}
                           >
                             <EyeIcon />

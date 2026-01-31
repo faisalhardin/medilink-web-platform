@@ -11,7 +11,6 @@ import { GetJourneyPoints } from '@requests/journey';
 import { JourneyPoint } from '@models/journey';
 import { Id } from 'types';
 import { t } from 'i18next';
-import EyeIcon from 'assets/icons/EyeIcon';
 import { useDrawer } from 'hooks/useDrawer';
 import Drawer from "./Drawer";
 import { PatientVisitsComponent } from './PatientComponent';
