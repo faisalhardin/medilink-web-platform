@@ -4,13 +4,16 @@ import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@r
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
-import { CheckoutProduct, TrxVisitProduct,  } from '@models/product';
+import { CheckoutProduct, TrxVisitProduct, } from '@models/product';
 import { ListOrderedProduct, OrderProduct } from '@requests/products';
-import { convertProductsToCheckoutProducts} from '@utils/common'
+import { convertProductsToCheckoutProducts } from '@utils/common'
 import { GetJourneyPoints } from '@requests/journey';
 import { JourneyPoint } from '@models/journey';
 import { Id } from 'types';
 import { t } from 'i18next';
+import { useDrawer } from 'hooks/useDrawer';
+import Drawer from "./Drawer";
+import { PatientVisitsComponent } from './PatientComponent';
 
 
 export interface journeyTab {
@@ -28,9 +31,10 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [visitDetails, setVisitDetails] = useState<VisitDetail[]>([]);
     const [patientVisit, setPatientVisit] = useState<PatientVisit>({} as PatientVisit);
     const [patient, setPatient] = useState<Patient>({} as Patient);
-    const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);    
+    const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
-    
+    const viewPatientRecordDrawer = useDrawer();
+
     const updateSelectedProducts = (products: CheckoutProduct[]) => {
         setSelectedProducts(prev => {
             // Create maps for easier comparison
@@ -38,7 +42,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
             const newMap = new Map(products.map(p => [p.id, p]));
 
             // Check if there are any differences
-            const hasDifferences = 
+            const hasDifferences =
                 prev.length !== products.length || // Length changed
                 products.some(newProduct => {
                     const prevProduct = prevMap.get(newProduct.id);
@@ -57,7 +61,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         setActiveTab(tab);
     }
 
-    const GenerateVisitTab = async (_patientVisit: GetPatientVisitDetailedResponse, journeyPoints: JourneyPoint[] ) => {
+    const GenerateVisitTab = async (_patientVisit: GetPatientVisitDetailedResponse, journeyPoints: JourneyPoint[]) => {
         var setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
         const journeyPointMap = new Map<Id, JourneyPoint>();
         for (const jp of journeyPoints) {
@@ -97,7 +101,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
             if (trxProducts) {
                 setTrxProduct(trxProducts);
             }
-        } catch  (error) {
+        } catch (error) {
             console.error("Error fetching data:", error);
         }
     }
@@ -114,7 +118,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
 
     useEffect(() => {
         fetchProducts();
-    },[])
+    }, [])
 
     useEffect(() => {
         const fetchData = async () => {
@@ -129,7 +133,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     setPatient(patientVisit.patient);
                     setSelectedProducts(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
                 }
-               
+
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setVisitDetails([]);
@@ -192,7 +196,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
             // First add to the backend and get the response
             // (which might include an ID or other server-generated fields)
             const cartProduct = visit.product_cart?.filter(p => p.quantity > 0) || [];
-            
+
             await OrderProduct({
                 visit_id: visit.id,
                 products: cartProduct
@@ -209,12 +213,30 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         <div className='flex-1 lg:p-6 h-screen'>
             <div className='bg-white p-6'>
                 <div className='flex items-center mb-6'>
-                    <div>
-                        <h2 className='text-xl sm:text-2xl lg:text-3xl font-semibold'>
-                            {patient.name}
-                        </h2>
+                    <div className='flex flex-col w-full'>
+                        <div
+                            className="flex items-center justify-between mb-2  w-full"
+
+                        >
+                            <h2 className='text-xl sm:text-2xl lg:text-3xl font-semibold  relative'>
+                                {patient.name}
+                            </h2>
+                            <span className='group text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1 cursor-pointer'
+                                onClick={viewPatientRecordDrawer.openDrawer}>
+                                View Visits
+                                <svg
+                                    className="w-4 h-4 transition-all duration-300 group-hover:translate-x-2 group-hover:scale-110"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </span>
+                        </div>
+
                         <p>
-                        {t('common.' + String(patient.sex)).toLowerCase()}
+                            {t('common.' + String(patient.sex)).toLowerCase()}
                         </p>
                     </div>
                 </div>
@@ -264,7 +286,22 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     </div>
                 </div>
             </div>
+            <Drawer
+                isOpen={viewPatientRecordDrawer.isOpen}
+                onClose={viewPatientRecordDrawer.closeDrawer}
+                title={t('patient.viewPatientRecord')}
+                maxWidth="lg"
+                position="right"
+            >
+                <PatientVisitsComponent patient_uuid={patient?.uuid || ''} limit={5}
+                    offset={0}
+                    patient={patient || undefined}
+                    isInDrawer={true}
+                />
+            </Drawer>
         </div>
+
+
     )
 
 
