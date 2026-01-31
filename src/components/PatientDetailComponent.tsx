@@ -42,8 +42,8 @@ const PatientDetailComponent = ({ patient_uuid }: PatientDetailComponentProps) =
 
                 {/* Tab Content */}
                 {activeTab === 'detail' && (
-                    <PatientDetailInfo 
-                        patient={patient} 
+                    <PatientDetailInfo
+                        patient={patient}
                         onUpdate={(updatedPatient) => {
                             setPatient(updatedPatient);
                         }}

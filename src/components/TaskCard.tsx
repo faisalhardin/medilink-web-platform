@@ -9,6 +9,7 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { ModalLink } from "./ModalLink";
 import { formatDateTimeHHmm } from "@utils/common";
 import { t } from "i18next";
+import GenderBadge from "@components/GenderBadge";
 
 interface Props {
   task: PatientVisitTask;
@@ -116,7 +117,7 @@ function TaskCard({ task, deleteTask }: Props) {
       {/* Patient Name */}
       <div className="flex-1 w-full relative">
         <p className="text-xs sm:text-sm font-medium text-gray-900 leading-tight flex items-center gap-1">
-          {getGenderSymbol(task.sex)}
+          <GenderBadge sex={task.sex} />
           {task.patient_name}
         </p>
         <p className="text-xs text-gray-400 mt-1">
@@ -129,19 +130,6 @@ function TaskCard({ task, deleteTask }: Props) {
 }
 
 export default TaskCard;
-
-const getGenderSymbol = (sex?: string) => {
-  if (!sex) return null;
-  const normalizedSex = sex.toLowerCase();
-
-  if (normalizedSex === "male") {
-    return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">♂</span>;
-  } else if (normalizedSex === "female") {
-    return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800">♀</span>;
-  }
-
-  return null;
-};
 
 
 interface TaskCardDropDownProps {

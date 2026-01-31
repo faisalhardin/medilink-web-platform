@@ -9,6 +9,7 @@ import { useDrawer } from "hooks/useDrawer";
 import { PatientListComponent, PatientRegistrationComponent, PatientVisitsComponent } from "./PatientComponent";
 import { EditorComponent } from "./EditorComponent";
 import { formatDate } from "@utils/common";
+import EyeIcon from "assets/icons/EyeIcon";
 
 interface PatientVisitRegistrationProps {
   journeyPointID: number;
@@ -25,7 +26,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<PatientModel | null>(null);
   const [activeSection, _] = useState<string>('patient');
-  
+
   const { closeModal } = useModal();
   const patientDrawer = useDrawer();
   const registerPatientDrawer = useDrawer();
@@ -48,7 +49,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
         journey_point_id: data.journey_point_id,
         notes: data.notes,
       };
-      
+
       await InsertPatientVisit(visitPayload);
       reset();
       if (closeModal) closeModal();
@@ -67,13 +68,13 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
         <div className="bg-gradient-to-r px-8 py-6">
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold ">{t('patient.patientVisitRegistration')}</h2>
           <p className=" mt-1">{t('patient.completeAdmission')}</p>
-        </div>        
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* Patient Selection Section */}
           {activeSection === 'patient' && (
             <div className="space-y-6">
-              <div className="grid lg:grid-cols-[2fr_3fr] gap-6">                
+              <div className="grid lg:grid-cols-[2fr_3fr] gap-6">
                 {/* Left Column - Patient Selection */}
                 <div className="flex flex-col gap-2">
                   <div className="p-6">
@@ -118,28 +119,25 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                         </div>
 
                       }
-                      {selectedPatient && 
-                      <div className="relative group">
-                        <button
-                          type="button"
-                          className="flex items-center justify-center h-full w-full bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
-                          onClick={viewPatientRecordDrawer.openDrawer}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                          </svg>
-                        </button>
-                        {/* Custom Tooltip */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                          {t('patient.viewPatientMedicalRecords')}
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                      {selectedPatient &&
+                        <div className="relative group">
+                          <button
+                            type="button"
+                            className="flex items-center justify-center h-full w-full bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                            onClick={viewPatientRecordDrawer.openDrawer}
+                          >
+                            <EyeIcon />
+                          </button>
+                          {/* Custom Tooltip */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                            {t('patient.viewPatientMedicalRecords')}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
                         </div>
-                      </div>
                       }
 
-                      
-                      
+
+
                     </div>
                     {errors.patient_uuid && (
                       <p className="mt-1 text-xs sm:text-sm text-red-600">{t('patient.patientSelectionRequired')}</p>
@@ -163,14 +161,14 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                     </div>
                   )}
                 </div>
-                
+
                 {/* Right Column - Editor Component */}
                 <div className="group border border-gray-200 rounded-lg p-4 focus-within:border-blue-400 transition-colors">
                   <div className="mb-2">
-                    <svg 
-                      className="w-5 h-5 text-gray-500 animate-pulse group-hover:animate-none group-hover:scale-110 group-hover:text-blue-500 transition-all duration-200" 
-                      fill="none" 
-                      stroke="currentColor" 
+                    <svg
+                      className="w-5 h-5 text-gray-500 animate-pulse group-hover:animate-none group-hover:scale-110 group-hover:text-blue-500 transition-all duration-200"
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -188,7 +186,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
                 </div>
               </div>
             </div>
-          )}        
+          )}
 
           {/* Navigation and Submit Buttons */}
           <div className="flex justify-between items-center pt-8 px-3">
@@ -223,7 +221,7 @@ export function VisitFormComponent({ journeyPointID }: PatientVisitRegistrationP
         maxWidth="lg"
         position="right"
       >
-        <PatientListComponent 
+        <PatientListComponent
           journey_board_id={journeyPointID}
           isInDrawer={true}
           onPatientSelect={(patient: PatientModel) => {

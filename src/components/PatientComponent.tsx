@@ -532,29 +532,63 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
     const [internalPatient, setPatient] = useState<Patient | null>(patient || null);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
+    // Pagination states
+    const [currentOffset, setCurrentOffset] = useState(offset || 0);
+    const [hasMoreVisits, setHasMoreVisits] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+    // Initial fetch - replaces existing visits
+    const fetchVisits = async () => {
+        try {
+            setIsLoading(true);
+            const response = await ListVisitsDetailed({
+                patient_uuid: patient_uuid,
+                limit: limit,
+                offset: offset,
+            });
+            setPatientVisits(response);
+            setCurrentOffset(offset || 0);
+
+            // Check if there are more visits
+            setHasMoreVisits(response.length === (limit || 0));
+
+            if (response.length > 0) {
+                setActiveTab(response[0].id);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Load more - appends to existing visits
+    const loadMoreVisits = async () => {
+        if (!limit) return;
+
+        try {
+            setIsLoadingMore(true);
+            const newOffset = currentOffset + limit;
+            const response = await ListVisitsDetailed({
+                patient_uuid: patient_uuid,
+                limit: limit,
+                offset: newOffset,
+            });
+
+            // Append new visits to existing ones
+            setPatientVisits(prev => [...prev, ...response]);
+            setCurrentOffset(newOffset);
+
+            // Hide button if we got fewer results than the limit
+            setHasMoreVisits(response.length === limit);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchVisits = async () => {
-            try {
-                setIsLoading(true);
-                const response = await ListVisitsDetailed({
-                    patient_uuid: patient_uuid,
-                    limit: limit,
-                    offset: offset,
-                });
-                // Handle the new API response structure
-                setPatientVisits(response);
-                // Set first visit as active by default
-                if (response.length > 0) {
-                    setActiveTab(response[0].id);
-                }
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         if (patient_uuid) {
             fetchVisits();
         }
@@ -672,7 +706,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
         <div className="p-6 w-full bg-white border border-t-0 shadow-md rounded-b-lg rounded-tr-lg">
             <div className="mb-6">
                 <div>
-                    <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('patient.visitsOf', { name: internalPatient?.name || '' })}</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('patient.visitsOf', { name: patient?.name || internalPatient?.name || '' })}</h2>
                 </div>
                 {/* Horizontal Tabs */}
                 <div className="border-b border-gray-200">
@@ -701,6 +735,32 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                     </div>
                                 </div>
                             ))}
+
+                            {/* Load More Button */}
+                            {hasMoreVisits && (
+                                <button
+                                    onClick={loadMoreVisits}
+                                    disabled={isLoadingMore}
+                                    className="w-24 min-w-24 max-w-24 py-2 px-1 flex flex-col items-center justify-center border-b-4 border-transparent text-blue-600 hover:text-blue-800 hover:border-blue-300 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isLoadingMore ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span className="text-xs mt-1">Loading...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-5 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                            <span className="text-xs mt-1">Load More</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </nav>
                     </HorizontalScroll>
                 </div>
