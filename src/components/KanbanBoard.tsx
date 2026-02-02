@@ -46,7 +46,7 @@ function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
       column_update_time: visit.column_update_time,
     };
 
-    if (columnId === undefined || columnId === null ) {
+    if (columnId === undefined || columnId === null) {
       patientVisitTask.columnId = '';
     }
 
@@ -60,20 +60,22 @@ function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
 
 function KanbanBoard() {
   const { boardID } = useParams<{ boardID: string }>();
-  const [ queryParams, setQueryParams ] = useState<GetPatientVisitParam>({
+  const [queryParams, setQueryParams] = useState<GetPatientVisitParam>({
     journey_board_id: boardID,
     from_time: formatDateTimeWithOffset(FilterPresetToday.startDate()),
     to_time: formatDateTimeWithOffset(FilterPresetToday.endDate()),
+    limit: 1000,
+    offset: 0,
   } as GetPatientVisitParam);
-  
-  const {openModal} = useModal();
+
+  const { openModal } = useModal();
 
   const [columns, setColumns] = useState<JourneyPoint[]>([]);
   const [tasks, setTasks] = useState<PatientVisitTask[]>([]);
   const [isShowAddColumnPanel, setShowAddColumnPanel] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
-  const [createColumnError, setCreateColumnError] = useState<string | null>(null);  
+  const [createColumnError, setCreateColumnError] = useState<string | null>(null);
 
   const fetchVisitsData = async () => {
     try {
@@ -114,17 +116,17 @@ function KanbanBoard() {
     fetchVisitsData();
   }, [queryParams])
 
-   const onFilterChange = (filter: Record<string, any>) => {
+  const onFilterChange = (filter: Record<string, any>) => {
     const updatedParams: GetPatientVisitParam = {
       ...queryParams,
       journey_board_id: queryParams.journey_board_id,
-      
+
       from_time: formatDateTimeForAPI(filter.timeRange?.startDate || queryParams.from_time || ''),
       to_time: formatDateTimeForAPI(filter.timeRange?.endDate || queryParams.to_time || ''),
     };
-      setQueryParams(updatedParams);
+    setQueryParams(updatedParams);
 
-    };
+  };
 
   const columnsId = useMemo(() => columns.map((col) => col.id), [columns]); // TODO: changes cause it to have unresponsive draging effect
 
@@ -144,11 +146,11 @@ function KanbanBoard() {
 
   return (
     <div className="m-auto gap-2 flex flex-col min-h-screen w-full items-center overflow-x-auto overflow-y-hidden p-6">
-    <div className="w-full">
-      <FilterBar onFiltersChange={onFilterChange} defaultFilters={FilterPresetToday}/>
-    </div>
-    <div
-      className="
+      <div className="w-full">
+        <FilterBar onFiltersChange={onFilterChange} defaultFilters={FilterPresetToday} />
+      </div>
+      <div
+        className="
         flex
         w-full
         items-center
@@ -156,38 +158,38 @@ function KanbanBoard() {
         overflow-y-hidden
         
     "
-    >
-      <DndContext
-        sensors={sensors}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        onDragOver={onDragOver}
       >
-        <div className="m-auto flex gap-4">
-          <div className="flex gap-4">
-            <SortableContext items={columnsId}>
-              {columns
-                .sort((a, b) => (
-                  a.position - b.position
-                ))
-                .map((col) => {
-                  return (
-                    <ColumnContainer
-                      key={col.id}
-                      column={col}
-                      deleteColumn={deleteColumn}
-                      updateColumn={updateColumn}
-                      createTask={createTask}
-                      deleteTask={deleteTask}
-                      updateTask={updateTask}
-                      tasks={tasks.filter((task) => task.columnId === col.id)}
-                    />
-                  )
-                })}
-            </SortableContext>
-          </div>
-          {isShowAddColumnPanel ? (
-            <div className="
+        <DndContext
+          sensors={sensors}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDragOver={onDragOver}
+        >
+          <div className="m-auto flex gap-4">
+            <div className="flex gap-4">
+              <SortableContext items={columnsId}>
+                {columns
+                  .sort((a, b) => (
+                    a.position - b.position
+                  ))
+                  .map((col) => {
+                    return (
+                      <ColumnContainer
+                        key={col.id}
+                        column={col}
+                        deleteColumn={deleteColumn}
+                        updateColumn={updateColumn}
+                        createTask={createTask}
+                        deleteTask={deleteTask}
+                        updateTask={updateTask}
+                        tasks={tasks.filter((task) => task.columnId === col.id)}
+                      />
+                    )
+                  })}
+              </SortableContext>
+            </div>
+            {isShowAddColumnPanel ? (
+              <div className="
               h-[120px]
               w-[300px]
               min-w-[300px]
@@ -201,12 +203,12 @@ function KanbanBoard() {
               flex-col
               gap-3
             ">
-              <input
-                type="text"
-                value={newColumnName}
-                onChange={(e) => setNewColumnName(e.target.value)}
-                placeholder="Enter column name..."
-                className="
+                <input
+                  type="text"
+                  value={newColumnName}
+                  onChange={(e) => setNewColumnName(e.target.value)}
+                  placeholder="Enter column name..."
+                  className="
                   w-full
                   px-3
                   py-2
@@ -218,27 +220,27 @@ function KanbanBoard() {
                   focus:ring-blue-500
                   focus:border-transparent
                 "
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    createNewColumn();
-                  } else if (e.key === 'Escape') {
-                    cancelAddColumn();
-                  }
-                }}
-              />
-              
-              {createColumnError && (
-                <div className="text-red-600 text-xs sm:text-sm">
-                  {createColumnError}
-                </div>
-              )}
-              
-              <div className="flex gap-2">
-                <button
-                  onClick={createNewColumn}
-                  disabled={isCreatingColumn || !newColumnName.trim()}
-                  className="
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      createNewColumn();
+                    } else if (e.key === 'Escape') {
+                      cancelAddColumn();
+                    }
+                  }}
+                />
+
+                {createColumnError && (
+                  <div className="text-red-600 text-xs sm:text-sm">
+                    {createColumnError}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={createNewColumn}
+                    disabled={isCreatingColumn || !newColumnName.trim()}
+                    className="
                     flex-1
                     bg-blue-500
                     text-white
@@ -255,24 +257,24 @@ function KanbanBoard() {
                     justify-center
                     gap-2
                   "
-                >
-                  {isCreatingColumn ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <PlusIcon />
-                      Add Column
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={cancelAddColumn}
-                  disabled={isCreatingColumn}
-                  className="
+                  >
+                    {isCreatingColumn ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <PlusIcon />
+                        Add Column
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={cancelAddColumn}
+                    disabled={isCreatingColumn}
+                    className="
                     px-4
                     py-2
                     border
@@ -285,17 +287,17 @@ function KanbanBoard() {
                     transition-colors
                     duration-200
                   "
-                >
-                  Cancel
-                </button>
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => {
-                ShowAddColumnPanel();
-              }}
-              className="
+            ) : (
+              <button
+                onClick={() => {
+                  ShowAddColumnPanel();
+                }}
+                className="
         h-[60px]
         w-[300px]
         min-w-[300px]
@@ -309,45 +311,45 @@ function KanbanBoard() {
         flex
         gap-2
         "
-            >
-              <PlusIcon />
-              Add Column
-            </button>
-          )}
-        </div>
+              >
+                <PlusIcon />
+                Add Column
+              </button>
+            )}
+          </div>
 
-        {createPortal(
-          <DragOverlay>
-            {activeColumn && (
-              <ColumnContainer
-                column={activeColumn}
-                deleteColumn={deleteColumn}
-                updateColumn={updateColumn}
-                createTask={createTask}
-                deleteTask={deleteTask}
-                updateTask={updateTask}
-                tasks={tasks.filter(
-                  (task) => task.columnId === activeColumn.id
-                )}
-              />
-            )}
-            {activeTask && (
-              <TaskCard
-                task={activeTask}
-                deleteTask={deleteTask}
-                updateTask={updateTask}
-              />
-            )}
-          </DragOverlay>,
-          document.body
-        )}
-      </DndContext>
-    </div>
+          {createPortal(
+            <DragOverlay>
+              {activeColumn && (
+                <ColumnContainer
+                  column={activeColumn}
+                  deleteColumn={deleteColumn}
+                  updateColumn={updateColumn}
+                  createTask={createTask}
+                  deleteTask={deleteTask}
+                  updateTask={updateTask}
+                  tasks={tasks.filter(
+                    (task) => task.columnId === activeColumn.id
+                  )}
+                />
+              )}
+              {activeTask && (
+                <TaskCard
+                  task={activeTask}
+                  deleteTask={deleteTask}
+                  updateTask={updateTask}
+                />
+              )}
+            </DragOverlay>,
+            document.body
+          )}
+        </DndContext>
+      </div>
     </div>
   );
 
   function createTask(columnId: Id) {
-    
+
     openModal(
       <Suspense fallback={<div>Loading...</div>}>
         {React.createElement(VisitFormComponent, {
@@ -399,9 +401,9 @@ function KanbanBoard() {
 
     try {
       const boardIDNumber = Number(boardID);
-        if (isNaN(boardIDNumber)) {
-          throw new Error('Invalid board ID');
-        }
+      if (isNaN(boardIDNumber)) {
+        throw new Error('Invalid board ID');
+      }
 
       const columnToAdd: CreateJourneyPointRequest = {
         name: newColumnName.trim(),
