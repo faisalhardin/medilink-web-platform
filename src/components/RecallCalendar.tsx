@@ -69,6 +69,9 @@ const sortRecallsByTime = (recalls: Recall[]) =>
 
 const VALID_VIEWS: RecallCalendarView[] = ["month", "week", "threeDays", "day"];
 
+/** Minimum column width (px) for day / 3-day / week; below this the grid scrolls horizontally. */
+const MIN_MULTI_DAY_COLUMN_PX = 180;
+
 function parseDateParam(raw: string | null, view: RecallCalendarView): Date {
   if (!raw) return startOfDay(new Date());
   if (view === "month") {
@@ -376,7 +379,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
   };
 
   return (
-    <div className="w-full h-full flex flex-col rounded-xl shadow-sm border border-gray-200 bg-white">
+    <div className="w-full h-full min-w-0 flex flex-col rounded-xl shadow-sm border border-gray-200 bg-white">
       {/* ── Top header ───────────────────────────────────────────────────── */}
 
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
@@ -533,71 +536,77 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
 
         {/* ── Day / 3-day / Week view ───────────────────────────────────── */}
         {!isLoading && !error && view !== "month" && (
-          <div
-            className="flex-1 grid gap-px bg-gray-200"
-            style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
-          >
-            {days.map((day) => {
-              const key = toLocalDateKey(day);
-              const dayRecalls = sortRecallsByTime(groupedRecalls[key] || []);
-              const isToday = sameDay(day, new Date());
+          <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-x-auto overflow-y-hidden">
+            <div
+              className="flex-1 grid gap-px bg-gray-200 h-full min-h-[160px]"
+              style={{
+                width: "100%",
+                minWidth: `${days.length * MIN_MULTI_DAY_COLUMN_PX}px`,
+                gridTemplateColumns: `repeat(${days.length}, minmax(${MIN_MULTI_DAY_COLUMN_PX}px, 1fr))`,
+              }}
+            >
+              {days.map((day) => {
+                const key = toLocalDateKey(day);
+                const dayRecalls = sortRecallsByTime(groupedRecalls[key] || []);
+                const isToday = sameDay(day, new Date());
 
-              return (
-                <div
-                  key={key}
-                  className="bg-white flex flex-col h-full min-h-[160px]"
-                  onMouseEnter={() => setHoveredDay(key)}
-                  onMouseLeave={() => setHoveredDay(null)}
-                >
-                  {/* Column header */}
+                return (
                   <div
-                    className={`px-3 py-2 border-b text-xs sm:text-sm flex items-center justify-center ${isToday ? "bg-blue-50" : "bg-gray-50"}`}
+                    key={key}
+                    className="bg-white flex flex-col h-full min-h-[160px]"
+                    onMouseEnter={() => setHoveredDay(key)}
+                    onMouseLeave={() => setHoveredDay(null)}
                   >
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className={`text-[10px] uppercase tracking-wide font-medium ${isToday ? "text-blue-600" : "text-gray-500"}`}>
-                        {day.toLocaleDateString("en-US", { weekday: "short" })}
+                    {/* Column header */}
+                    <div
+                      className={`px-3 py-2 border-b text-xs sm:text-sm flex items-center justify-center ${isToday ? "bg-blue-50" : "bg-gray-50"}`}
+                    >
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className={`text-[10px] uppercase tracking-wide font-medium ${isToday ? "text-blue-600" : "text-gray-500"}`}>
+                          {day.toLocaleDateString("en-US", { weekday: "short" })}
+                        </div>
+                        <DateCircle day={day} size="lg" isToday={isToday} />
                       </div>
-                      <DateCircle day={day} size="lg" isToday={isToday} />
                     </div>
-                  </div>
 
-                  {/* Items */}
-                  <div className="flex-1 px-3 py-2 space-y-2">
-                    {dayRecalls.length === 0 && (
-                      <div className="text-[11px] text-gray-400 italic">
-                        {t("recall.noAppointments", "No recalls scheduled")}
-                      </div>
-                    )}
-                    {dayRecalls.map((recall) => (
-                      <div
-                        key={recall.id}
-                        onClick={() => openDetailModal(recall)}
-                        className="border border-blue-100 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 hover:shadow-md rounded-md px-2 py-1.5 text-xs shadow-sm cursor-pointer transition-all duration-100 select-none"
-                      >
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="font-semibold text-blue-900">
-                            {formatTime(recall.scheduled_at)}
-                          </span>
-                          {recall.recall_type && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800">
-                              {recall.recall_type}
+                    {/* Items */}
+                    <div className="flex-1 px-3 py-2 space-y-2 min-w-0">
+                      {dayRecalls.length === 0 && (
+                        <div className="text-[11px] text-gray-400 italic">
+                          {t("recall.noAppointments", "No recalls scheduled")}
+                        </div>
+                      )}
+                      {dayRecalls.map((recall) => (
+                        <div
+                          key={recall.id}
+                          onClick={() => openDetailModal(recall)}
+                          className="border border-blue-100 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 hover:shadow-md rounded-md px-2 py-1.5 text-xs shadow-sm cursor-pointer transition-all duration-100 select-none"
+                        >
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="font-semibold text-blue-900">
+                              {formatTime(recall.scheduled_at)}
                             </span>
+                            {recall.recall_type && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800">
+                                {recall.recall_type}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-gray-800 truncate">
+                            {recall.patient_name || recall.patient_uuid}
+                          </div>
+                          {recall.notes && (
+                            <div className="mt-0.5 text-[10px] text-gray-600 line-clamp-2">
+                              {recall.notes}
+                            </div>
                           )}
                         </div>
-                        <div className="text-[11px] text-gray-800 truncate">
-                          {recall.patient_name || recall.patient_uuid}
-                        </div>
-                        {recall.notes && (
-                          <div className="mt-0.5 text-[10px] text-gray-600 line-clamp-2">
-                            {recall.notes}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
