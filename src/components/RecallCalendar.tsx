@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { ListRecalls } from "@requests/recall";
@@ -100,39 +100,83 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
 
   const useUrl = !patientUUID;
 
-  const initialView = useMemo<RecallCalendarView>(() => {
-    if (!useUrl) return defaultView;
+  // ── URL-driven state ────────────────────────────────────────────────────────
+  // When useUrl, we derive view/anchorDate directly from searchParams so that
+  // browser back/forward (which updates searchParams) automatically re-renders
+  // the calendar at the correct position — no separate sync effect needed.
+
+  const urlView = useMemo<RecallCalendarView>(() => {
     const param = searchParams.get("view") as RecallCalendarView | null;
     return param && VALID_VIEWS.includes(param) ? param : defaultView;
+  }, [searchParams, defaultView]);
+
+  const urlAnchorDate = useMemo<Date>(
+    () => parseDateParam(searchParams.get("date"), urlView),
+    [searchParams, urlView]
+  );
+
+  // ── Local state fallback (used only when patientUUID is provided) ───────────
+  const [localView, setLocalView] = useState<RecallCalendarView>(defaultView);
+  const [localAnchorDate, setLocalAnchorDate] = useState<Date>(startOfDay(new Date()));
+
+  const view = useUrl ? urlView : localView;
+  const anchorDate = useUrl ? urlAnchorDate : localAnchorDate;
+
+  // Write view+date into the URL. Wrapped in a ref-guarded callback so we never
+  // push duplicate entries: the first call (mount) replaces the current entry,
+  // every subsequent call pushes a new one for back/forward support.
+  const mountedRef = useRef(false);
+  const setView = useCallback(
+    (v: RecallCalendarView) => {
+      if (useUrl) {
+        setSearchParams({ view: v, date: toDateParam(anchorDate, v) });
+      } else {
+        setLocalView(v);
+      }
+    },
+    [useUrl, anchorDate, setSearchParams]
+  );
+  const setAnchorDate = useCallback(
+    (d: Date) => {
+      if (useUrl) {
+        setSearchParams({ view, date: toDateParam(d, view) });
+      } else {
+        setLocalAnchorDate(d);
+      }
+    },
+    [useUrl, view, setSearchParams]
+  );
+  const setViewAndAnchorDate = useCallback(
+    (v: RecallCalendarView, d: Date) => {
+      if (useUrl) {
+        setSearchParams({ view: v, date: toDateParam(d, v) });
+      } else {
+        setLocalView(v);
+        setLocalAnchorDate(d);
+      }
+    },
+    [useUrl, setSearchParams]
+  );
+
+  // Initialise URL params on first mount if they are absent (e.g. bare /recall).
+  useEffect(() => {
+    if (!useUrl) return;
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      if (!searchParams.get("view") || !searchParams.get("date")) {
+        setSearchParams(
+          { view: urlView, date: toDateParam(urlAnchorDate, urlView) },
+          { replace: true }
+        );
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const initialDate = useMemo<Date>(() => {
-    if (!useUrl) return startOfDay(new Date());
-    return parseDateParam(searchParams.get("date"), initialView);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const [view, setView] = useState<RecallCalendarView>(initialView);
-  const [anchorDate, setAnchorDate] = useState<Date>(initialDate);
   const [recalls, setRecalls] = useState<Recall[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
-
-  // Sync view + anchorDate → URL (only on the standalone /recall page).
-  // Use replace:true on first render so navigating to /recall doesn't push
-  // a redundant entry; subsequent changes push a new history entry for back/forward.
-  const isFirstRender = useMemo(() => ({ value: true }), []);
-  useEffect(() => {
-    if (!useUrl) return;
-    const replace = isFirstRender.value;
-    isFirstRender.value = false;
-    setSearchParams(
-      { view, date: toDateParam(anchorDate, view) },
-      { replace }
-    );
-  }, [view, anchorDate, useUrl]); // intentionally omit setSearchParams / isFirstRender
 
   const dateRange = useMemo(() => {
     if (view === "month") {
@@ -440,7 +484,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
                     return (
                       <div
                         key={key}
-                        onClick={() => { setView("threeDays"); setAnchorDate(day); }}
+                        onClick={() => setViewAndAnchorDate("threeDays", day)}
                         className="h-[110px] sm:h-[130px] w-full border-r border-gray-200 last:border-r-0 bg-white flex flex-col overflow-y-hidden overflow-x-hidden cursor-pointer hover:bg-blue-50 transition-colors duration-100"
                         onMouseEnter={() => setHoveredDay(key)}
                         onMouseLeave={() => setHoveredDay(null)}
