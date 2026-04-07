@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { ListRecalls } from "@requests/recall";
 import { Recall } from "@models/recall";
 import { useModal } from "context/ModalContext";
@@ -66,15 +67,72 @@ const sortRecallsByTime = (recalls: Recall[]) =>
 
 // ─── RecallCalendar ───────────────────────────────────────────────────────────
 
+const VALID_VIEWS: RecallCalendarView[] = ["month", "week", "threeDays", "day"];
+
+function parseDateParam(raw: string | null, view: RecallCalendarView): Date {
+  if (!raw) return startOfDay(new Date());
+  if (view === "month") {
+    // Expect YYYY-MM
+    const [year, month] = raw.split("-").map(Number);
+    if (year && month) return startOfDay(new Date(year, month - 1, 1));
+  } else {
+    // Expect YYYY-MM-DD
+    const parts = raw.split("-").map(Number);
+    if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+      return startOfDay(new Date(parts[0], parts[1] - 1, parts[2]));
+    }
+  }
+  return startOfDay(new Date());
+}
+
+function toDateParam(date: Date, view: RecallCalendarView): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  if (view === "month") return `${y}-${m}`;
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCalendarProps) {
   const { t } = useTranslation();
   const { openModal } = useModal();
-  const [view, setView] = useState<RecallCalendarView>(defaultView);
-  const [anchorDate, setAnchorDate] = useState<Date>(startOfDay(new Date()));
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const useUrl = !patientUUID;
+
+  const initialView = useMemo<RecallCalendarView>(() => {
+    if (!useUrl) return defaultView;
+    const param = searchParams.get("view") as RecallCalendarView | null;
+    return param && VALID_VIEWS.includes(param) ? param : defaultView;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const initialDate = useMemo<Date>(() => {
+    if (!useUrl) return startOfDay(new Date());
+    return parseDateParam(searchParams.get("date"), initialView);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [view, setView] = useState<RecallCalendarView>(initialView);
+  const [anchorDate, setAnchorDate] = useState<Date>(initialDate);
   const [recalls, setRecalls] = useState<Recall[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+
+  // Sync view + anchorDate → URL (only on the standalone /recall page).
+  // Use replace:true on first render so navigating to /recall doesn't push
+  // a redundant entry; subsequent changes push a new history entry for back/forward.
+  const isFirstRender = useMemo(() => ({ value: true }), []);
+  useEffect(() => {
+    if (!useUrl) return;
+    const replace = isFirstRender.value;
+    isFirstRender.value = false;
+    setSearchParams(
+      { view, date: toDateParam(anchorDate, view) },
+      { replace }
+    );
+  }, [view, anchorDate, useUrl]); // intentionally omit setSearchParams / isFirstRender
 
   const dateRange = useMemo(() => {
     if (view === "month") {
@@ -188,7 +246,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
     });
 
   const calendarTitle = useMemo(() => {
-    const { from, to } = dateRange;
+    const { from } = dateRange;
     if (view === "month") {
       return from.toLocaleDateString("en-US", { year: "numeric", month: "long" });
     }
@@ -200,19 +258,8 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
         day: "numeric",
       });
     }
-    const sameMonth = from.getMonth() === to.getMonth();
-    const sameYear = from.getFullYear() === to.getFullYear();
-    const fromStr = from.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: sameYear ? undefined : "numeric",
-    });
-    const toStr = addDays(to, -1).toLocaleDateString("en-US", {
-      month: sameMonth ? undefined : "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    return `${fromStr} - ${toStr}`;
+    // week and threeDays — show only the first date of the range
+    return from.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   }, [dateRange, visibleDays, view]);
 
   const openDetailModal = (recall: Recall) => {
@@ -393,7 +440,8 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
                     return (
                       <div
                         key={key}
-                        className="min-h-[96px] sm:min-h-[120px] border-r border-gray-200 last:border-r-0 bg-white flex flex-col"
+                        onClick={() => { setView("threeDays"); setAnchorDate(day); }}
+                        className="h-[110px] sm:h-[130px] w-full border-r border-gray-200 last:border-r-0 bg-white flex flex-col overflow-y-hidden overflow-x-hidden cursor-pointer hover:bg-blue-50 transition-colors duration-100"
                         onMouseEnter={() => setHoveredDay(key)}
                         onMouseLeave={() => setHoveredDay(null)}
                       >
@@ -402,16 +450,15 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
                           <DateCircle day={day} size="sm" isToday={isToday} dimmed={!isCurrentMonth} />
                         </div>
 
-                        {/* Recall items */}
-                        <div className="flex-1 px-1.5 pb-1.5 space-y-1.5">
+                        {/* Recall items — visual only, the cell itself is the clickable unit */}
+                        <div className="flex-1 p-1.5 pb-1.5 space-y-1.5">
                           {dayRecalls.slice(0, 3).map((recall) => (
                             <div
                               key={recall.id}
-                              onClick={() => openDetailModal(recall)}
-                              className="border border-blue-100 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 rounded-sm px-1 py-0.5 text-[10px] leading-tight cursor-pointer transition-colors duration-100"
+                              className="border border-blue-100 bg-blue-50 rounded-sm px-1 py-0.5 text-[10px] leading-tight"
                             >
                               <div className="flex items-center justify-between">
-                                <span className="font-semibold text-blue-900 truncate mr-1">
+                                <span className="font-semibold text-blue-900 mr-1 whitespace-normal break-words">
                                   {formatTime(recall.scheduled_at)}
                                 </span>
                                 {recall.recall_type && (
@@ -420,7 +467,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-gray-800 truncate">
+                              <div className="text-[10px] text-gray-800 whitespace-normal break-words">
                                 {recall.patient_name || recall.patient_uuid}
                               </div>
                             </div>
