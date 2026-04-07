@@ -170,7 +170,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
         );
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [recalls, setRecalls] = useState<Recall[]>([]);
@@ -534,7 +534,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
         {/* ── Day / 3-day / Week view ───────────────────────────────────── */}
         {!isLoading && !error && view !== "month" && (
           <div
-            className="grid gap-px bg-gray-200"
+            className="flex-1 grid gap-px bg-gray-200"
             style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
           >
             {days.map((day) => {
@@ -545,7 +545,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
               return (
                 <div
                   key={key}
-                  className="bg-white flex flex-col min-h-[160px]"
+                  className="bg-white flex flex-col h-full min-h-[160px]"
                   onMouseEnter={() => setHoveredDay(key)}
                   onMouseLeave={() => setHoveredDay(null)}
                 >
