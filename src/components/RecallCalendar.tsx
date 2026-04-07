@@ -42,6 +42,21 @@ const endOfMonth = (date: Date) => {
   return d;
 };
 
+const endOfDay = (date: Date) => {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+
+/** First/last calendar cells shown in month view (includes leading/trailing days from adjacent months). */
+const monthGridDayRange = (anchorDate: Date) => {
+  const start = startOfMonth(anchorDate);
+  const end = endOfMonth(anchorDate);
+  const gridStart = addDays(start, -start.getDay());
+  const gridEnd = addDays(end, 6 - end.getDay());
+  return { gridStart, gridEnd };
+};
+
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
@@ -195,6 +210,15 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
     return { from, to };
   }, [anchorDate, view]);
 
+  /** Range sent to ListRecalls — in month view, matches the full visible grid, not only the nominal month. */
+  const listRecallsDateRange = useMemo(() => {
+    if (view === "month") {
+      const { gridStart, gridEnd } = monthGridDayRange(anchorDate);
+      return { from: startOfDay(gridStart), to: endOfDay(gridEnd) };
+    }
+    return dateRange;
+  }, [anchorDate, dateRange, view]);
+
   const visibleDays = useMemo(() => {
     if (view === "day") return 1;
     if (view === "threeDays") return 3;
@@ -212,8 +236,8 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
       setIsLoading(true);
       setError(null);
       const recallsData = await ListRecalls({
-        from_time: formatISODateTime(dateRange.from),
-        to_time: formatISODateTime(dateRange.to),
+        from_time: formatISODateTime(listRecallsDateRange.from),
+        to_time: formatISODateTime(listRecallsDateRange.to),
         patient_uuid: patientUUID,
         limit: 200,
         offset: 0,
@@ -224,7 +248,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange.from, dateRange.to, patientUUID]);
+  }, [listRecallsDateRange.from, listRecallsDateRange.to, patientUUID]);
 
   useEffect(() => {
     fetchRecalls();
@@ -235,11 +259,7 @@ export function RecallCalendar({ patientUUID, defaultView = "month" }: RecallCal
   const monthGrid = useMemo(() => {
     if (view !== "month") return [];
 
-    const start = startOfMonth(anchorDate);
-    const end = endOfMonth(anchorDate);
-
-    const gridStart = addDays(start, -start.getDay());
-    const gridEnd = addDays(end, 6 - end.getDay());
+    const { gridStart, gridEnd } = monthGridDayRange(anchorDate);
 
     const days: Date[] = [];
     let current = gridStart;
