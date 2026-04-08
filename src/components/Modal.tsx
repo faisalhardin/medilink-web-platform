@@ -1,18 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { useModal } from '../context/ModalContext';
 
-export interface ModalProps {
-    maxWidth?: 'xl' | '2xl';
-}
-
-export function Modal({ maxWidth = '2xl' }: ModalProps) {
-    const { isOpen, modalContent, closeModal } = useModal();
+export function Modal() {
+    const { isOpen, modalContent, maxWidth, closeModal } = useModal();
     const overlayRef = useRef<HTMLDivElement>(null);
 
     const maxWidthClasses = {
-        xl: 'max-w-4xl',
+        sm:  'max-w-sm',
+        md:  'max-w-md',
+        lg:  'max-w-lg',
+        xl:  'max-w-4xl',
         '2xl': 'max-w-[90vw]',
-      };
+    };
 
     useEffect(() => {
         if (isOpen) {

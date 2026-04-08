@@ -12,6 +12,7 @@ import PatientVisitDetailPage from "@pages/PatientVisitDetail";
 import GoogleLogin from "@pages/GoogleLogin";
 import TokenExpired from "@pages/TokenExpired";
 import ProtectedRoute from "@components/ProtectedRoute";
+import RecallPage from "@pages/Recall";
 import { Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 // import PatieVisitReg
@@ -36,56 +37,61 @@ const DefaultLayout = () => {
       <ColumnNav isMobileNavOpen={isMobileNavOpen} setIsMobileNavOpen={setIsMobileNavOpen} />
       <div className="flex-1 overflow-x-hidden">
         <MobileNavHeader isMobileNavOpen={isMobileNavOpen} setIsMobileNavOpen={setIsMobileNavOpen} />
-        
+
         <Routes>
           {/* Public routes - no authentication required */}
-          <Route path="/login" element={<GoogleLogin/>}/>
-          <Route path="/token-expired" element={<TokenExpired/>}/>
-          
+          <Route path="/login" element={<GoogleLogin />} />
+          <Route path="/token-expired" element={<TokenExpired />} />
+
           {/* Protected routes - authentication required */}
           <Route path="/" element={
             <ProtectedRoute>
-              <Home/>
+              <Home />
             </ProtectedRoute>
-          }/>
+          } />
           <Route path="/institution" element={
             <ProtectedRoute>
-              <Institution/>
+              <Institution />
             </ProtectedRoute>
-          }/>
+          } />
           <Route path="/patient" element={
             <ProtectedRoute>
-              <PatientPage/>
+              <PatientPage />
             </ProtectedRoute>
-          }/>
+          } />
           <Route path="/patient-detail/:uuid" element={
             <ProtectedRoute>
-              <PatientDetail/>
+              <PatientDetail />
             </ProtectedRoute>
-          }/>
+          } />
           <Route path="/patient-registration" element={
             <ProtectedRoute>
-              <PatientRegistrationPage/>
+              <PatientRegistrationPage />
             </ProtectedRoute>
           } />
           <Route path="/patient-visit/:id" element={
             <ProtectedRoute>
-              <PatientVisitDetailPage/>
+              <PatientVisitDetailPage />
             </ProtectedRoute>
           } />
           <Route path="/journey-board/:boardID" element={
             <ProtectedRoute>
-              <JourneyBoard/>
+              <JourneyBoard />
             </ProtectedRoute>
           } />
           <Route path="/inventory" element={
             <ProtectedRoute>
-              <InventoryPage/>
+              <InventoryPage />
             </ProtectedRoute>
           } />
           <Route path="/product-replenishment" element={
             <ProtectedRoute>
-              <ProductReplenishmentPage/>
+              <ProductReplenishmentPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/recall" element={
+            <ProtectedRoute>
+              <RecallPage />
             </ProtectedRoute>
           } />
         </Routes>

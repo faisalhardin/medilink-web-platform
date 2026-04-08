@@ -146,6 +146,23 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
           </svg>
           {t('navigation.productReplenishment')}
         </NavLink>
+
+        <NavLink 
+          to="/recall"
+          onClick={handleNavClick}
+          className={({ isActive }) => 
+            `flex items-center px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
+              isActive 
+                ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
+                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+            }`
+          }
+        >
+          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-4 14v-4m0 4H8m4 0h4M5 21h14a2 2 0 002-2v-5a2 2 0 00-2-2h-3.5a1.5 1.5 0 01-1.2-.6L12 8l-2.3 3.4a1.5 1.5 0 01-1.2.6H5a2 2 0 00-2 2v5a2 2 0 002 2z" />
+          </svg>
+          {t('navigation.recall', 'Recall')}
+        </NavLink>
         
         <NavList name={t('navigation.journeyBoard')} request={requestJourneyBoard} onNavClick={handleNavClick} />
       </nav>

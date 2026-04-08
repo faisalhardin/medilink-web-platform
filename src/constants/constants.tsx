@@ -24,6 +24,9 @@ export const PATIENT_VISIT_DETAIL_PATH = `/v1/visit-detail`
 // path to journey
 export const JOURNEY_URL_PATH = `/v1/journey`
 
+// path to recall
+export const RECALL_PATH = `/v1/recall`
+
 // url to auth
 export const AUTH_URL = `${MEDILINK_API_BASE_URL}/v1/auth`
 
