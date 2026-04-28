@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import debounce from 'lodash.debounce';
 import {
   DiagnosisFormRow,
@@ -15,6 +16,7 @@ import {
   emptyDiagnosisRow,
 } from '@models/diagnosis';
 import { searchICD10, searchDoctors } from '@requests/diagnosis';
+import { useTranslation } from 'react-i18next';
 
 interface SearchComboboxProps {
   value: string;
@@ -37,17 +39,67 @@ const SearchCombobox = ({
   const [results, setResults] = useState<{ id: string; label: string }[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     setQuery(displayValue ?? value);
   }, [displayValue, value]);
 
+  const updateMenuPosition = useCallback(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen || results.length === 0) {
+      setMenuPos(null);
+      return;
+    }
+    updateMenuPosition();
+  }, [isOpen, results, updateMenuPosition]);
+
+  useEffect(() => {
+    if (!isOpen || results.length === 0) return;
+    updateMenuPosition();
+
+    const scrollableAncestors: (HTMLElement | Window)[] = [window];
+    let p: HTMLElement | null = wrapperRef.current?.parentElement ?? null;
+    while (p) {
+      const { overflow, overflowY, overflowX } = getComputedStyle(p);
+      if (/(auto|scroll|overlay)/.test(`${overflow}${overflowY}${overflowX}`)) {
+        scrollableAncestors.push(p);
+      }
+      p = p.parentElement;
+    }
+
+    const onScrollOrResize = () => updateMenuPosition();
+    window.addEventListener('resize', onScrollOrResize);
+    scrollableAncestors.forEach((node) =>
+      node === window
+        ? window.addEventListener('scroll', onScrollOrResize, true)
+        : node.addEventListener('scroll', onScrollOrResize, true)
+    );
+
+    return () => {
+      window.removeEventListener('resize', onScrollOrResize);
+      scrollableAncestors.forEach((node) =>
+        node === window
+          ? window.removeEventListener('scroll', onScrollOrResize, true)
+          : node.removeEventListener('scroll', onScrollOrResize, true)
+      );
+    };
+  }, [isOpen, results.length, updateMenuPosition]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      const t = e.target as Node;
+      if (wrapperRef.current?.contains(t)) return;
+      if (listRef.current?.contains(t)) return;
+      setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -97,19 +149,31 @@ const SearchCombobox = ({
           <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
         </div>
       )}
-      {isOpen && results.length > 0 && (
-        <ul className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
-          {results.map((item) => (
-            <li
-              key={item.id}
-              onMouseDown={() => handleSelect(item)}
-              className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50"
-            >
-              {item.label}
-            </li>
-          ))}
-        </ul>
-      )}
+      {isOpen &&
+        results.length > 0 &&
+        menuPos &&
+        createPortal(
+          <ul
+            ref={listRef}
+            className="fixed z-[300] max-h-48 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
+            style={{
+              top: menuPos.top,
+              left: menuPos.left,
+              width: menuPos.width,
+            }}
+          >
+            {results.map((item) => (
+              <li
+                key={item.id}
+                onMouseDown={() => handleSelect(item)}
+                className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50"
+              >
+                {item.label}
+              </li>
+            ))}
+          </ul>,
+          document.body
+        )}
     </div>
   );
 };
@@ -120,6 +184,7 @@ interface DiagnosisTableProps {
 }
 
 export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
+  const { t } = useTranslation();
   const updateRow = (index: number, patch: Partial<DiagnosisFormRow>) => {
     const next = rows.map((row, i) => (i === index ? { ...row, ...patch } : row));
     onRowsChange(next);
@@ -170,30 +235,30 @@ export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
                   checked={allSelected}
                   onChange={toggleSelectAll}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  aria-label="Pilih semua"
+                  aria-label={t('diagnosis.table.selectAll')}
                 />
               </th>
               <th className="w-8 px-2 py-3 text-center font-medium text-gray-500">#</th>
               <th className="min-w-[200px] px-3 py-3 text-left font-medium text-gray-500">
-                ICD-10 / Diagnosa
+                {t('diagnosis.table.columns.icd10')}
               </th>
               <th className="min-w-[130px] px-3 py-3 text-left font-medium text-gray-500">
-                Jenis
+                {t('diagnosis.table.columns.type')}
               </th>
               <th className="min-w-[100px] px-3 py-3 text-left font-medium text-gray-500">
-                Kasus
+                {t('diagnosis.table.columns.case')}
               </th>
               <th className="min-w-[140px] px-3 py-3 text-left font-medium text-gray-500">
-                Status Klinis
+                {t('diagnosis.table.columns.clinicalStatus')}
               </th>
               <th className="min-w-[150px] px-3 py-3 text-left font-medium text-gray-500">
-                Verifikasi
+                {t('diagnosis.table.columns.verification')}
               </th>
               <th className="min-w-[130px] px-3 py-3 text-left font-medium text-gray-500">
-                Onset
+                {t('diagnosis.table.columns.onset')}
               </th>
               <th className="min-w-[180px] px-3 py-3 text-left font-medium text-gray-500">
-                Dokter
+                {t('diagnosis.table.columns.doctor')}
               </th>
             </tr>
           </thead>
@@ -204,7 +269,8 @@ export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
                   colSpan={9}
                   className="py-10 text-center text-sm text-gray-400"
                 >
-                  Belum ada diagnosa. Klik <strong>+ Tambah Baris</strong> untuk memulai.
+                  {t('diagnosis.table.empty.prefix')} <strong>{t('diagnosis.table.addRow')}</strong>{' '}
+                  {t('diagnosis.table.empty.suffix')}
                 </td>
               </tr>
             )}
@@ -232,7 +298,7 @@ export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
                     <SearchCombobox
                       value={row.icd10_code}
                       displayValue={row.icd10_code ? `${row.icd10_code}` : ''}
-                      placeholder="Cari kode ICD-10..."
+                      placeholder={t('diagnosis.table.placeholders.searchIcd10')}
                       onSearch={handleICD10Search}
                       onSelect={(code, label) => {
                         const display = label.includes('—')
@@ -245,7 +311,7 @@ export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
                       type="text"
                       value={row.icd10_display}
                       onChange={(e) => updateRow(index, { icd10_display: e.target.value })}
-                      placeholder="Nama diagnosa..."
+                      placeholder={t('diagnosis.table.placeholders.diagnosisName')}
                       className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
@@ -253,17 +319,33 @@ export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
 
                 {/* Jenis */}
                 <td className="px-3 py-3">
+                  {(() => {
+                    const primaryTakenByAnotherRow = rows.some(
+                      (r, rowIdx) => rowIdx !== index && r.type === 'primary'
+                    );
+
+                    return (
                   <select
                     value={row.type}
                     onChange={(e) => updateRow(index, { type: e.target.value as DiagnosisType })}
                     className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     {DIAGNOSIS_TYPE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
+                      <option
+                        key={o.value}
+                        value={o.value}
+                        disabled={
+                          o.value === 'primary' &&
+                          primaryTakenByAnotherRow &&
+                          row.type !== 'primary'
+                        }
+                      >
                         {o.label}
                       </option>
                     ))}
                   </select>
+                    );
+                  })()}
                 </td>
 
                 {/* Kasus */}
@@ -332,7 +414,7 @@ export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
                   <SearchCombobox
                     value={row.doctor_id}
                     displayValue={row.doctor_name}
-                    placeholder="Cari dokter..."
+                    placeholder={t('diagnosis.table.placeholders.searchDoctor')}
                     onSearch={handleDoctorSearch}
                     onSelect={(id, name) => updateRow(index, { doctor_id: id, doctor_name: name })}
                   />
@@ -353,7 +435,7 @@ export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Tambah Baris
+          {t('diagnosis.table.addRow')}
         </button>
 
         {hasSelected && (
@@ -370,7 +452,7 @@ export const DiagnosisTable = ({ rows, onRowsChange }: DiagnosisTableProps) => {
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               />
             </svg>
-            Hapus Terpilih ({rows.filter((r) => r.selected).length})
+            {t('diagnosis.table.removeSelected')} ({rows.filter((r) => r.selected).length})
           </button>
         )}
       </div>

@@ -10,6 +10,8 @@ import {
 } from '@models/diagnosis';
 import { Patient } from '@models/patient';
 import { getVisitDiagnoses, saveVisitDiagnoses } from '@requests/diagnosis';
+import { normalizeDateForInput } from '@utils/common';
+import { useTranslation } from 'react-i18next';
 
 export interface DiagnosisTabContentProps {
   visitId: number;
@@ -17,10 +19,22 @@ export interface DiagnosisTabContentProps {
 }
 
 export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTabContentProps) => {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<DiagnosisFormRow[]>([emptyDiagnosisRow()]);
   const [prognosis, setPrognosis] = useState<Prognosis | ''>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const handleRowsChange = (nextRows: DiagnosisFormRow[]) => {
+    setRows(nextRows);
+    setHasUnsavedChanges(true);
+  };
+
+  const handlePrognosisChange = (value: Prognosis | '') => {
+    setPrognosis(value);
+    setHasUnsavedChanges(true);
+  };
 
   useEffect(() => {
     const fetchDiagnoses = async () => {
@@ -37,7 +51,7 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
               case: e.case,
               clinical_status: e.clinical_status,
               verification_status: e.verification_status,
-              onset_date: e.onset_date,
+              onset_date: normalizeDateForInput(e.onset_date),
               doctor_id: e.doctor_id,
               doctor_name: e.doctor_name,
               selected: false,
@@ -47,6 +61,7 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
             setPrognosis(entries[0].prognosis);
           }
         }
+        setHasUnsavedChanges(false);
       } catch (err) {
         console.error('Error fetching diagnoses:', err);
       } finally {
@@ -59,7 +74,7 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
   const handleSave = async () => {
     const filledRows = rows.filter((r) => r.icd10_code.trim() !== '');
     if (filledRows.length === 0) {
-      toast.error('Tambahkan minimal satu diagnosa dengan kode ICD-10');
+      toast.error(t('diagnosis.errors.minOneDiagnosis'));
       return;
     }
 
@@ -70,7 +85,7 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
       case: r.case,
       clinical_status: r.clinical_status,
       verification_status: r.verification_status,
-      onset_date: r.onset_date,
+      onset_date: normalizeDateForInput(r.onset_date),
       doctor_id: r.doctor_id,
       rank: i + 1,
     }));
@@ -78,10 +93,11 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
     setIsSaving(true);
     try {
       await saveVisitDiagnoses(visitId, { diagnoses: diagnosesPayload, prognosis });
-      toast.success('Diagnosa berhasil disimpan');
+      toast.success(t('diagnosis.messages.saveSuccess'));
+      setHasUnsavedChanges(false);
     } catch (err) {
       console.error('Error saving diagnoses:', err);
-      toast.error('Gagal menyimpan diagnosa. Coba lagi.');
+      toast.error(t('diagnosis.errors.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -92,7 +108,7 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
       <div className="flex items-center justify-center py-24">
         <div className="flex flex-col items-center gap-3 text-gray-400">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-          <span className="text-sm">Memuat diagnosa...</span>
+          <span className="text-sm">{t('diagnosis.loading')}</span>
         </div>
       </div>
     );
@@ -103,12 +119,12 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
       {/* Diagnosis table */}
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-800">Tabel Diagnosa</h2>
+          <h2 className="text-base font-semibold text-gray-800">{t('diagnosis.table.title')}</h2>
           <p className="text-xs text-gray-400">
-            <span className="text-red-500">*</span> wajib diisi sebelum menyimpan
+            <span className="text-red-500">*</span> {t('diagnosis.requiredBeforeSave')}
           </p>
         </div>
-        <DiagnosisTable rows={rows} onRowsChange={setRows} />
+        <DiagnosisTable rows={rows} onRowsChange={handleRowsChange} />
       </section>
 
       {/* Divider */}
@@ -121,15 +137,15 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
             htmlFor="prognosis-select"
             className="mb-1.5 block text-sm font-medium text-gray-700"
           >
-            Prognosis
+            {t('diagnosis.prognosis')}
           </label>
           <select
             id="prognosis-select"
             value={prognosis}
-            onChange={(e) => setPrognosis(e.target.value as Prognosis | '')}
+            onChange={(e) => handlePrognosisChange(e.target.value as Prognosis | '')}
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="">— Pilih Prognosis —</option>
+            <option value="">{t('diagnosis.selectPrognosis')}</option>
             {PROGNOSIS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -138,31 +154,33 @@ export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTab
           </select>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center justify-center gap-2 rounded-md bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSaving ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Menyimpan...
-            </>
-          ) : (
-            <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              Simpan Diagnosa
-            </>
-          )}
-        </button>
+        {hasUnsavedChanges && (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center justify-center gap-2 rounded-md bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                {t('diagnosis.saving')}
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                {t('diagnosis.saveDiagnosis')}
+              </>
+            )}
+          </button>
+        )}
       </section>
     </div>
   );
