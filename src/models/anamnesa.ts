@@ -105,14 +105,20 @@ export interface GetAnamnesaResponse {
 }
 
 export interface SaveAnamnesaRequest {
-  doctor_id: string;
+  doctor_id?: string;
   nurse_id: string;
   chief_complaint: string;
-  secondary_complaint: string;
+  history_of_illness?: string;
+  secondary_complaint?: string;
   illness_duration: IllnessDuration;
   medical_history: MedicalHistory;
   allergies: Allergies;
-  vital_signs: Omit<VitalSigns, 'map' | 'bmi' | 'bmi_result'>;
+  vital_signs: Omit<VitalSigns, 'map' | 'bmi' | 'bmi_result' | 'heart_rate' | 'spo2'> & {
+    pulse?: number | '';
+    oxygen_saturation?: number | '';
+    heart_rate?: number | '';
+    spo2?: number | '';
+  };
   gcs: GCS;
   pain_assessment: PainAssessment;
   fall_risk: FallRisk;

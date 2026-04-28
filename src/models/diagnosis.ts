@@ -1,5 +1,5 @@
-export type DiagnosisType = 'PRIMER' | 'SEKUNDER' | 'KOMPLIKASI';
-export type DiagnosisCase = 'BARU' | 'LAMA';
+export type DiagnosisType = 'primary' | 'secondary' | 'comorbidity';
+export type DiagnosisCase = 'new' | 'chronic' | 'acute_on_chronic';
 export type ClinicalStatus =
   | 'active'
   | 'recurrence'
@@ -12,13 +12,14 @@ export type VerificationStatus =
   | 'unconfirmed'
   | 'provisional'
   | 'differential'
-  | 'refuted';
+  | 'refuted'
+  | 'entered_in_error';
 export type Prognosis =
-  | 'Sanam'
-  | 'Bonam'
-  | 'Malam'
-  | 'Dubia ad sanam'
-  | 'Dubia ad malam';
+  | 'sanam'
+  | 'bonam'
+  | 'malam'
+  | 'dubia_ad_sanam'
+  | 'dubia_ad_malam';
 
 export interface ICD10Option {
   code: string;
@@ -49,7 +50,6 @@ export interface DiagnosisEntry {
 export interface SaveDiagnosisRow {
   id: number | null;
   icd10_code: string;
-  icd10_display: string;
   type: DiagnosisType;
   case: DiagnosisCase;
   clinical_status: ClinicalStatus;
@@ -105,14 +105,15 @@ export interface DiagnosisFormRow {
 }
 
 export const DIAGNOSIS_TYPE_OPTIONS: { value: DiagnosisType; label: string }[] = [
-  { value: 'PRIMER', label: 'Primer' },
-  { value: 'SEKUNDER', label: 'Sekunder' },
-  { value: 'KOMPLIKASI', label: 'Komplikasi' },
+  { value: 'primary', label: 'Primer' },
+  { value: 'secondary', label: 'Sekunder' },
+  { value: 'comorbidity', label: 'Komorbiditas' },
 ];
 
 export const DIAGNOSIS_CASE_OPTIONS: { value: DiagnosisCase; label: string }[] = [
-  { value: 'BARU', label: 'Baru' },
-  { value: 'LAMA', label: 'Lama' },
+  { value: 'new', label: 'Baru' },
+  { value: 'chronic', label: 'Kronis' },
+  { value: 'acute_on_chronic', label: 'Akut pada Kronis' },
 ];
 
 export const CLINICAL_STATUS_OPTIONS: { value: ClinicalStatus; label: string }[] = [
@@ -130,14 +131,15 @@ export const VERIFICATION_STATUS_OPTIONS: { value: VerificationStatus; label: st
   { value: 'provisional', label: 'Sementara' },
   { value: 'differential', label: 'Diferensial' },
   { value: 'refuted', label: 'Dibantah' },
+  { value: 'entered_in_error', label: 'Salah Input' },
 ];
 
 export const PROGNOSIS_OPTIONS: { value: Prognosis; label: string }[] = [
-  { value: 'Sanam', label: 'Sanam' },
-  { value: 'Bonam', label: 'Bonam' },
-  { value: 'Malam', label: 'Malam' },
-  { value: 'Dubia ad sanam', label: 'Dubia ad Sanam' },
-  { value: 'Dubia ad malam', label: 'Dubia ad Malam' },
+  { value: 'sanam', label: 'Sanam' },
+  { value: 'bonam', label: 'Bonam' },
+  { value: 'malam', label: 'Malam' },
+  { value: 'dubia_ad_sanam', label: 'Dubia ad Sanam' },
+  { value: 'dubia_ad_malam', label: 'Dubia ad Malam' },
 ];
 
 export function emptyDiagnosisRow(): DiagnosisFormRow {
@@ -145,8 +147,8 @@ export function emptyDiagnosisRow(): DiagnosisFormRow {
     id: null,
     icd10_code: '',
     icd10_display: '',
-    type: 'PRIMER',
-    case: 'BARU',
+    type: 'primary',
+    case: 'new',
     clinical_status: 'active',
     verification_status: 'confirmed',
     onset_date: new Date().toISOString().split('T')[0],

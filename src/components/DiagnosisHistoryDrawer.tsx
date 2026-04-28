@@ -10,9 +10,9 @@ const clinicalStatusLabel = (status: string) => {
 };
 
 const typeColor: Record<string, string> = {
-  PRIMER: 'bg-blue-100 text-blue-700',
-  SEKUNDER: 'bg-purple-100 text-purple-700',
-  KOMPLIKASI: 'bg-orange-100 text-orange-700',
+  primary: 'bg-blue-100 text-blue-700',
+  secondary: 'bg-purple-100 text-purple-700',
+  comorbidity: 'bg-orange-100 text-orange-700',
 };
 
 const statusColor: Record<string, string> = {

@@ -66,7 +66,6 @@ export const DiagnosisTabContent = ({ visitId, patient }: DiagnosisTabContentPro
     const diagnosesPayload: SaveDiagnosisRow[] = filledRows.map((r, i) => ({
       id: r.id,
       icd10_code: r.icd10_code,
-      icd10_display: r.icd10_display,
       type: r.type,
       case: r.case,
       clinical_status: r.clinical_status,

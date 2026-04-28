@@ -257,11 +257,16 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
       toast.error('Keluhan utama wajib diisi');
       return;
     }
+    if (!form.nurse_id) {
+      toast.error('Perawat / bidan wajib dipilih');
+      return;
+    }
     const { vital_signs } = form;
     const payload: SaveAnamnesaRequest = {
-      doctor_id: form.doctor_id,
+      doctor_id: form.doctor_id || undefined,
       nurse_id: form.nurse_id,
       chief_complaint: form.chief_complaint,
+      history_of_illness: form.secondary_complaint || undefined,
       secondary_complaint: form.secondary_complaint,
       illness_duration: form.illness_duration,
       medical_history: form.medical_history,
@@ -269,8 +274,10 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
       vital_signs: {
         systolic: vital_signs.systolic,
         diastolic: vital_signs.diastolic,
-        heart_rate: vital_signs.heart_rate,
+        pulse: vital_signs.heart_rate,
         respiratory_rate: vital_signs.respiratory_rate,
+        oxygen_saturation: vital_signs.spo2,
+        heart_rate: vital_signs.heart_rate,
         spo2: vital_signs.spo2,
         temperature: vital_signs.temperature,
         height: vital_signs.height,
