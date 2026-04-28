@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import FolderTab from './FolderTab';
 import { DiagnosisTabContent } from './DiagnosisTabContent';
+import { AnamnesaTabContent } from './AnamnesaTabContent';
 import { PatientInfoDrawer } from './PatientInfoDrawer';
 import { DiagnosisHistoryDrawer } from './DiagnosisHistoryDrawer';
 import { useDrawer } from 'hooks/useDrawer';
@@ -20,8 +21,8 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { id: 'diagnosa', label: 'Diagnosa' },
   { id: 'anamnesa', label: 'Anamnesa' },
+  { id: 'diagnosa', label: 'Diagnosa' },
   { id: 'resep', label: 'Resep' },
   { id: 'tindakan', label: 'Tindakan' },
   { id: 'laboratorium', label: 'Laboratorium' },
@@ -97,7 +98,7 @@ export const EncounterPageComponent = ({ visitId }: EncounterPageProps) => {
       case 'diagnosa':
         return <DiagnosisTabContent visitId={visitId} patient={patient} />;
       case 'anamnesa':
-        return <PlaceholderTab label="Anamnesa" />;
+        return <AnamnesaTabContent visitId={visitId} patient={patient} />;
       case 'resep':
         return <PlaceholderTab label="Resep" />;
       case 'tindakan':
