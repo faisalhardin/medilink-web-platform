@@ -16,7 +16,7 @@ export interface DiagnosisTabContentProps {
   patient: Patient;
 }
 
-export const DiagnosisTabContent = ({ visitId, patient }: DiagnosisTabContentProps) => {
+export const DiagnosisTabContent = ({ visitId, patient: _patient }: DiagnosisTabContentProps) => {
   const [rows, setRows] = useState<DiagnosisFormRow[]>([emptyDiagnosisRow()]);
   const [prognosis, setPrognosis] = useState<Prognosis | ''>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -105,8 +105,7 @@ export const DiagnosisTabContent = ({ visitId, patient }: DiagnosisTabContentPro
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-800">Tabel Diagnosa</h2>
           <p className="text-xs text-gray-400">
-            {patient.name && <span className="mr-3 text-gray-500">{patient.name}</span>}
-            Bidang bertanda * wajib diisi sebelum menyimpan
+            <span className="text-red-500">*</span> wajib diisi sebelum menyimpan
           </p>
         </div>
         <DiagnosisTable rows={rows} onRowsChange={setRows} />
