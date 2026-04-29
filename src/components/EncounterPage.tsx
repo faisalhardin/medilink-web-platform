@@ -152,7 +152,7 @@ export const EncounterPageComponent = ({ visitId, isModal = false }: EncounterPa
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={historyDrawer.openDrawer}
@@ -175,7 +175,7 @@ export const EncounterPageComponent = ({ visitId, isModal = false }: EncounterPa
               </svg>
               Info Pasien
             </button>
-          </div>
+          </div> */}
         </div>
       )}
     </div>
