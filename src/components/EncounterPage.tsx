@@ -73,7 +73,7 @@ export const EncounterPageComponent = ({ visitId, isModal = false }: EncounterPa
   const [patient, setPatient] = useState<Patient>({} as Patient);
   const [visitDate, setVisitDate] = useState<string>('');
   const [isLoadingVisit, setIsLoadingVisit] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabId>('diagnosa');
+  const [activeTab, setActiveTab] = useState<TabId>('anamnesa');
 
   const patientInfoDrawer = useDrawer();
   const historyDrawer = useDrawer();

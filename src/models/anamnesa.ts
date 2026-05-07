@@ -1,7 +1,7 @@
 export type HeightMeasurement = 'berdiri' | 'telentang';
-export type Consciousness = 'COMPOS MENTIS' | 'SOMNOLEN' | 'SOPOR' | 'COMA';
-export type HeartRhythm = 'REGULAR' | 'IREGULAR';
-export type Triage = 'GAWAT DARURAT' | 'DARURAT' | 'TIDAK GAWAT DARURAT' | 'MENINGGAL';
+export type Consciousness = 'compos mentis' | 'somnolen' | 'sopor' | 'coma';
+export type HeartRhythm = 'regular' | 'irregular';
+export type Triage = 'gawat darurat' | 'darurat' | 'tidak gawat darurat' | 'meninggal';
 export type PainQuality =
   | 'tekanan'
   | 'terbakar'
@@ -56,73 +56,76 @@ export interface VitalSigns {
 }
 
 export interface GCS {
-  eye: number;
-  verbal: number;
-  motor: number;
+  eye?: number;
+  verbal?: number;
+  motor?: number;
 }
 
 export interface PainAssessment {
-  has_pain: boolean;
-  trigger: string;
-  quality: PainQuality | '';
-  location: string;
-  scale: number;
-  pattern: PainPattern;
-}
-
-export interface FallRisk {
-  gait: boolean;
-  support: boolean;
-}
-
-export interface Lifestyle {
-  smoking: boolean;
-  alcohol: boolean;
-  low_vegetable_fruit: boolean;
+  has_pain?: boolean | null;
+  trigger?: string | null;
+  quality?: PainQuality | '' | null;
+  location?: string | null;
+  scale?: number | null;
+  pattern?: PainPattern | null;
 }
 
 export interface AnamnesaData {
-  id?: number;
-  visit_id?: number;
+  /** API may return UUID string */
+  id?: string | null;
+  visit_id: number;
   doctor_id: string;
   doctor_name: string;
   nurse_id: string;
   nurse_name: string;
   chief_complaint: string;
-  secondary_complaint: string;
-  illness_duration: IllnessDuration;
-  medical_history: MedicalHistory;
-  allergies: Allergies;
-  vital_signs: VitalSigns;
-  gcs: GCS;
-  pain_assessment: PainAssessment;
-  fall_risk: FallRisk;
-  lifestyle: Lifestyle;
+  secondary_complaint?: string | null;
+  illness_duration?: IllnessDuration | null;
+  medical_history?: MedicalHistory | null;
+  allergies?: Allergies | null;
+  vital_signs?: VitalSigns | null;
+  gcs?: GCS | null;
+  pain_assessment?: PainAssessment | null;
 }
 
 export interface GetAnamnesaResponse {
   data: AnamnesaData | null;
 }
 
+export interface VitalSignsInput {
+  systolic?: number | null;
+  diastolic?: number | null;
+  pulse?: number | null;
+  temperature?: number | null;
+  respiratory_rate?: number | null;
+  oxygen_saturation?: number | null;
+  weight?: number | null;
+  height?: number | null;
+  abdominal_circumference?: number | null;
+  consciousness?: Consciousness | null;
+  heart_rhythm?: HeartRhythm | null;
+  triage?: Triage | null;
+}
+
+export interface GCSInput {
+  eye?: number | null;
+  verbal?: number | null;
+  motor?: number | null;
+}
+
+/** POST body: only `chief_complaint` is required; other keys may be omitted or explicitly `null`. */
 export interface SaveAnamnesaRequest {
-  doctor_id?: string;
-  nurse_id: string;
+  doctor_id?: string | null;
+  nurse_id?: string | null;
   chief_complaint: string;
-  history_of_illness?: string;
-  secondary_complaint?: string;
-  illness_duration: IllnessDuration;
-  medical_history: MedicalHistory;
-  allergies: Allergies;
-  vital_signs: Omit<VitalSigns, 'map' | 'bmi' | 'bmi_result' | 'heart_rate' | 'spo2'> & {
-    pulse?: number | '';
-    oxygen_saturation?: number | '';
-    heart_rate?: number | '';
-    spo2?: number | '';
-  };
-  gcs: GCS;
-  pain_assessment: PainAssessment;
-  fall_risk: FallRisk;
-  lifestyle: Lifestyle;
+  secondary_complaint?: string | null;
+  history_of_illness?: string | null;
+  illness_duration?: IllnessDuration | null;
+  medical_history?: MedicalHistory | null;
+  allergies?: Allergies | null;
+  vital_signs?: VitalSignsInput | null;
+  gcs?: GCSInput | null;
+  pain_assessment?: PainAssessment | null;
 }
 
 export interface SaveAnamnesaResponse {
@@ -131,6 +134,7 @@ export interface SaveAnamnesaResponse {
 }
 
 export const defaultAnamnesa = (): AnamnesaData => ({
+  visit_id: 0,
   doctor_id: '',
   doctor_name: '',
   nurse_id: '',
@@ -160,27 +164,188 @@ export const defaultAnamnesa = (): AnamnesaData => ({
   pain_assessment: {
     has_pain: false,
     trigger: '',
-    quality: '',
+    quality: undefined,
     location: '',
     scale: 0,
     pattern: 'intermittent',
   },
-  fall_risk: { gait: false, support: false },
-  lifestyle: { smoking: false, alcohol: false, low_vegetable_fruit: false },
 });
 
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === 'object' && !Array.isArray(v);
+
+const str = (v: unknown): string => (v === null || v === undefined ? '' : String(v));
+
+const numOrEmpty = (v: unknown): number | '' => {
+  if (v === null || v === undefined || v === '') return '';
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : '';
+};
+
+const optFiniteNumber = (v: unknown): number | undefined => {
+  if (v === null || v === undefined) return undefined;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+/**
+ * Merges sparse GET /anamnesa JSON into full `AnamnesaData` so the form never reads
+ * `undefined` for nested groups (e.g. `medical_history`) when the backend omits keys.
+ */
+export function normalizeAnamnesaApiResponse(raw: unknown): AnamnesaData {
+  if (!isRecord(raw)) return defaultAnamnesa();
+
+  const base = defaultAnamnesa();
+  const vsIn = isRecord(raw.vital_signs) ? raw.vital_signs : {};
+  const gcsIn = isRecord(raw.gcs) ? raw.gcs : {};
+  const painIn = isRecord(raw.pain_assessment) ? raw.pain_assessment : {};
+  const mhIn = isRecord(raw.medical_history) ? raw.medical_history : null;
+  const alIn = isRecord(raw.allergies) ? raw.allergies : null;
+  const durIn = isRecord(raw.illness_duration) ? raw.illness_duration : null;
+
+  const heightM = vsIn.height_measurement;
+  const height_measurement: HeightMeasurement =
+    heightM === 'telentang' ? 'telentang' : heightM === 'berdiri' ? 'berdiri' : base.vital_signs!.height_measurement;
+
+  const consciousnessRaw = vsIn.consciousness;
+  const consciousness: Consciousness | '' =
+    consciousnessRaw === 'compos mentis' ||
+      consciousnessRaw === 'somnolen' ||
+      consciousnessRaw === 'sopor' ||
+      consciousnessRaw === 'coma'
+      ? consciousnessRaw
+      : '';
+
+  const rhythmRaw = vsIn.heart_rhythm;
+  const heart_rhythm: HeartRhythm | '' = (() => {
+    if (rhythmRaw === 'regular' || rhythmRaw === 'irregular') return rhythmRaw;
+    if (typeof rhythmRaw === 'string') {
+      const u = rhythmRaw.toUpperCase();
+      if (u === 'REGULAR') return 'regular';
+      if (u === 'IREGULAR' || u === 'IRREGULAR') return 'irregular';
+    }
+    return '';
+  })();
+
+  const triageRaw = vsIn.triage;
+  const triage: Triage | '' =
+    triageRaw === 'gawat darurat' ||
+      triageRaw === 'darurat' ||
+      triageRaw === 'tidak gawat darurat' ||
+      triageRaw === 'meninggal'
+      ? triageRaw
+      : '';
+
+  const qualityRaw = painIn.quality;
+  const painQuality: PainQuality | '' | undefined =
+    qualityRaw === null || qualityRaw === undefined || qualityRaw === ''
+      ? undefined
+      : qualityRaw === 'tekanan' ||
+        qualityRaw === 'terbakar' ||
+        qualityRaw === 'melilit' ||
+        qualityRaw === 'tertusuk' ||
+        qualityRaw === 'diiris' ||
+        qualityRaw === 'mencengkram'
+        ? qualityRaw
+        : undefined;
+
+  const patternRaw = painIn.pattern;
+  const painPattern: PainPattern =
+    patternRaw === 'continuous' || patternRaw === 'intermittent'
+      ? patternRaw
+      : base.pain_assessment!.pattern ?? 'intermittent';
+
+  const scaleRaw = painIn.scale;
+  const scale =
+    typeof scaleRaw === 'number' && Number.isFinite(scaleRaw)
+      ? scaleRaw
+      : typeof scaleRaw === 'string' && scaleRaw !== ''
+        ? Number(scaleRaw) || 0
+        : base.pain_assessment!.scale ?? 0;
+
+  return {
+    ...base,
+    id: raw.id !== undefined && raw.id !== null ? (raw.id as string | undefined) : base.id,
+    visit_id: typeof raw.visit_id === 'number' ? raw.visit_id : base.visit_id,
+    doctor_id: str(raw.doctor_id),
+    doctor_name: str(raw.doctor_name),
+    nurse_id: str(raw.nurse_id),
+    nurse_name: str(raw.nurse_name),
+    chief_complaint: str(raw.chief_complaint),
+    secondary_complaint: str(raw.secondary_complaint ?? raw.history_of_illness),
+    illness_duration: durIn
+      ? {
+        years: Number(durIn.years) || 0,
+        months: Number(durIn.months) || 0,
+        days: Number(durIn.days) || 0,
+      }
+      : base.illness_duration,
+    medical_history: mhIn
+      ? {
+        current: str(mhIn.current),
+        past: str(mhIn.past),
+        family: str(mhIn.family),
+      }
+      : base.medical_history,
+    allergies: alIn
+      ? {
+        drug: str(alIn.drug),
+        food: str(alIn.food),
+        air: str(alIn.air),
+        other: str(alIn.other),
+      }
+      : base.allergies,
+    vital_signs: {
+      ...base.vital_signs!,
+      systolic: numOrEmpty(vsIn.systolic),
+      diastolic: numOrEmpty(vsIn.diastolic),
+      heart_rate: numOrEmpty(vsIn.heart_rate ?? vsIn.pulse),
+      respiratory_rate: numOrEmpty(vsIn.respiratory_rate),
+      spo2: numOrEmpty(vsIn.spo2 ?? vsIn.oxygen_saturation),
+      temperature: numOrEmpty(vsIn.temperature),
+      height: numOrEmpty(vsIn.height),
+      weight: numOrEmpty(vsIn.weight),
+      map: optFiniteNumber(vsIn.map),
+      bmi: optFiniteNumber(vsIn.bmi),
+      bmi_result: vsIn.bmi_result == null || vsIn.bmi_result === '' ? undefined : str(vsIn.bmi_result),
+      height_measurement,
+      abdominal_circumference: numOrEmpty(vsIn.abdominal_circumference),
+      consciousness,
+      heart_rhythm,
+      pregnancy_status:
+        typeof vsIn.pregnancy_status === 'boolean' ? vsIn.pregnancy_status : base.vital_signs!.pregnancy_status,
+      triage,
+    },
+    gcs: {
+      eye: typeof gcsIn.eye === 'number' ? gcsIn.eye : base.gcs!.eye,
+      verbal: typeof gcsIn.verbal === 'number' ? gcsIn.verbal : base.gcs!.verbal,
+      motor: typeof gcsIn.motor === 'number' ? gcsIn.motor : base.gcs!.motor,
+    },
+    pain_assessment: {
+      has_pain: typeof painIn.has_pain === 'boolean' ? painIn.has_pain : base.pain_assessment!.has_pain ?? false,
+      trigger: str(painIn.trigger),
+      quality: painQuality,
+      location: str(painIn.location),
+      scale,
+      pattern: painPattern,
+    },
+  };
+}
+
 export const CONSCIOUSNESS_OPTIONS: { value: Consciousness; label: string }[] = [
-  { value: 'COMPOS MENTIS', label: 'Compos Mentis' },
-  { value: 'SOMNOLEN', label: 'Somnolen' },
-  { value: 'SOPOR', label: 'Sopor' },
-  { value: 'COMA', label: 'Koma' },
+  { value: 'compos mentis', label: 'Compos Mentis' },
+  { value: 'somnolen', label: 'Somnolen' },
+  { value: 'sopor', label: 'Sopor' },
+  { value: 'coma', label: 'Koma' },
 ];
 
 export const TRIAGE_OPTIONS: { value: Triage; label: string; color: string }[] = [
-  { value: 'GAWAT DARURAT', label: 'Gawat Darurat', color: 'text-red-600' },
-  { value: 'DARURAT', label: 'Darurat', color: 'text-orange-600' },
-  { value: 'TIDAK GAWAT DARURAT', label: 'Tidak Gawat Darurat', color: 'text-green-600' },
-  { value: 'MENINGGAL', label: 'Meninggal', color: 'text-gray-600' },
+  { value: 'gawat darurat', label: 'Gawat Darurat', color: 'text-red-600' },
+  { value: 'darurat', label: 'Darurat', color: 'text-orange-600' },
+  { value: 'tidak gawat darurat', label: 'Tidak Gawat Darurat', color: 'text-green-600' },
+  { value: 'meninggal', label: 'Meninggal', color: 'text-gray-600' },
 ];
 
 export const PAIN_QUALITY_OPTIONS: { value: PainQuality; label: string }[] = [

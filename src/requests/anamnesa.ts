@@ -4,6 +4,7 @@ import {
   SaveAnamnesaRequest,
   SaveAnamnesaResponse,
   NurseOption,
+  normalizeAnamnesaApiResponse,
 } from '@models/anamnesa';
 
 export const getAnamnesa = async (visitId: number): Promise<AnamnesaData | null> => {
@@ -14,15 +15,7 @@ export const getAnamnesa = async (visitId: number): Promise<AnamnesaData | null>
     const data = response.data.data ?? null;
     if (!data) return null;
 
-    return {
-      ...data,
-      secondary_complaint: data.secondary_complaint ?? data.history_of_illness ?? '',
-      vital_signs: {
-        ...data.vital_signs,
-        heart_rate: data.vital_signs?.heart_rate ?? data.vital_signs?.pulse ?? '',
-        spo2: data.vital_signs?.spo2 ?? data.vital_signs?.oxygen_saturation ?? '',
-      },
-    };
+    return normalizeAnamnesaApiResponse(data);
   } catch (error) {
     console.error('Error fetching anamnesa:', error);
     return null;

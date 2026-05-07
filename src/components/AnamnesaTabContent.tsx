@@ -1,4 +1,13 @@
-import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  ReactNode,
+  useLayoutEffect,
+  type CSSProperties,
+} from 'react';
+import { createPortal } from 'react-dom';
 import debounce from 'lodash.debounce';
 import toast from 'react-hot-toast';
 import {
@@ -6,8 +15,6 @@ import {
   VitalSigns,
   GCS,
   PainAssessment,
-  FallRisk,
-  Lifestyle,
   MedicalHistory,
   Allergies,
   IllnessDuration,
@@ -145,17 +152,67 @@ const Combobox = ({ displayValue, placeholder, onSearch, onSelect }: ComboboxPro
   const [results, setResults] = useState<{ id: string; label: string }[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     setQuery(displayValue);
   }, [displayValue]);
 
+  const updateMenuPosition = useCallback(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen || results.length === 0) {
+      setMenuPos(null);
+      return;
+    }
+    updateMenuPosition();
+  }, [isOpen, results, updateMenuPosition]);
+
+  useEffect(() => {
+    if (!isOpen || results.length === 0) return;
+    updateMenuPosition();
+
+    const scrollableAncestors: (HTMLElement | Window)[] = [window];
+    let p: HTMLElement | null = wrapperRef.current?.parentElement ?? null;
+    while (p) {
+      const { overflow, overflowY, overflowX } = getComputedStyle(p);
+      if (/(auto|scroll|overlay)/.test(`${overflow}${overflowY}${overflowX}`)) {
+        scrollableAncestors.push(p);
+      }
+      p = p.parentElement;
+    }
+
+    const onScrollOrResize = () => updateMenuPosition();
+    window.addEventListener('resize', onScrollOrResize);
+    scrollableAncestors.forEach((node) =>
+      node === window
+        ? window.addEventListener('scroll', onScrollOrResize, true)
+        : node.addEventListener('scroll', onScrollOrResize, true)
+    );
+
+    return () => {
+      window.removeEventListener('resize', onScrollOrResize);
+      scrollableAncestors.forEach((node) =>
+        node === window
+          ? window.removeEventListener('scroll', onScrollOrResize, true)
+          : node.removeEventListener('scroll', onScrollOrResize, true)
+      );
+    };
+  }, [isOpen, results.length, updateMenuPosition]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      const t = e.target as Node;
+      if (wrapperRef.current?.contains(t)) return;
+      if (listRef.current?.contains(t)) return;
+      setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -188,34 +245,54 @@ const Combobox = ({ displayValue, placeholder, onSearch, onSelect }: ComboboxPro
           <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
         </div>
       )}
-      {isOpen && results.length > 0 && (
-        <ul className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
-          {results.map((item) => (
-            <li
-              key={item.id}
-              onMouseDown={() => { setQuery(item.label); setIsOpen(false); onSelect(item.id, item.label); }}
-              className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50"
-            >
-              {item.label}
-            </li>
-          ))}
-        </ul>
-      )}
+      {isOpen &&
+        results.length > 0 &&
+        menuPos &&
+        createPortal(
+          <ul
+            ref={listRef}
+            className="fixed z-[300] max-h-48 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
+            style={{
+              top: menuPos.top,
+              left: menuPos.left,
+              width: menuPos.width,
+            }}
+          >
+            {results.map((item) => (
+              <li
+                key={item.id}
+                onMouseDown={() => { setQuery(item.label); setIsOpen(false); onSelect(item.id, item.label); }}
+                className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50"
+              >
+                {item.label}
+              </li>
+            ))}
+          </ul>,
+          document.body
+        )}
     </div>
   );
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps) => {
+export const AnamnesaTabContent = ({ visitId, patient: _patient }: AnamnesaTabContentProps) => {
   const [form, setForm] = useState<AnamnesaData>(defaultAnamnesa());
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  const formDefaults = defaultAnamnesa();
+  const vitalSigns = form.vital_signs ?? formDefaults.vital_signs!;
+  const gcsForm = form.gcs ?? formDefaults.gcs!;
+  const painForm = form.pain_assessment ?? formDefaults.pain_assessment!;
+  const durationForm = form.illness_duration ?? formDefaults.illness_duration!;
+  const mhForm = form.medical_history ?? formDefaults.medical_history!;
+  const allergiesForm = form.allergies ?? formDefaults.allergies!;
+
   // Derived display values (not submitted)
-  const mapValue = calcMAP(form.vital_signs.systolic, form.vital_signs.diastolic);
-  const bmiValue = calcBMI(form.vital_signs.height, form.vital_signs.weight);
-  const gcsTotal = form.gcs.eye + form.gcs.verbal + form.gcs.motor;
+  const mapValue = calcMAP(vitalSigns.systolic, vitalSigns.diastolic);
+  const bmiValue = calcBMI(vitalSigns.height, vitalSigns.weight);
+  const gcsTotal = (gcsForm.eye ?? 0) + (gcsForm.verbal ?? 0) + (gcsForm.motor ?? 0);
 
   useEffect(() => {
     const fetch = async () => {
@@ -230,21 +307,35 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
   // Generic patch helpers
   const patch = (partial: Partial<AnamnesaData>) => setForm((f) => ({ ...f, ...partial }));
   const patchVS = (partial: Partial<VitalSigns>) =>
-    setForm((f) => ({ ...f, vital_signs: { ...f.vital_signs, ...partial } }));
+    setForm((f) => {
+      const baseVs = f.vital_signs ?? formDefaults.vital_signs!;
+      return { ...f, vital_signs: { ...baseVs, ...partial } };
+    });
   const patchGCS = (partial: Partial<GCS>) =>
-    setForm((f) => ({ ...f, gcs: { ...f.gcs, ...partial } }));
+    setForm((f) => {
+      const baseG = f.gcs ?? formDefaults.gcs!;
+      return { ...f, gcs: { ...baseG, ...partial } };
+    });
   const patchPain = (partial: Partial<PainAssessment>) =>
-    setForm((f) => ({ ...f, pain_assessment: { ...f.pain_assessment, ...partial } }));
-  const patchFall = (partial: Partial<FallRisk>) =>
-    setForm((f) => ({ ...f, fall_risk: { ...f.fall_risk, ...partial } }));
-  const patchLifestyle = (partial: Partial<Lifestyle>) =>
-    setForm((f) => ({ ...f, lifestyle: { ...f.lifestyle, ...partial } }));
+    setForm((f) => {
+      const baseP = f.pain_assessment ?? formDefaults.pain_assessment!;
+      return { ...f, pain_assessment: { ...baseP, ...partial } };
+    });
   const patchHistory = (partial: Partial<MedicalHistory>) =>
-    setForm((f) => ({ ...f, medical_history: { ...f.medical_history, ...partial } }));
+    setForm((f) => {
+      const baseH = f.medical_history ?? formDefaults.medical_history!;
+      return { ...f, medical_history: { ...baseH, ...partial } };
+    });
   const patchAllergies = (partial: Partial<Allergies>) =>
-    setForm((f) => ({ ...f, allergies: { ...f.allergies, ...partial } }));
+    setForm((f) => {
+      const baseA = f.allergies ?? formDefaults.allergies!;
+      return { ...f, allergies: { ...baseA, ...partial } };
+    });
   const patchDuration = (partial: Partial<IllnessDuration>) =>
-    setForm((f) => ({ ...f, illness_duration: { ...f.illness_duration, ...partial } }));
+    setForm((f) => {
+      const baseD = f.illness_duration ?? formDefaults.illness_duration!;
+      return { ...f, illness_duration: { ...baseD, ...partial } };
+    });
 
   // Search adapters
   const handleDoctorSearch = async (q: string) =>
@@ -257,42 +348,50 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
       toast.error('Keluhan utama wajib diisi');
       return;
     }
-    if (!form.nurse_id) {
-      toast.error('Perawat / bidan wajib dipilih');
+    const hasDoctor = Boolean(form.doctor_id);
+    const hasNurse = Boolean(form.nurse_id);
+    if (!hasDoctor && !hasNurse) {
+      toast.error('Dokter atau perawat/bidan wajib diisi');
       return;
     }
-    const { vital_signs } = form;
+    const numOrNull = (v: number | ''): number | null => (v === '' ? null : v);
+    const consciousnessRaw = vitalSigns.consciousness as Consciousness | '';
+    const consciousnessOut: Consciousness | null =
+      consciousnessRaw === '' ? null : consciousnessRaw;
+    const triageRaw = vitalSigns.triage as Triage | '';
+    const triageOut: Triage | null = triageRaw === '' ? null : triageRaw;
+    const heartRhythmRaw = vitalSigns.heart_rhythm as HeartRhythm | '';
+    const heartRhythmOut: HeartRhythm | null =
+      heartRhythmRaw === '' ? null : heartRhythmRaw;
+
     const payload: SaveAnamnesaRequest = {
-      doctor_id: form.doctor_id || undefined,
-      nurse_id: form.nurse_id,
       chief_complaint: form.chief_complaint,
-      history_of_illness: form.secondary_complaint || undefined,
-      secondary_complaint: form.secondary_complaint,
-      illness_duration: form.illness_duration,
-      medical_history: form.medical_history,
-      allergies: form.allergies,
+      doctor_id: form.doctor_id?.trim() ? form.doctor_id : null,
+      nurse_id: form.nurse_id?.trim() ? form.nurse_id : null,
+      secondary_complaint: form.secondary_complaint ?? null,
+      illness_duration: form.illness_duration ?? null,
+      medical_history: form.medical_history ?? null,
+      allergies: form.allergies ?? null,
       vital_signs: {
-        systolic: vital_signs.systolic,
-        diastolic: vital_signs.diastolic,
-        pulse: vital_signs.heart_rate,
-        respiratory_rate: vital_signs.respiratory_rate,
-        oxygen_saturation: vital_signs.spo2,
-        heart_rate: vital_signs.heart_rate,
-        spo2: vital_signs.spo2,
-        temperature: vital_signs.temperature,
-        height: vital_signs.height,
-        weight: vital_signs.weight,
-        height_measurement: vital_signs.height_measurement,
-        abdominal_circumference: vital_signs.abdominal_circumference,
-        consciousness: vital_signs.consciousness,
-        heart_rhythm: vital_signs.heart_rhythm,
-        pregnancy_status: vital_signs.pregnancy_status,
-        triage: vital_signs.triage,
+        systolic: numOrNull(vitalSigns.systolic),
+        diastolic: numOrNull(vitalSigns.diastolic),
+        pulse: numOrNull(vitalSigns.heart_rate),
+        temperature: numOrNull(vitalSigns.temperature),
+        respiratory_rate: numOrNull(vitalSigns.respiratory_rate),
+        oxygen_saturation: numOrNull(vitalSigns.spo2),
+        weight: numOrNull(vitalSigns.weight),
+        height: numOrNull(vitalSigns.height),
+        abdominal_circumference: numOrNull(vitalSigns.abdominal_circumference),
+        consciousness: consciousnessOut,
+        heart_rhythm: heartRhythmOut,
+        triage: triageOut,
       },
-      gcs: form.gcs,
-      pain_assessment: form.pain_assessment,
-      fall_risk: form.fall_risk,
-      lifestyle: form.lifestyle,
+      gcs: {
+        eye: gcsForm.eye ?? null,
+        verbal: gcsForm.verbal ?? null,
+        motor: gcsForm.motor ?? null,
+      },
+      pain_assessment: form.pain_assessment ?? null,
     };
     setIsSaving(true);
     try {
@@ -319,22 +418,6 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
 
   return (
     <div className="space-y-4">
-      {/* Patient context strip */}
-      {patient.name && (
-        <div className="flex items-center gap-2 text-sm text-gray-500 pb-2 border-b border-gray-100">
-          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <span>{patient.name}</span>
-          {patient.date_of_birth && (
-            <>
-              <span className="text-gray-300">·</span>
-              <span>{new Date().getFullYear() - new Date(patient.date_of_birth).getFullYear()} tahun</span>
-            </>
-          )}
-        </div>
-      )}
-
       {/* ── 1. Dokter & Perawat ─────────────────────────────────────────── */}
       <Section title="Dokter & Perawat">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -378,7 +461,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
             <textarea
               id="secondary_complaint"
               rows={2}
-              value={form.secondary_complaint}
+              value={form.secondary_complaint ?? ''}
               onChange={(e) => patch({ secondary_complaint: e.target.value })}
               placeholder="Tulis keluhan tambahan..."
               className={inputCls}
@@ -398,7 +481,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                   <input
                     type="number"
                     min={0}
-                    value={form.illness_duration[key]}
+                    value={durationForm[key]}
                     onChange={(e) => patchDuration({ [key]: Number(e.target.value) })}
                     className="w-16 rounded border border-gray-300 px-2 py-1.5 text-sm text-center focus:border-blue-500 focus:outline-none"
                   />
@@ -425,15 +508,15 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                 <Label>{label}</Label>
                 <button
                   type="button"
-                  onClick={() => patchHistory({ [key]: form.medical_history[key] ? '' : 'Tidak Ada' })}
+                  onClick={() => patchHistory({ [key]: mhForm[key] ? '' : 'Tidak Ada' })}
                   className="text-xs text-gray-400 hover:text-gray-600"
                 >
-                  {form.medical_history[key] === 'Tidak Ada' ? 'Hapus' : 'Tidak Ada'}
+                  {mhForm[key] === 'Tidak Ada' ? 'Hapus' : 'Tidak Ada'}
                 </button>
               </div>
               <textarea
                 rows={2}
-                value={form.medical_history[key]}
+                value={mhForm[key]}
                 onChange={(e) => patchHistory({ [key]: e.target.value })}
                 placeholder={`Tulis ${label.toLowerCase()}...`}
                 className={inputCls}
@@ -459,7 +542,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
               <Label>{label}</Label>
               <input
                 type="text"
-                value={form.allergies[key]}
+                value={allergiesForm[key]}
                 onChange={(e) => patchAllergies({ [key]: e.target.value })}
                 placeholder={placeholder}
                 className={inputCls}
@@ -480,7 +563,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                 <input
                   type="number"
                   min={0}
-                  value={form.vital_signs.systolic}
+                  value={vitalSigns.systolic}
                   onChange={(e) => patchVS({ systolic: e.target.value === '' ? '' : Number(e.target.value) })}
                   placeholder="Sistole"
                   className="w-24 rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
@@ -489,7 +572,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                 <input
                   type="number"
                   min={0}
-                  value={form.vital_signs.diastolic}
+                  value={vitalSigns.diastolic}
                   onChange={(e) => patchVS({ diastolic: e.target.value === '' ? '' : Number(e.target.value) })}
                   placeholder="Diastole"
                   className="w-24 rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
@@ -522,7 +605,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                     type="number"
                     min={0}
                     step={key === 'temperature' ? 0.1 : 1}
-                    value={form.vital_signs[key]}
+                    value={vitalSigns[key]}
                     onChange={(e) =>
                       patchVS({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
                     }
@@ -545,7 +628,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                 <input
                   type="number"
                   min={0}
-                  value={form.vital_signs.height}
+                  value={vitalSigns.height}
                   onChange={(e) => patchVS({ height: e.target.value === '' ? '' : Number(e.target.value) })}
                   className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
                 />
@@ -556,7 +639,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                   type="number"
                   min={0}
                   step={0.1}
-                  value={form.vital_signs.weight}
+                  value={vitalSigns.weight}
                   onChange={(e) => patchVS({ weight: e.target.value === '' ? '' : Number(e.target.value) })}
                   className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
                 />
@@ -566,7 +649,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                 <input
                   type="number"
                   min={0}
-                  value={form.vital_signs.abdominal_circumference}
+                  value={vitalSigns.abdominal_circumference}
                   onChange={(e) =>
                     patchVS({ abdominal_circumference: e.target.value === '' ? '' : Number(e.target.value) })
                   }
@@ -576,7 +659,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
               <div>
                 <span className="text-xs text-gray-500">Cara Ukur Tinggi</span>
                 <select
-                  value={form.vital_signs.height_measurement}
+                  value={vitalSigns.height_measurement}
                   onChange={(e) => patchVS({ height_measurement: e.target.value as 'berdiri' | 'telentang' })}
                   className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
                 >
@@ -603,7 +686,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
               <Label htmlFor="consciousness">Kesadaran</Label>
               <select
                 id="consciousness"
-                value={form.vital_signs.consciousness}
+                value={vitalSigns.consciousness}
                 onChange={(e) => patchVS({ consciousness: e.target.value as Consciousness | '' })}
                 className={inputCls}
               >
@@ -616,16 +699,16 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
             <div>
               <Label>Detak Jantung</Label>
               <div className="flex gap-4 mt-1">
-                {(['REGULAR', 'IREGULAR'] as HeartRhythm[]).map((v) => (
+                {(['regular', 'irregular'] as HeartRhythm[]).map((v) => (
                   <label key={v} className="flex items-center gap-1.5 cursor-pointer text-sm">
                     <input
                       type="radio"
                       name="heart_rhythm"
-                      checked={form.vital_signs.heart_rhythm === v}
+                      checked={vitalSigns.heart_rhythm === v}
                       onChange={() => patchVS({ heart_rhythm: v })}
                       className="h-3.5 w-3.5 text-blue-600"
                     />
-                    {v === 'REGULAR' ? 'Regular' : 'Iregular'}
+                    {v === 'regular' ? 'Regular' : 'Iregular'}
                   </label>
                 ))}
               </div>
@@ -637,7 +720,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
               <Label>Status Hamil</Label>
               <YesNoRadio
                 id="pregnancy_status"
-                value={form.vital_signs.pregnancy_status}
+                value={vitalSigns.pregnancy_status}
                 onChange={(v) => patchVS({ pregnancy_status: v })}
                 yesLabel="Hamil"
                 noLabel="Tidak"
@@ -651,7 +734,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                     <input
                       type="radio"
                       name="triage"
-                      checked={form.vital_signs.triage === o.value}
+                      checked={vitalSigns.triage === o.value}
                       onChange={() => patchVS({ triage: o.value as Triage })}
                       className="h-3.5 w-3.5 text-blue-600"
                     />
@@ -671,7 +754,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
             <Label htmlFor="gcs_eye">Buka Mata (E)</Label>
             <select
               id="gcs_eye"
-              value={form.gcs.eye}
+              value={gcsForm.eye}
               onChange={(e) => patchGCS({ eye: Number(e.target.value) })}
               className={inputCls}
             >
@@ -684,7 +767,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
             <Label htmlFor="gcs_verbal">Respons Verbal (V)</Label>
             <select
               id="gcs_verbal"
-              value={form.gcs.verbal}
+              value={gcsForm.verbal}
               onChange={(e) => patchGCS({ verbal: Number(e.target.value) })}
               className={inputCls}
             >
@@ -697,7 +780,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
             <Label htmlFor="gcs_motor">Respons Motorik (M)</Label>
             <select
               id="gcs_motor"
-              value={form.gcs.motor}
+              value={gcsForm.motor}
               onChange={(e) => patchGCS({ motor: Number(e.target.value) })}
               className={inputCls}
             >
@@ -711,11 +794,10 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
           <span className="text-xs text-gray-500">Total GCS:</span>
           <span className="text-lg font-bold text-blue-700">{gcsTotal}</span>
           <span className="text-xs text-gray-400">/ 15</span>
-          <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium border ${
-            gcsTotal >= 13 ? 'bg-green-50 text-green-700 border-green-200'
+          <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium border ${gcsTotal >= 13 ? 'bg-green-50 text-green-700 border-green-200'
             : gcsTotal >= 9 ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-            : 'bg-red-50 text-red-700 border-red-200'
-          }`}>
+              : 'bg-red-50 text-red-700 border-red-200'
+            }`}>
             {gcsTotal >= 13 ? 'Ringan' : gcsTotal >= 9 ? 'Sedang' : 'Berat'}
           </span>
         </div>
@@ -728,18 +810,18 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
             <Label>Merasakan Nyeri?</Label>
             <YesNoRadio
               id="has_pain"
-              value={form.pain_assessment.has_pain}
+              value={Boolean(painForm.has_pain)}
               onChange={(v) => patchPain({ has_pain: v })}
             />
           </div>
-          {form.pain_assessment.has_pain && (
+          {Boolean(painForm.has_pain) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-2 border-l-2 border-blue-200">
               <div>
                 <Label htmlFor="pain_trigger">Pencetus</Label>
                 <input
                   id="pain_trigger"
                   type="text"
-                  value={form.pain_assessment.trigger}
+                  value={painForm.trigger ?? ''}
                   onChange={(e) => patchPain({ trigger: e.target.value })}
                   placeholder="cth: Aktivitas fisik"
                   className={inputCls}
@@ -749,7 +831,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                 <Label htmlFor="pain_quality">Kualitas Nyeri</Label>
                 <select
                   id="pain_quality"
-                  value={form.pain_assessment.quality}
+                  value={painForm.quality ?? ''}
                   onChange={(e) => patchPain({ quality: e.target.value as PainQuality | '' })}
                   className={inputCls}
                 >
@@ -764,7 +846,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                 <input
                   id="pain_location"
                   type="text"
-                  value={form.pain_assessment.location}
+                  value={painForm.location ?? ''}
                   onChange={(e) => patchPain({ location: e.target.value })}
                   placeholder="cth: Kepala bagian depan"
                   className={inputCls}
@@ -778,7 +860,7 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                       <input
                         type="radio"
                         name="pain_pattern"
-                        checked={form.pain_assessment.pattern === v}
+                        checked={painForm.pattern === v}
                         onChange={() => patchPain({ pattern: v })}
                         className="h-3.5 w-3.5 text-blue-600"
                       />
@@ -788,84 +870,36 @@ export const AnamnesaTabContent = ({ visitId, patient }: AnamnesaTabContentProps
                 </div>
               </div>
               <div className="sm:col-span-2">
-                <Label>Skala Nyeri: <span className="font-bold text-blue-700">{form.pain_assessment.scale}</span> / 10</Label>
-                <input
-                  type="range"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={form.pain_assessment.scale}
-                  onChange={(e) => patchPain({ scale: Number(e.target.value) })}
-                  className="w-full h-2 rounded-lg appearance-none bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 cursor-pointer mt-1"
-                />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>0 Tidak nyeri</span>
-                  <span>5 Sedang</span>
-                  <span>10 Sangat nyeri</span>
+                <Label htmlFor="pain_scale">
+                  Skala Nyeri:{' '}
+                  <span className="font-semibold tabular-nums text-blue-600">{painForm.scale ?? 0}</span>
+                  <span className="font-normal text-gray-500"> / 10</span>
+                </Label>
+                <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/80 px-4 py-3 shadow-sm">
+                  <input
+                    id="pain_scale"
+                    type="range"
+                    min={0}
+                    max={10}
+                    step={1}
+                    value={painForm.scale ?? 0}
+                    onChange={(e) => patchPain({ scale: Number(e.target.value) })}
+                    className="pain-scale-range w-full cursor-pointer"
+                    style={
+                      {
+                        '--pain-scale-fill': `${((painForm.scale ?? 0) / 10) * 100}%`,
+                      } as CSSProperties & { '--pain-scale-fill': string }
+                    }
+                  />
+                  <div className="mt-2.5 flex justify-between text-xs text-gray-500">
+                    <span>0 — Tidak nyeri</span>
+                    <span>5 — Sedang</span>
+                    <span>10 — Sangat nyeri</span>
+                  </div>
                 </div>
               </div>
             </div>
           )}
-        </div>
-      </Section>
-
-      {/* ── 8. Asesmen Risiko Jatuh ─────────────────────────────────────── */}
-      <Section title="Asesmen Risiko Jatuh" defaultOpen={false}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label>Cara Berjalan Tidak Normal / Tidak Seimbang</Label>
-            <YesNoRadio
-              id="fall_gait"
-              value={form.fall_risk.gait}
-              onChange={(v) => patchFall({ gait: v })}
-            />
-          </div>
-          <div>
-            <Label>Menggunakan Alat Bantu / Berpegangan</Label>
-            <YesNoRadio
-              id="fall_support"
-              value={form.fall_risk.support}
-              onChange={(v) => patchFall({ support: v })}
-            />
-          </div>
-        </div>
-        <div className="mt-3 rounded bg-gray-50 px-3 py-2 text-sm">
-          Risiko Jatuh:
-          <span className={`ml-2 font-semibold ${
-            form.fall_risk.gait || form.fall_risk.support ? 'text-red-600' : 'text-green-600'
-          }`}>
-            {form.fall_risk.gait || form.fall_risk.support ? 'Risiko Tinggi' : 'Risiko Rendah'}
-          </span>
-        </div>
-      </Section>
-
-      {/* ── 9. Gaya Hidup ───────────────────────────────────────────────── */}
-      <Section title="Gaya Hidup" defaultOpen={false}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div>
-            <Label>Merokok</Label>
-            <YesNoRadio
-              id="lifestyle_smoking"
-              value={form.lifestyle.smoking}
-              onChange={(v) => patchLifestyle({ smoking: v })}
-            />
-          </div>
-          <div>
-            <Label>Konsumsi Alkohol</Label>
-            <YesNoRadio
-              id="lifestyle_alcohol"
-              value={form.lifestyle.alcohol}
-              onChange={(v) => patchLifestyle({ alcohol: v })}
-            />
-          </div>
-          <div>
-            <Label>Kurang Konsumsi Sayur & Buah</Label>
-            <YesNoRadio
-              id="lifestyle_vegetables"
-              value={form.lifestyle.low_vegetable_fruit}
-              onChange={(v) => patchLifestyle({ low_vegetable_fruit: v })}
-            />
-          </div>
         </div>
       </Section>
 

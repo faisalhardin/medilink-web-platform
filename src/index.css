@@ -580,3 +580,62 @@ img.ProseMirror-separator {
   font-size: 8px;
   line-height: 10px;
 }
+
+/* Anamnesa pain scale — blue filled track (--pain-scale-fill from React), gray remainder */
+.pain-scale-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: transparent;
+}
+.pain-scale-range:focus {
+  outline: none;
+}
+.pain-scale-range:focus-visible {
+  box-shadow: 0 0 0 2px rgb(255 255 255), 0 0 0 4px rgb(59 130 246 / 0.35);
+  border-radius: 9999px;
+}
+.pain-scale-range::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    #2563eb 0%,
+    #2563eb var(--pain-scale-fill, 0%),
+    #e5e7eb var(--pain-scale-fill, 0%),
+    #e5e7eb 100%
+  );
+}
+.pain-scale-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: -0.3125rem;
+  border-radius: 9999px;
+  background: #1d4ed8;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 1px 2px rgb(0 0 0 / 0.08);
+  cursor: pointer;
+}
+.pain-scale-range::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #e5e7eb;
+}
+/* Firefox: native progress segment (left of thumb) */
+.pain-scale-range::-moz-range-progress {
+  height: 0.5rem;
+  border-radius: 9999px 0 0 9999px;
+  background: linear-gradient(to right, #2563eb, #3b82f6);
+}
+.pain-scale-range::-moz-range-thumb {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  background: #1d4ed8;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 1px 2px rgb(0 0 0 / 0.08);
+  cursor: pointer;
+}
