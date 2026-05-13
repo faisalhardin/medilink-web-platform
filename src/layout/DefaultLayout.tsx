@@ -9,6 +9,8 @@ import PatientPage from "@pages/Patient";
 import PatientDetail from "@pages/PatientDetail";
 import PatientRegistrationPage from "@pages/PatientRegistration";
 import PatientVisitDetailPage from "@pages/PatientVisitDetail";
+import DiagnosisPage from "@pages/Diagnosis";
+import EncounterPage from "@pages/Encounter";
 import GoogleLogin from "@pages/GoogleLogin";
 import TokenExpired from "@pages/TokenExpired";
 import ProtectedRoute from "@components/ProtectedRoute";
@@ -72,6 +74,16 @@ const DefaultLayout = () => {
           <Route path="/patient-visit/:id" element={
             <ProtectedRoute>
               <PatientVisitDetailPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/patient-visit/:id/diagnosis" element={
+            <ProtectedRoute>
+              <DiagnosisPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/encounter/:id" element={
+            <ProtectedRoute>
+              <EncounterPage />
             </ProtectedRoute>
           } />
           <Route path="/journey-board/:boardID" element={

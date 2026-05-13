@@ -1,15 +1,14 @@
-import { PatientVisitComponent } from '@components/PatientVisitDetail'
+import { PatientVisitComponent } from '@components/PatientVisitDetail';
 import { useRouteParams } from '../hooks/useRouteParams';
 
 interface PatientVisitDetailPageProps {
-  id?: string; // Optional because it might come from useParams() instead
+  id?: string;
+  isModal?: boolean;
 }
 
- export default function PatientVisitDetailPage (props: PatientVisitDetailPageProps) {
-    const { id } = useRouteParams(props);
-    const numericId = id ? parseInt(id, 10) : 0;
+export default function PatientVisitDetailPage(props: PatientVisitDetailPageProps) {
+  const { id } = useRouteParams(props);
+  const visitId = id ? parseInt(id, 10) : 0;
 
-    return (
-        <PatientVisitComponent patientVisitId={numericId} />
-    )
+  return <PatientVisitComponent patientVisitId={visitId} />;
 }

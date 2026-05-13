@@ -113,6 +113,45 @@
     "name": "Nama",
     "updateError": "Gagal memperbarui informasi pasien. Silakan coba lagi."
   },
+  "diagnosis": {
+    "loading": "Memuat diagnosa...",
+    "requiredBeforeSave": "wajib diisi sebelum menyimpan",
+    "prognosis": "Prognosis",
+    "selectPrognosis": "— Pilih Prognosis —",
+    "saving": "Menyimpan...",
+    "saveDiagnosis": "Simpan Diagnosa",
+    "messages": {
+      "saveSuccess": "Diagnosa berhasil disimpan"
+    },
+    "errors": {
+      "minOneDiagnosis": "Tambahkan minimal satu diagnosa dengan kode ICD-10",
+      "saveFailed": "Gagal menyimpan diagnosa. Coba lagi."
+    },
+    "table": {
+      "title": "Tabel Diagnosa",
+      "selectAll": "Pilih semua",
+      "addRow": "Tambah Baris",
+      "removeSelected": "Hapus Terpilih",
+      "columns": {
+        "icd10": "ICD-10 / Diagnosa",
+        "type": "Jenis",
+        "case": "Kasus",
+        "clinicalStatus": "Status Klinis",
+        "verification": "Verifikasi",
+        "onset": "Onset",
+        "doctor": "Dokter"
+      },
+      "placeholders": {
+        "searchIcd10": "Cari kode ICD-10...",
+        "diagnosisName": "Nama diagnosa...",
+        "searchDoctor": "Cari dokter..."
+      },
+      "empty": {
+        "prefix": "Belum ada diagnosa. Klik",
+        "suffix": "untuk memulai."
+      }
+    }
+  },
   "inventory": {
     "inventoryManagement": "Manajemen Inventori",
     "addProduct": "Tambah Produk",

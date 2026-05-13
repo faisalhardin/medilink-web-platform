@@ -168,6 +168,35 @@ export function formatDateForAPI(dateStr: string): string {
   return match ? match[1] : dateStr;
 }
 
+export function normalizeDateForInput(value?: string): string {
+  if (!value) return '';
+
+  // Already normalized for <input type="date">
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  // Common backend format dd/mm/yyyy
+  const slash = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slash) {
+    const [, dd, mm, yyyy] = slash;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // ISO datetime (e.g. 2026-04-29T00:00:00Z)
+  const iso = value.match(/^(\d{4}-\d{2}-\d{2})T/);
+  if (iso) {
+    return iso[1];
+  }
+
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10);
+  }
+
+  return '';
+}
+
 
 export function isValidIndonesianPhone(phone: string): boolean {
   const normalized = phone.replace(/\s|-/g, '');

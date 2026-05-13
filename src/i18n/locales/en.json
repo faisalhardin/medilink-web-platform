@@ -114,6 +114,45 @@
     "name": "Name",
     "updateError": "Failed to update patient information. Please try again."
   },
+  "diagnosis": {
+    "loading": "Loading diagnosis...",
+    "requiredBeforeSave": "required before saving",
+    "prognosis": "Prognosis",
+    "selectPrognosis": "— Select Prognosis —",
+    "saving": "Saving...",
+    "saveDiagnosis": "Save Diagnosis",
+    "messages": {
+      "saveSuccess": "Diagnosis saved successfully"
+    },
+    "errors": {
+      "minOneDiagnosis": "Add at least one diagnosis with an ICD-10 code",
+      "saveFailed": "Failed to save diagnosis. Please try again."
+    },
+    "table": {
+      "title": "Diagnosis Table",
+      "selectAll": "Select all",
+      "addRow": "Add Row",
+      "removeSelected": "Remove Selected",
+      "columns": {
+        "icd10": "ICD-10 / Diagnosis",
+        "type": "Type",
+        "case": "Case",
+        "clinicalStatus": "Clinical Status",
+        "verification": "Verification",
+        "onset": "Onset",
+        "doctor": "Doctor"
+      },
+      "placeholders": {
+        "searchIcd10": "Search ICD-10 code...",
+        "diagnosisName": "Diagnosis name...",
+        "searchDoctor": "Search doctor..."
+      },
+      "empty": {
+        "prefix": "No diagnosis yet. Click",
+        "suffix": "to get started."
+      }
+    }
+  },
   "inventory": {
     "inventoryManagement": "Inventory Management",
     "addProduct": "Add Product",

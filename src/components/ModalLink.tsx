@@ -43,8 +43,9 @@ export function ModalLink({ to, children, className = '', state }: ModalLinkProp
         openModal(
             <Suspense fallback={<div>Loading...</div>}>
                  {React.createElement(Component as React.ComponentType<ModalComponentProps>, { 
-                    id ,
+                    id,
                     state,
+                    isModal: true,
                     })}
             </Suspense>,
             () => {

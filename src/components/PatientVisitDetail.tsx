@@ -14,7 +14,11 @@ import { t } from 'i18next';
 import { useDrawer } from 'hooks/useDrawer';
 import Drawer from "./Drawer";
 import { PatientVisitsComponent } from './PatientComponent';
+import { AnamnesaTabContent } from './AnamnesaTabContent';
+import { DiagnosisTabContent } from './DiagnosisTabContent';
 
+
+type TabType = 'journey' | 'anamnesa' | 'diagnosis';
 
 export interface journeyTab {
     id: Id,
@@ -22,6 +26,7 @@ export interface journeyTab {
     position: number,
     servicePointID?: number
     is_owned: boolean,
+    type: TabType,
 }
 
 export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComponentProps) => {
@@ -34,6 +39,10 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
     const viewPatientRecordDrawer = useDrawer();
+    const medicalTabs: journeyTab[] = [
+        { id: 'anamnesa', name: 'Anamnesa', position: 999, is_owned: true, type: 'anamnesa' },
+        { id: 'diagnosis', name: 'Diagnosis', position: 1000, is_owned: true, type: 'diagnosis' },
+    ];
 
     const updateSelectedProducts = (products: CheckoutProduct[]) => {
         setSelectedProducts(prev => {
@@ -62,20 +71,21 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     }
 
     const GenerateVisitTab = async (_patientVisit: GetPatientVisitDetailedResponse, journeyPoints: JourneyPoint[]) => {
-        var setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
+        const setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
         const journeyPointMap = new Map<Id, JourneyPoint>();
         for (const jp of journeyPoints) {
             journeyPointMap.set(jp.id, jp);
         }
-        var _activeTab: journeyTab = {
+        const _activeTab: journeyTab = {
             id: _patientVisit.journey_point_id,
             name: _patientVisit.journey_point.name,
             position: journeyPointMap.get(_patientVisit.journey_point.id)?.position || 0,
             servicePointID: _patientVisit.service_point_id,
             is_owned: journeyPointMap.get(_patientVisit.journey_point.id)?.is_owned || false,
+            type: 'journey',
         }
         updateActiveTab(_activeTab);
-        var journeyPointTabs: journeyTab[] = [
+        const journeyPointTabs: journeyTab[] = [
             _activeTab,
         ];
         for (const patientVisitJourneyPoint of _patientVisit.patient_journeypoints) {
@@ -85,7 +95,8 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     id: patientVisitJourneyPoint.journey_point_id,
                     name: patientVisitJourneyPoint.name_mst_journey_point,
                     position: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.position || 0,
-                    is_owned: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.is_owned || false
+                    is_owned: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.is_owned || false,
+                    type: 'journey',
                 } as journeyTab);
             }
         }
@@ -242,7 +253,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 </div>
                 <div className='border-b border-gray-200 mb-6 pb-2'>
                     <ul className='flex'>
-                        {journeyPointTab.sort((a, b) => a.position - b.position).map((item, idx) => {
+                        {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item, idx) => {
                             return (
                                 <li onClick={() => {
                                     updateActiveTab(item)
@@ -255,36 +266,48 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         })}
                     </ul>
                 </div>
-                <div className="flex flex-col lg:flex-row">
-                    {/* Product assignment panel - appears first on small screens */}
-                    <div className='w-full lg:w-3/12 order-1 lg:order-2 mb-4 lg:mb-0'>
-                        <ProductAssignmentPanel
-                            patientVisit={patientVisit}
-                            journeyPointId={activeTab.id as string}
-                            cartProducts={selectedProducts}
-                            orderedProducts={trxProduct}
-                            updateSelectedProducts={updateSelectedProducts}
-                            onAssignProduct={(productRequest: CheckoutProduct[]) => {
-                                updateProductOrder({
-                                    id: patientVisit.id,
-                                    product_cart: productRequest,
-                                })
-                            }}
-                            updatedOrderedProduct={setTrxProduct}
-                        />
+                {activeTab.type === 'anamnesa' && (
+                    <div className="w-full">
+                        <AnamnesaTabContent visitId={patientVisitId} patient={patient} />
                     </div>
-                    {/* Notes panel - appears second on small screens */}
-                    <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1">
-                        <PatientVisitlDetailNotes
-                            visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
-                            activeTab={activeTab}
-                            patientVisit={patientVisit}
-                            journeyPoints={boardJourneyPoints}
-                            upsertVisitDetailFunc={upsertVisitDetail}
-                            updateVisitFunc={updateProductOrder}
-                        />
+                )}
+                {activeTab.type === 'diagnosis' && (
+                    <div className="w-full">
+                        <DiagnosisTabContent visitId={patientVisitId} patient={patient} />
                     </div>
-                </div>
+                )}
+                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && (
+                    <div className="flex flex-col lg:flex-row">
+                        {/* Product assignment panel - appears first on small screens */}
+                        <div className='w-full lg:w-3/12 order-1 lg:order-2 mb-4 lg:mb-0'>
+                            <ProductAssignmentPanel
+                                patientVisit={patientVisit}
+                                journeyPointId={activeTab.id as string}
+                                cartProducts={selectedProducts}
+                                orderedProducts={trxProduct}
+                                updateSelectedProducts={updateSelectedProducts}
+                                onAssignProduct={(productRequest: CheckoutProduct[]) => {
+                                    updateProductOrder({
+                                        id: patientVisit.id,
+                                        product_cart: productRequest,
+                                    })
+                                }}
+                                updatedOrderedProduct={setTrxProduct}
+                            />
+                        </div>
+                        {/* Notes panel - appears second on small screens */}
+                        <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1">
+                            <PatientVisitlDetailNotes
+                                visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
+                                activeTab={activeTab}
+                                patientVisit={patientVisit}
+                                journeyPoints={boardJourneyPoints}
+                                upsertVisitDetailFunc={upsertVisitDetail}
+                                updateVisitFunc={updateProductOrder}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
             <Drawer
                 isOpen={viewPatientRecordDrawer.isOpen}
