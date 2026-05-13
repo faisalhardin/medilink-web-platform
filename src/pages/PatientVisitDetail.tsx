@@ -1,4 +1,4 @@
-import { EncounterPageComponent } from '@components/EncounterPage';
+import { PatientVisitComponent } from '@components/PatientVisitDetail';
 import { useRouteParams } from '../hooks/useRouteParams';
 
 interface PatientVisitDetailPageProps {
@@ -10,5 +10,5 @@ export default function PatientVisitDetailPage(props: PatientVisitDetailPageProp
   const { id } = useRouteParams(props);
   const visitId = id ? parseInt(id, 10) : 0;
 
-  return <EncounterPageComponent visitId={visitId} isModal={!!props.isModal} />;
+  return <PatientVisitComponent patientVisitId={visitId} />;
 }
