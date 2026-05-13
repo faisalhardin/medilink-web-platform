@@ -45,6 +45,10 @@ export interface DiagnosisEntry {
   doctor_id: string;
   doctor_name: string;
   rank: number;
+  /** Present on visit-detail API payloads */
+  updated_at?: string;
+  created_at?: string;
+  note?: string | null;
 }
 
 export interface SaveDiagnosisRow {
