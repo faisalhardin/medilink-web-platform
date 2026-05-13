@@ -1,12 +1,73 @@
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { GetPatientVisitDetailedByID, ListPatients, ListVisitsByParams, RegisterPatientRequest } from "@requests/patient";
+import { DiagnosisEntry, PROGNOSIS_OPTIONS } from "@models/diagnosis";
 import { GetPatientParam, GetPatientVisitDetailedResponse, Patient, Patient as PatientModel, PatientVisit, PatientVisitDetail, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { EditorComponent } from "./EditorComponent";
 import { isValidIndonesianNIK, isValidIndonesianPhone, normalizeIndonesianPhone } from "@utils/common";
 import HorizontalScroll from "./HorizontalScroll";
+
+type VisitProductLine = {
+    id: number;
+    name: string;
+    quantity: number;
+    unit_type: string;
+    lineTotal: number;
+};
+
+function getVisitProductLines(detail: GetPatientVisitDetailedResponse): VisitProductLine[] {
+    const fromProducts = detail.products;
+    if (fromProducts != null && fromProducts.length > 0) {
+        return fromProducts.map((p) => ({
+            id: p.id,
+            name: p.name,
+            quantity: p.quantity,
+            unit_type: p.unit_type,
+            lineTotal:
+                typeof p.total_price === 'number' && !Number.isNaN(p.total_price)
+                    ? p.total_price
+                    : p.price * p.quantity,
+        }));
+    }
+    return (detail.product_cart ?? []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        quantity: p.quantity,
+        unit_type: p.unit_type,
+        lineTotal: p.price * p.quantity,
+    }));
+}
+
+function hasAnamnesaContent(anamnesa: NonNullable<GetPatientVisitDetailedResponse['anamnesa']>): boolean {
+    if (anamnesa.id) return true;
+    if (anamnesa.chief_complaint?.trim()) return true;
+    if (anamnesa.secondary_complaint?.trim()) return true;
+    return false;
+}
+
+function formatVisitAnamnesaVitals(anamnesa: NonNullable<GetPatientVisitDetailedResponse['anamnesa']>): string | null {
+    const vs = anamnesa.vital_signs;
+    if (!vs) return null;
+    const parts: string[] = [];
+    if (vs.systolic !== '' && vs.systolic != null && vs.diastolic !== '' && vs.diastolic != null) {
+        parts.push(`BP ${vs.systolic}/${vs.diastolic}`);
+    }
+    const raw = vs as unknown as Record<string, unknown>;
+    const pulse =
+        typeof raw.pulse === 'number' && raw.pulse > 0
+            ? raw.pulse
+            : vs.heart_rate !== '' && vs.heart_rate != null && Number(vs.heart_rate) > 0
+                ? Number(vs.heart_rate)
+                : null;
+    if (pulse != null) parts.push(`Pulse ${pulse}`);
+    return parts.length ? parts.join(' · ') : null;
+}
+
+function prognosisLabel(value: NonNullable<DiagnosisEntry['prognosis']>): string {
+    return PROGNOSIS_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
 
 interface PatientListComponentProps {
     journey_board_id?: number;
@@ -708,6 +769,52 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
         }).format(amount);
     };
 
+    const visitWall = useMemo(() => {
+        if (!visitDetail) return null;
+        const productLines = getVisitProductLines(visitDetail);
+        const journeyLen = visitDetail.patient_journeypoints?.length ?? 0;
+        const rawAnamnesa = visitDetail.anamnesa;
+        const hasAnamnesa = rawAnamnesa != null && hasAnamnesaContent(rawAnamnesa);
+        const diagnoses = [...(visitDetail.diagnoses ?? [])].sort((a, b) => a.rank - b.rank);
+        const hasDiagnoses = diagnoses.length > 0;
+        const hasProducts = productLines.length > 0;
+        const hasJourney = journeyLen > 0;
+        const hasVisitWallContent = hasJourney || hasProducts || hasAnamnesa || hasDiagnoses;
+        const extraCards =
+            (hasAnamnesa ? 1 : 0) + (hasDiagnoses ? 1 : 0) + (hasProducts ? 1 : 0);
+        const totalWallItems = extraCards + journeyLen;
+        const useNarrowWall = totalWallItems <= 1;
+        const overviewParts: string[] = [];
+        if (hasJourney) overviewParts.push(`${journeyLen} journey point${journeyLen !== 1 ? 's' : ''}`);
+        if (hasAnamnesa) overviewParts.push('Anamnesa');
+        if (hasDiagnoses) overviewParts.push(`${diagnoses.length} diagnosis${diagnoses.length !== 1 ? 'es' : ''}`);
+        if (hasProducts) overviewParts.push(`${productLines.length} product${productLines.length !== 1 ? 's' : ''}`);
+        const overviewSummary =
+            overviewParts.length > 0 ? overviewParts.join(' · ') : 'No recorded items';
+        const anamnesaVitals =
+            hasAnamnesa && rawAnamnesa ? formatVisitAnamnesaVitals(rawAnamnesa) : null;
+        const latestDiagnosisUpdate = diagnoses.reduce<string | undefined>((acc, d) => {
+            if (!d.updated_at) return acc;
+            if (!acc || new Date(d.updated_at) > new Date(acc)) return d.updated_at;
+            return acc;
+        }, undefined);
+        return {
+            productLines,
+            journeyLen,
+            hasAnamnesa,
+            anamnesa: rawAnamnesa,
+            anamnesaVitals,
+            diagnoses,
+            hasDiagnoses,
+            hasProducts,
+            hasJourney,
+            hasVisitWallContent,
+            useNarrowWall,
+            overviewSummary,
+            latestDiagnosisUpdate,
+        };
+    }, [visitDetail]);
+
     if (isLoading) {
         return (
             <div className="p-6 w-full">
@@ -819,7 +926,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                     </div>
                 </div>
             )}
-            {!isLoadingDetail && visitDetail && visitDetail.id === activeTab && (
+            {!isLoadingDetail && visitDetail && visitDetail.id === activeTab && visitWall && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     {/* Visit Header */}
                     <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -833,36 +940,154 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                 </p>
                             </div>
                             <div className="text-right">
-                                <div className="text-sm text-gray-500">
-                                    {visitDetail.patient_journeypoints?.length} journey point{visitDetail.patient_journeypoints?.length !== 1 ? 's' : ''}
+                                <div className="text-sm text-gray-500 max-w-xs sm:max-w-md">
+                                    {visitWall.overviewSummary}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Journey Points - Pinterest Style Wall */}
+                    {/* Visit overview — journey, anamnesa, diagnoses, products */}
                     <div className="p-6">
-                        {visitDetail.patient_journeypoints?.length === 0 ? (
+                        {!visitWall.hasVisitWallContent ? (
                             <div className="text-center py-12">
                                 <div className="text-gray-400 mb-4">
                                     <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
                                 </div>
-                                <h3 className="text-sm font-medium text-gray-900 mb-2">No journey points recorded</h3>
-                                <p className="text-sm text-gray-500">This visit doesn't have any journey points yet.</p>
+                                <h3 className="text-sm font-medium text-gray-900 mb-2">No visit overview yet</h3>
+                                <p className="text-sm text-gray-500">
+                                    This visit has no journey points, anamnesa, diagnoses, or ordered products recorded.
+                                </p>
                             </div>
                         ) : (
                             <div
-                                className={`w-full ${(visitDetail.patient_journeypoints == undefined || visitDetail.patient_journeypoints?.length === 1)
+                                className={`w-full ${visitWall.useNarrowWall
                                     ? 'max-w-2xl mx-auto'
                                     : isInDrawer ? 'columns-1 gap-6' : 'columns-1 md:columns-2 gap-6'
                                     }`}
                             >
-                                {/* Products Card - Show first if products exist */}
-                                {visitDetail.product_cart && visitDetail.product_cart.length > 0 && (
+                                {/* Anamnesa */}
+                                {visitWall.hasAnamnesa && visitWall.anamnesa && (
                                     <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6">
-                                        {/* Card Header */}
+                                        <div className="p-4 border-b border-gray-100">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="h-8 w-8 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center text-white">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M5 5a2 2 0 012-2h10a2 2 0 012 2v14l-7-4-7 4V5z" />
+                                                        </svg>
+                                                    </div>
+                                                    <h4 className="text-base font-semibold text-gray-900">Anamnesa</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 space-y-3 text-sm text-gray-800">
+                                            {visitWall.anamnesa.chief_complaint?.trim() ? (
+                                                <div>
+                                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Chief complaint</p>
+                                                    <p className="mt-0.5">{visitWall.anamnesa.chief_complaint}</p>
+                                                </div>
+                                            ) : null}
+                                            {visitWall.anamnesa.secondary_complaint?.trim() ? (
+                                                <div>
+                                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Secondary / additional</p>
+                                                    <p className="mt-0.5">{visitWall.anamnesa.secondary_complaint}</p>
+                                                </div>
+                                            ) : null}
+                                            {(() => {
+                                                const hist = (visitWall.anamnesa as { history_of_illness?: string | null }).history_of_illness;
+                                                return hist?.trim() ? (
+                                                    <div>
+                                                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">History of illness</p>
+                                                        <p className="mt-0.5">{hist}</p>
+                                                    </div>
+                                                ) : null;
+                                            })()}
+                                            {visitWall.anamnesaVitals ? (
+                                                <div>
+                                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vitals</p>
+                                                    <p className="mt-0.5 text-gray-700">{visitWall.anamnesaVitals}</p>
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
+                                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+                                                <span>
+                                                    {visitWall.anamnesa.doctor_name || visitWall.anamnesa.nurse_name
+                                                        ? [visitWall.anamnesa.doctor_name, visitWall.anamnesa.nurse_name].filter(Boolean).join(' · ')
+                                                        : 'Staff'}
+                                                </span>
+                                                <span>
+                                                    {(() => {
+                                                        const u = (visitWall.anamnesa as { updated_at?: string }).updated_at;
+                                                        return u ? `Updated ${formatRelativeTime(u)}` : '';
+                                                    })()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Diagnoses */}
+                                {visitWall.hasDiagnoses && (
+                                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6">
+                                        <div className="p-4 border-b border-gray-100">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="h-8 w-8 bg-gradient-to-br from-rose-500 to-red-600 rounded-full flex items-center justify-center text-white">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                                        </svg>
+                                                    </div>
+                                                    <h4 className="text-base font-semibold text-gray-900">Diagnoses</h4>
+                                                </div>
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                                    {visitWall.diagnoses.length} record{visitWall.diagnoses.length !== 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 space-y-3">
+                                            {visitWall.diagnoses.map((row) => (
+                                                <div
+                                                    key={row.id ?? `diag-${row.rank}-${row.icd10_code}`}
+                                                    className="border border-gray-100 rounded-lg p-3 bg-gray-50/80"
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-xs font-mono text-gray-500">{row.icd10_code}</p>
+                                                            <p className="text-sm font-medium text-gray-900 mt-0.5">{row.icd10_display}</p>
+                                                            {row.doctor_name ? (
+                                                                <p className="text-xs text-gray-500 mt-1">{row.doctor_name}</p>
+                                                            ) : null}
+                                                        </div>
+                                                        <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase bg-white border border-gray-200 text-gray-700">
+                                                            {row.type}
+                                                        </span>
+                                                    </div>
+                                                    {row.prognosis ? (
+                                                        <p className="text-xs text-gray-600 mt-2">
+                                                            Prognosis: <span className="font-medium">{prognosisLabel(row.prognosis)}</span>
+                                                        </p>
+                                                    ) : null}
+                                                    {row.note?.trim() ? (
+                                                        <p className="text-xs text-gray-600 mt-1">{row.note}</p>
+                                                    ) : null}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100 text-xs text-gray-500">
+                                            {visitWall.latestDiagnosisUpdate
+                                                ? `Last updated ${formatRelativeTime(visitWall.latestDiagnosisUpdate)}`
+                                                : null}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Products */}
+                                {visitWall.hasProducts && (
+                                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6">
                                         <div className="p-4 border-b border-gray-100">
                                             <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center space-x-3">
@@ -878,15 +1103,13 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                     </h4>
                                                 </div>
                                                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                    {visitDetail.product_cart.length} item{visitDetail.product_cart.length !== 1 ? 's' : ''}
+                                                    {visitWall.productLines.length} item{visitWall.productLines.length !== 1 ? 's' : ''}
                                                 </span>
                                             </div>
                                         </div>
-
-                                        {/* Products List */}
                                         <div className="p-4">
                                             <div className="space-y-3">
-                                                {visitDetail.product_cart.map((product) => (
+                                                {visitWall.productLines.map((product) => (
                                                     <div key={product.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                                         <div className="flex-1 min-w-0">
                                                             <p className="text-sm font-medium text-gray-900 truncate">
@@ -898,20 +1121,18 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-sm font-semibold text-gray-900">
-                                                                {formatCurrency(product.price * product.quantity)}
+                                                                {formatCurrency(product.lineTotal)}
                                                             </p>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
-
-                                        {/* Card Footer - Grand Total */}
                                         <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-semibold text-gray-900">Total</span>
                                                 <span className="text-lg font-bold text-gray-900">
-                                                    {formatCurrency(visitDetail.product_cart.reduce((sum, product) => sum + product.price * product.quantity, 0))}
+                                                    {formatCurrency(visitWall.productLines.reduce((sum, product) => sum + product.lineTotal, 0))}
                                                 </span>
                                             </div>
                                         </div>
@@ -930,11 +1151,10 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                 ) : (
                                     visitDetail.patient_journeypoints?.map((journeyPoint, index) => (
                                         <div
-                                            key={index}
+                                            key={journeyPoint.id ?? `jp-${journeyPoint.journey_point_id}-${index}`}
                                             className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6 ${visitDetail.patient_journeypoints?.length === 1 ? 'w-full' : ''
                                                 }`}
                                         >
-                                            {/* Card Header */}
                                             <div className="p-4 border-b border-gray-100">
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center space-x-3">
@@ -949,8 +1169,6 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                         {getStatusText(journeyPoint)}
                                                     </span>
                                                 </div>
-
-                                                {/* Meta Information */}
                                                 <div className="space-y-2 text-xs text-gray-500">
                                                     <div className="flex items-center space-x-2">
                                                         <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -960,8 +1178,6 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Comment Box Content */}
                                             <div className="p-4">
                                                 <div className="bg-gray-50 rounded-lg border border-gray-200 px-2 min-h-[100px] overflow-y-auto">
                                                     <EditorComponent
@@ -974,8 +1190,6 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                     />
                                                 </div>
                                             </div>
-
-                                            {/* Card Footer */}
                                             <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
                                                 <div className="flex items-center justify-between text-xs text-gray-500">
                                                     <span>Last updated {formatRelativeTime(journeyPoint?.create_time || '')}</span>

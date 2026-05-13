@@ -1,4 +1,6 @@
+import { AnamnesaData } from "./anamnesa";
 import { CommonQueryParams } from "./common";
+import { DiagnosisEntry } from "./diagnosis";
 import { JourneyPoint } from "./journey";
 import { CheckoutProduct, Product } from "./product";
 
@@ -61,6 +63,10 @@ export interface GetPatientVisitDetailedResponse {
   patient: Patient;
   journey_point: JourneyPoint;
   product_cart: Product[];
+  /** Ordered line items when API returns checkout snapshot; prefer over `product_cart` when present. */
+  products?: CheckoutProduct[] | null;
+  anamnesa?: AnamnesaData | null;
+  diagnoses?: DiagnosisEntry[] | null;
 }
 
 export interface PatientVisit {
