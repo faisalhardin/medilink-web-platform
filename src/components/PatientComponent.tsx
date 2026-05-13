@@ -1,9 +1,9 @@
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
-import { ListPatients, ListVisitsDetailed, RegisterPatientRequest } from "@requests/patient";
-import { GetPatientParam, Patient, Patient as PatientModel, PatientVisitDetail, PatientVisitDetailed, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
+import { GetPatientVisitDetailedByID, ListPatients, ListVisitsByParams, RegisterPatientRequest } from "@requests/patient";
+import { GetPatientParam, GetPatientVisitDetailedResponse, Patient, Patient as PatientModel, PatientVisit, PatientVisitDetail, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
 import { EditorComponent } from "./EditorComponent";
 import { isValidIndonesianNIK, isValidIndonesianPhone, normalizeIndonesianPhone } from "@utils/common";
 import HorizontalScroll from "./HorizontalScroll";
@@ -528,10 +528,12 @@ export function PatientListComponent({ onPatientSelect, isInDrawer = false }: Pa
 
 export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, isInDrawer }: PatientVisitsComponentProps) => {
     const { t } = useTranslation();
-    const [patientVisits, setPatientVisits] = useState<PatientVisitDetailed[]>([]);
+    const [patientVisits, setPatientVisits] = useState<PatientVisit[]>([]);
+    const [visitDetail, setVisitDetail] = useState<GetPatientVisitDetailedResponse | null>(null);
     const [internalPatient, setPatient] = useState<Patient | null>(patient || null);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingDetail, setIsLoadingDetail] = useState(false);
     // Pagination states
     const [currentOffset, setCurrentOffset] = useState(offset || 0);
     const [hasMoreVisits, setHasMoreVisits] = useState(true);
@@ -541,7 +543,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
     const fetchVisits = async () => {
         try {
             setIsLoading(true);
-            const response = await ListVisitsDetailed({
+            const response = await ListVisitsByParams({
                 patient_uuid: patient_uuid,
                 limit: limit,
                 offset: offset,
@@ -554,6 +556,9 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
 
             if (response.length > 0) {
                 setActiveTab(response[0].id);
+            } else {
+                setActiveTab(0);
+                setVisitDetail(null);
             }
         } catch (err) {
             console.error(err);
@@ -569,7 +574,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
         try {
             setIsLoadingMore(true);
             const newOffset = currentOffset + limit;
-            const response = await ListVisitsDetailed({
+            const response = await ListVisitsByParams({
                 patient_uuid: patient_uuid,
                 limit: limit,
                 offset: newOffset,
@@ -608,7 +613,41 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
         }
     }, [patient_uuid, internalPatient]);
 
-    const activeVisit = patientVisits.find(visit => visit.id === activeTab);
+    useLayoutEffect(() => {
+        if (activeTab === 0) {
+            setVisitDetail(null);
+            setIsLoadingDetail(false);
+            return;
+        }
+        setVisitDetail(null);
+        setIsLoadingDetail(true);
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 0) return;
+        let cancelled = false;
+        const fetchDetail = async () => {
+            try {
+                const detail = await GetPatientVisitDetailedByID(activeTab);
+                if (!cancelled) {
+                    setVisitDetail(detail);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    console.error(err);
+                    setVisitDetail(null);
+                }
+            } finally {
+                if (!cancelled) {
+                    setIsLoadingDetail(false);
+                }
+            }
+        };
+        fetchDetail();
+        return () => {
+            cancelled = true;
+        };
+    }, [activeTab]);
 
 
     // Helper function to format date
@@ -767,22 +806,35 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
             </div>
 
             {/* Active Visit Content */}
-            {activeVisit && (
+            {isLoadingDetail && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="flex items-center justify-center py-16">
+                        <div className="flex items-center space-x-2">
+                            <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="text-gray-600">Loading visit details...</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {!isLoadingDetail && visitDetail && visitDetail.id === activeTab && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     {/* Visit Header */}
                     <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    Visit #{activeVisit.id}
+                                    Visit #{visitDetail.id}
                                 </h3>
                                 <p className="text-sm text-gray-600 mt-1">
-                                    Started {formatDateTime(activeVisit.create_time)}
+                                    Started {formatDateTime(visitDetail.create_time)}
                                 </p>
                             </div>
                             <div className="text-right">
                                 <div className="text-sm text-gray-500">
-                                    {activeVisit.patient_journeypoints?.length} journey point{activeVisit.patient_journeypoints?.length !== 1 ? 's' : ''}
+                                    {visitDetail.patient_journeypoints?.length} journey point{visitDetail.patient_journeypoints?.length !== 1 ? 's' : ''}
                                 </div>
                             </div>
                         </div>
@@ -790,7 +842,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
 
                     {/* Journey Points - Pinterest Style Wall */}
                     <div className="p-6">
-                        {activeVisit.patient_journeypoints?.length === 0 ? (
+                        {visitDetail.patient_journeypoints?.length === 0 ? (
                             <div className="text-center py-12">
                                 <div className="text-gray-400 mb-4">
                                     <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -802,13 +854,13 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                             </div>
                         ) : (
                             <div
-                                className={`w-full ${(activeVisit.patient_journeypoints == undefined || activeVisit.patient_journeypoints?.length === 1)
+                                className={`w-full ${(visitDetail.patient_journeypoints == undefined || visitDetail.patient_journeypoints?.length === 1)
                                     ? 'max-w-2xl mx-auto'
                                     : isInDrawer ? 'columns-1 gap-6' : 'columns-1 md:columns-2 gap-6'
                                     }`}
                             >
                                 {/* Products Card - Show first if products exist */}
-                                {activeVisit.products && activeVisit.products.length > 0 && (
+                                {visitDetail.product_cart && visitDetail.product_cart.length > 0 && (
                                     <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6">
                                         {/* Card Header */}
                                         <div className="p-4 border-b border-gray-100">
@@ -826,7 +878,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                     </h4>
                                                 </div>
                                                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                    {activeVisit.products.length} item{activeVisit.products.length !== 1 ? 's' : ''}
+                                                    {visitDetail.product_cart.length} item{visitDetail.product_cart.length !== 1 ? 's' : ''}
                                                 </span>
                                             </div>
                                         </div>
@@ -834,7 +886,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                         {/* Products List */}
                                         <div className="p-4">
                                             <div className="space-y-3">
-                                                {activeVisit.products.map((product) => (
+                                                {visitDetail.product_cart.map((product) => (
                                                     <div key={product.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                                         <div className="flex-1 min-w-0">
                                                             <p className="text-sm font-medium text-gray-900 truncate">
@@ -846,7 +898,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-sm font-semibold text-gray-900">
-                                                                {formatCurrency(product.total_price)}
+                                                                {formatCurrency(product.price * product.quantity)}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -859,14 +911,14 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-semibold text-gray-900">Total</span>
                                                 <span className="text-lg font-bold text-gray-900">
-                                                    {formatCurrency(activeVisit.products.reduce((sum, product) => sum + product.total_price, 0))}
+                                                    {formatCurrency(visitDetail.product_cart.reduce((sum, product) => sum + product.price * product.quantity, 0))}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
-                                {activeVisit.patient_journeypoints == undefined ? (
+                                {visitDetail.patient_journeypoints == undefined ? (
                                     <div className="text-center py-8">
                                         <div className="inline-flex items-center px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-500">
                                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -876,10 +928,10 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                         </div>
                                     </div>
                                 ) : (
-                                    activeVisit.patient_journeypoints?.map((journeyPoint, index) => (
+                                    visitDetail.patient_journeypoints?.map((journeyPoint, index) => (
                                         <div
                                             key={index}
-                                            className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6 ${activeVisit.patient_journeypoints?.length === 1 ? 'w-full' : ''
+                                            className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6 ${visitDetail.patient_journeypoints?.length === 1 ? 'w-full' : ''
                                                 }`}
                                         >
                                             {/* Card Header */}
@@ -934,6 +986,13 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                 )}
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+            {!isLoadingDetail && !visitDetail && activeTab !== 0 && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="text-center py-12 px-6 text-sm text-gray-500">
+                        Could not load visit details.
                     </div>
                 </div>
             )}
