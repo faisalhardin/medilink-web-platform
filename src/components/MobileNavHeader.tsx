@@ -11,7 +11,7 @@ interface MobileNavHeaderProps {
 // Helper function to format route path to readable breadcrumb
 const getBreadcrumbLabel = async (pathname: string, t: (key: string) => string): Promise<string> => {
   const routeMap: Record<string, string> = {
-    '/': t('pages.home'),
+    '/': t('navigation.institution'),
     '/institution': t('navigation.institution'),
     '/patient': t('navigation.patient'),
     '/patient-detail': t('patient.patientDetail'),

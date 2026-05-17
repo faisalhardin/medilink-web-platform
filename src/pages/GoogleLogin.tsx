@@ -35,7 +35,7 @@ const GoogleLogin = () => {
                     notifyAuthStateChanged();
                     
                     // Redirect to home page after successful login
-                    navigate('/');
+                    navigate('/institution');
                 } else {
                     setError(t('auth.tokenNotReceived'));
                 }

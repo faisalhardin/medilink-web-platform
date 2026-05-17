@@ -7,6 +7,7 @@ import { useAuthState } from "hooks/useAuthCallback";
 import UserComponent from "./UserComponent";
 import { useEffect } from "react";
 import { getJourneyBoardsCached } from "hooks/useJourneyBoards";
+import medianneDashboardLogo from "../assets/icons/MedianneDashboard.svg";
 
 interface ColumnNavProps {
   isMobileNavOpen?: boolean;
@@ -62,7 +63,18 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
       `}>
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0 flex items-center justify-between">
-          <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">{t('navigation.dashboard')}</h1>
+          <NavLink
+            to="/institution"
+            onClick={handleNavClick}
+            className="flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded"
+            aria-label={t('navigation.dashboard')}
+          >
+            <img
+              src={medianneDashboardLogo}
+              alt=""
+              className="h-8 w-auto"
+            />
+          </NavLink>
           {/* Close button - mobile only */}
           {setIsMobileNavOpen && (
             <button
