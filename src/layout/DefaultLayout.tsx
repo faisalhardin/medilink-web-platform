@@ -1,6 +1,5 @@
 import ColumnNav from "@components/NavColumn";
 import { MobileNavHeader } from "@components/MobileNavHeader";
-import Home from "@pages/Home";
 import Institution from "@pages/Institution";
 import InventoryPage from "@pages/Inventory";
 import ProductReplenishmentPage from "@pages/ProductReplenishment";
@@ -15,7 +14,7 @@ import GoogleLogin from "@pages/GoogleLogin";
 import TokenExpired from "@pages/TokenExpired";
 import ProtectedRoute from "@components/ProtectedRoute";
 import RecallPage from "@pages/Recall";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 // import PatieVisitReg
 
@@ -48,7 +47,7 @@ const DefaultLayout = () => {
           {/* Protected routes - authentication required */}
           <Route path="/" element={
             <ProtectedRoute>
-              <Home />
+              <Navigate to="/institution" replace />
             </ProtectedRoute>
           } />
           <Route path="/institution" element={
