@@ -3,7 +3,18 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { ChevronDownIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { PatientVisit } from '@models/patient';
 import { ListProducts } from '@requests/products';
-import { Product, CheckoutProduct, TrxVisitProduct, ProductPanelProps, ProductOrderConfirmationProps } from '@models/product';
+import {
+  Product,
+  CheckoutProduct,
+  TrxVisitProduct,
+  ProductPanelProps,
+  ProductOrderConfirmationProps,
+  cartProductsForVisitUpdate,
+  hasCartPendingChange,
+  isMarkedForRemoval,
+  resolveOrderedLine,
+  visitProductOrderPostPayload,
+} from '@models/product';
 import { debounce } from 'lodash';
 import { UpdatePatientVisit } from '@requests/patient';
 import { convertProductToCheckoutProduct, formatPrice } from '@utils/common'
@@ -30,6 +41,7 @@ interface ProductQuantityPanelProps {
   unitType: string;
   cartQuantity: number;
   orderedQuantity: number;
+  markedForRemoval?: boolean;
   price: number;
   adjustedPrice: number;
   variant: ProductPanelVariant;
@@ -85,6 +97,7 @@ const ProductQuantityPanel = ({
   cartQuantity,
   adjustedPrice,
   orderedQuantity,
+  markedForRemoval = false,
   variant,
   embedded = false,
   decrementQuantity,
@@ -98,6 +111,8 @@ const ProductQuantityPanel = ({
 
   const isReadOnly = variant === 'current';
   const isNewProduct = variant === 'pending' && orderedQuantity === 0;
+  const isRemovePending =
+    orderedQuantity > 0 && markedForRemoval && variant !== 'current';
   const displayQuantity = isReadOnly ? orderedQuantity : cartQuantity;
   const quantityDiff = cartQuantity - orderedQuantity;
   const showPriceEdit = variant === 'checkout';
@@ -195,9 +210,18 @@ const ProductQuantityPanel = ({
       </div>
       {variant === 'pending' && orderedQuantity > 0 && quantityDiff !== 0 && (
         <span
-          className={`shrink-0 font-semibold ${quantityDiff > 0 ? 'text-emerald-600' : 'text-amber-600'}`}
+          className={`shrink-0 font-semibold ${isRemovePending
+            ? 'text-rose-600'
+            : quantityDiff > 0
+              ? 'text-emerald-600'
+              : 'text-amber-600'
+            }`}
         >
-          {quantityDiff > 0 ? `+${quantityDiff}` : quantityDiff}
+          {isRemovePending
+            ? `-${orderedQuantity}`
+            : quantityDiff > 0
+              ? `+${quantityDiff}`
+              : quantityDiff}
         </span>
       )}
     </>
@@ -244,10 +268,19 @@ const ProductQuantityPanel = ({
     </div>
   );
 
+  // Purchased accordion wraps the whole group with REMOVE; avoid duplicate label on embedded row.
+  if (isRemovePending && !embedded) {
+    return (
+      <FolderLabels labels={[{ text: t('product.remove'), color: 'rose' }]} className="py-0">
+        {cardContent}
+      </FolderLabels>
+    );
+  }
+
   if (!isNewProduct) return cardContent;
 
   return (
-    <FolderLabels labels={[{ text: t('product.new'), color: 'violet' }]} className='py-0'>
+    <FolderLabels labels={[{ text: t('product.new'), color: 'violet' }]} className="py-0">
       {cardContent}
     </FolderLabels>
   );
@@ -255,6 +288,7 @@ const ProductQuantityPanel = ({
 
 interface ProductGroupItemProps {
   product: ProductPanelProps;
+  orderedProducts: TrxVisitProduct[];
   renderPanel: (
     product: ProductPanelProps,
     variant: ProductPanelVariant,
@@ -262,11 +296,14 @@ interface ProductGroupItemProps {
   ) => React.ReactNode;
 }
 
-function ProductGroupItem({ product, renderPanel }: ProductGroupItemProps) {
-  const orderedQty = product.orderedProduct?.quantity ?? 0;
+function ProductGroupItem({ product, orderedProducts, renderPanel }: ProductGroupItemProps) {
+  const orderedLine = resolveOrderedLine(product, orderedProducts);
+  const orderedQty = orderedLine?.quantity ?? 0;
   const cartQty = product.cartProduct?.quantity ?? 0;
   const hasPurchased = orderedQty > 0;
-  const hasPendingChange = cartQty !== orderedQty && cartQty >= 0;
+  const cart = product.cartProduct;
+  const hasPendingChange = hasCartPendingChange(cart, orderedQty);
+  const isRemovePending = isMarkedForRemoval(cart, orderedQty);
   const quantityDiff = cartQty - orderedQty;
 
   const [expanded, setExpanded] = useState(false);
@@ -275,43 +312,64 @@ function ProductGroupItem({ product, renderPanel }: ProductGroupItemProps) {
     return null;
   }
 
-  return (
-    <li className="overflow-hidden rounded-md">
-      {hasPurchased && (
-        <>
-          <button
-            type="button"
-            aria-expanded={expanded}
-            aria-label={t('product.expandToChangeQuantity')}
-            onClick={() => setExpanded((open) => !open)}
-            className="flex min-h-8 w-full items-center gap-1.5 border-b border-gray-100 bg-white px-2 py-0 text-left transition-colors hover:bg-gray-100/90 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-          >
-            <div className="min-w-0 flex-1">{renderPanel(product, 'current', true)}</div>
-            <div className="flex shrink-0 items-center gap-1">
-              {hasPendingChange && !expanded && (
-                <span
-                  className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${quantityDiff > 0
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-amber-100 text-amber-700'
-                    }`}
-                >
-                  {quantityDiff > 0 ? `+${quantityDiff}` : quantityDiff}
-                </span>
-              )}
-              <ChevronDownIcon
-                className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
-              />
-            </div>
-          </button>
-          {expanded && (
-            <div className="border-t border-blue-100 bg-blue-50">
-              {renderPanel(product, 'pending', true)}
-            </div>
+  const purchasedAccordion = (
+    <>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-label={t('product.expandToChangeQuantity')}
+        onClick={() => setExpanded((open) => !open)}
+        className="flex min-h-8 w-full items-center gap-1.5 border-b border-gray-100 bg-white px-2 py-0 text-left transition-colors hover:bg-gray-100/90 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+      >
+        <div className="min-w-0 flex-1">{renderPanel(product, 'current', true)}</div>
+        <div className="flex shrink-0 items-center gap-1">
+          {hasPendingChange && !expanded && (
+            <span
+              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${isRemovePending
+                ? 'bg-rose-100 text-rose-700'
+                : quantityDiff > 0
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-amber-100 text-amber-700'
+                }`}
+            >
+              {isRemovePending
+                ? `-${orderedQty}`
+                : quantityDiff > 0
+                  ? `+${quantityDiff}`
+                  : quantityDiff}
+            </span>
           )}
-        </>
+          <ChevronDownIcon
+            className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          />
+        </div>
+      </button>
+      {expanded && (
+        <div
+          className={
+            isRemovePending ? 'border-t border-rose-100 bg-rose-50/30' : 'border-t border-blue-100 bg-blue-50'
+          }
+        >
+          {renderPanel(product, 'pending', true)}
+        </div>
       )}
+    </>
+  );
+
+  return (
+    <li>
+      {hasPurchased &&
+        (isRemovePending ? (
+          <FolderLabels labels={[{ text: t('product.remove'), color: 'rose' }]} className="py-0">
+            {purchasedAccordion}
+          </FolderLabels>
+        ) : (
+          <div className="overflow-hidden rounded-md border border-gray-200">{purchasedAccordion}</div>
+        ))}
       {!hasPurchased && hasPendingChange && (
-        <div className="bg-white">{renderPanel(product, 'pending', false)}</div>
+        <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+          {renderPanel(product, 'pending', false)}
+        </div>
       )}
     </li>
   );
@@ -332,17 +390,24 @@ export const ProductAssignmentPanel = ({
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const cartDrawer = useDrawer();
 
-  const updateVisitCart = async (patientVisit: PatientVisit, productsCart: CheckoutProduct[]) => {
+  const updateVisitCart = async (
+    patientVisit: PatientVisit,
+    productsCart: CheckoutProduct[],
+    ordered: TrxVisitProduct[]
+  ) => {
     await UpdatePatientVisit({
       id: patientVisit.id,
-      product_cart: productsCart
+      product_cart: cartProductsForVisitUpdate(productsCart, ordered),
     });
   };
 
   const debouncedUpdateCart = useCallback(
-    debounce(async (patientVisit: PatientVisit, products: CheckoutProduct[]) => {
-      updateVisitCart(patientVisit, products);
-    }, 1000),
+    debounce(
+      async (patientVisit: PatientVisit, products: CheckoutProduct[], ordered: TrxVisitProduct[]) => {
+        await updateVisitCart(patientVisit, products, ordered);
+      },
+      1000
+    ),
     []
   );
 
@@ -379,7 +444,7 @@ export const ProductAssignmentPanel = ({
     const updatedProducts = addProduct({ ...product, quantity: 1 });
     setSearchTerm(product.name);
     setShowResults(false);
-    debouncedUpdateCart(patientVisit, updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
   };
 
   useEffect(() => {
@@ -394,12 +459,15 @@ export const ProductAssignmentPanel = ({
     }
 
     // 3. Create a comprehensive product list
-    const cartProductIds = new Set(_cartProducts.map(p => p?.id).filter(Boolean));
+    const cartProductIds = new Set(
+      _cartProducts.map((p) => Number(p?.id)).filter((id) => !Number.isNaN(id) && id !== 0)
+    );
 
     // 4. Find ordered products that aren't in cart
-    const missingFromCart = orderedProductsList.filter(prod =>
-      prod?.id_trx_institution_product &&
-      !cartProductIds.has(prod.id_trx_institution_product)
+    const missingFromCart = orderedProductsList.filter(
+      (prod) =>
+        prod?.id_trx_institution_product &&
+        !cartProductIds.has(Number(prod.id_trx_institution_product))
     );
 
     // 5. Convert missing ordered products to cart format
@@ -480,34 +548,36 @@ export const ProductAssignmentPanel = ({
 
   const productPanelList = useMemo(() => {
     const cartProduct = cartProducts.reduce((prev, prod) => {
-      prev[prod.id] = prod;
+      const id = Number(prod.id);
+      prev[id] = prod;
       return prev;
-    }, {} as { [key: number]: CheckoutProduct });
-    const panelProps: ProductPanelProps[] = orderedProducts.map((prod) => {
+    }, {} as Record<number, CheckoutProduct>);
 
-      let _cartProduct = cartProduct && cartProduct[prod.id_trx_institution_product];
+    const panelProps: ProductPanelProps[] = orderedProducts.map((prod) => {
+      const oid = Number(prod.id_trx_institution_product);
+      let _cartProduct = cartProduct[oid];
       if (_cartProduct) {
-        delete cartProduct[prod.id_trx_institution_product];
+        delete cartProduct[oid];
       }
 
       return {
-        product_id: prod.id_trx_institution_product,
+        product_id: oid,
         cartProduct: _cartProduct,
         orderedProduct: prod,
       } as ProductPanelProps;
-    })
-    const isEmpty = !cartProduct || Object.entries(cartProduct).length === 0;
-    if (isEmpty) {
-      return panelProps;
-    }
+    });
 
-    for (const key in cartProduct) {
+    for (const oid of Object.keys(cartProduct).map((k) => Number(k))) {
+      const cartLine = cartProduct[oid];
+      const orderedMatch = orderedProducts.find(
+        (o) => Number(o.id_trx_institution_product) === oid
+      );
       panelProps.push({
-        product_id: cartProduct[key].id,
-
-        name: cartProduct[key].name,
-        cartProduct: cartProduct[key],
-      })
+        product_id: oid,
+        name: cartLine.name,
+        cartProduct: cartLine,
+        orderedProduct: orderedMatch,
+      });
     }
 
     return panelProps;
@@ -515,20 +585,25 @@ export const ProductAssignmentPanel = ({
 
   const productGroups = useMemo(() => {
     return productPanelList.filter((product) => {
-      const orderedQty = product.orderedProduct?.quantity ?? 0;
-      const cartQty = product.cartProduct?.quantity ?? 0;
-      return orderedQty > 0 || (cartQty !== orderedQty && cartQty >= 0);
+      const orderedLine = resolveOrderedLine(product, orderedProducts);
+      const orderedQty = orderedLine?.quantity ?? 0;
+      return orderedQty > 0 || hasCartPendingChange(product.cartProduct, orderedQty);
     });
-  }, [productPanelList]);
+  }, [productPanelList, orderedProducts]);
 
   const hasPendingChanges = useMemo(
     () =>
       productGroups.some((product) => {
-        const orderedQty = product.orderedProduct?.quantity ?? 0;
-        const cartQty = product.cartProduct?.quantity ?? 0;
-        return cartQty !== orderedQty && cartQty >= 0;
+        const orderedLine = resolveOrderedLine(product, orderedProducts);
+        const orderedQty = orderedLine?.quantity ?? 0;
+        return hasCartPendingChange(product.cartProduct, orderedQty);
       }),
-    [productGroups]
+    [productGroups, orderedProducts]
+  );
+
+  const orderPayload = useMemo(
+    () => visitProductOrderPostPayload(productGroups, orderedProducts),
+    [productGroups, orderedProducts]
   );
 
   const summary = useMemo(() => {
@@ -547,20 +622,44 @@ export const ProductAssignmentPanel = ({
     let netValueChange = 0;
 
     productPanelList.forEach((p) => {
-      const orderedQty = p.orderedProduct?.quantity ?? 0;
+      const orderedLine = resolveOrderedLine(p, orderedProducts);
+      const orderedQty = orderedLine?.quantity ?? 0;
       const cartQty = p.cartProduct?.quantity ?? 0;
-      const price = p.cartProduct?.price ?? p.orderedProduct?.price ?? 0;
+      const price = p.cartProduct?.price ?? orderedLine?.price ?? 0;
+      const orderedValue =
+        orderedLine?.adjusted_price ?? orderedLine?.total_price ?? orderedQty * price;
+
+      if (isMarkedForRemoval(p.cartProduct, orderedQty)) {
+        netQtyChange -= orderedQty;
+        netValueChange -= orderedValue;
+        return;
+      }
 
       if (cartQty !== orderedQty) {
         netQtyChange += cartQty - orderedQty;
         const cartValue = p.cartProduct?.adjusted_price ?? cartQty * price;
-        const orderedValue = p.orderedProduct?.adjusted_price ?? orderedQty * price;
         netValueChange += cartValue - orderedValue;
       }
     });
 
     return { currentTotalQty, currentTotalValue, netQtyChange, netValueChange };
   }, [orderedProducts, productPanelList]);
+
+  const applyCartLineUpdate = (
+    id: number,
+    quantity: number,
+    options?: { markForRemoval?: boolean }
+  ): CheckoutProduct[] =>
+    cartProducts.map((p) => {
+      if (p.id !== id) return p;
+      const markForRemoval = options?.markForRemoval ?? false;
+      return {
+        ...p,
+        quantity,
+        adjusted_price: quantity * p.price,
+        marked_for_removal: markForRemoval,
+      };
+    });
 
   const incrementQuantity = (id: number) => {
     const updatedProducts = cartProducts.map(p => {
@@ -570,31 +669,34 @@ export const ProductAssignmentPanel = ({
           ...p,
           quantity: newQuantity,
           adjusted_price: newQuantity * p.price,
+          marked_for_removal: false,
         };
       }
       return p;
     }
     );
     updateSelectedProducts(updatedProducts);
-    debouncedUpdateCart(patientVisit, updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
 
   };
 
   const decrementQuantity = (id: number) => {
-    const updatedProducts = cartProducts.map(p => {
-      if (p.id === id && p.quantity) {
-        const newQuantity = p.quantity - 1;
-        return {
-          ...p,
-          quantity: newQuantity >= 0 ? newQuantity : 0,
-          adjusted_price: (newQuantity >= 0 ? newQuantity : 0) * p.price
-        };
-      }
-      return p;
-
+    const ordered = orderedProducts.find(
+      (o) => Number(o.id_trx_institution_product) === Number(id)
+    );
+    const updatedProducts = cartProducts.map((p) => {
+      if (p.id !== id || !p.quantity) return p;
+      const newQuantity = Math.max(0, p.quantity - 1);
+      const markForRemoval = Boolean(ordered && newQuantity === 0);
+      return {
+        ...p,
+        quantity: newQuantity,
+        adjusted_price: newQuantity * p.price,
+        marked_for_removal: markForRemoval,
+      };
     });
     updateSelectedProducts(updatedProducts);
-    debouncedUpdateCart(patientVisit, updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
   };
 
   const setAdjustedPrice = (productID: number, adjustedPrice: number) => {
@@ -605,24 +707,41 @@ export const ProductAssignmentPanel = ({
   }
 
   const setQuantity = (id: number, quantity: number) => {
-    const updatedProducts = cartProducts.map(p =>
-      p.id === id ? { ...p, quantity, adjusted_price: quantity * p.price } : p
+    const ordered = orderedProducts.find(
+      (o) => Number(o.id_trx_institution_product) === Number(id)
     );
+    const safeQty = Math.max(0, quantity);
+    const markForRemoval = Boolean(ordered && safeQty === 0);
+    const updatedProducts = applyCartLineUpdate(id, safeQty, { markForRemoval });
 
     updateSelectedProducts(updatedProducts);
-    debouncedUpdateCart(patientVisit, updatedProducts);
-
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
   };
 
   const deleteProduct = (id: number) => {
-    const updatedProducts = cartProducts.map(p =>
-      p.id === id ? { ...p, quantity: -1 } : p
+    const ordered = orderedProducts.find(
+      (o) => Number(o.id_trx_institution_product) === Number(id)
     );
+    const existing = cartProducts.find((p) => p.id === id);
 
-    // const updatededOrderedProducts = orderedProducts.filter(product => product.id_trx_institution_product !== id);
-    // updatedOrderedProduct(updatededOrderedProducts)
+    if (!ordered) {
+      const updatedProducts = cartProducts.filter((p) => p.id !== id);
+      updateSelectedProducts(updatedProducts);
+      debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
+      return;
+    }
+
+    // Toggle off: restore purchased quantity.
+    if (existing?.marked_for_removal) {
+      const updatedProducts = applyCartLineUpdate(id, ordered.quantity, { markForRemoval: false });
+      updateSelectedProducts(updatedProducts);
+      debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
+      return;
+    }
+
+    const updatedProducts = applyCartLineUpdate(id, 0, { markForRemoval: true });
     updateSelectedProducts(updatedProducts);
-    debouncedUpdateCart(patientVisit, updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
   };
 
 
@@ -631,12 +750,13 @@ export const ProductAssignmentPanel = ({
     variant: ProductPanelVariant,
     embedded = false
   ) => {
-    const orderedQty = product.orderedProduct?.quantity ?? 0;
+    const orderedLine = resolveOrderedLine(product, orderedProducts);
+    const orderedQty = orderedLine?.quantity ?? 0;
     const cartQty = product.cartProduct?.quantity ?? 0;
-    const price = product.cartProduct?.price ?? product.orderedProduct?.price ?? 0;
+    const price = product.cartProduct?.price ?? orderedLine?.price ?? 0;
     const orderedValue =
-      product.orderedProduct?.adjusted_price ??
-      product.orderedProduct?.total_price ??
+      orderedLine?.adjusted_price ??
+      orderedLine?.total_price ??
       orderedQty * price;
     const cartValue =
       product.cartProduct?.adjusted_price ??
@@ -648,10 +768,11 @@ export const ProductAssignmentPanel = ({
         key={product.product_id}
         variant={variant}
         embedded={embedded}
-        name={product.cartProduct?.name ?? product.orderedProduct?.name}
-        unitType={product.cartProduct?.unit_type ?? product.orderedProduct?.unit_type ?? ''}
+        name={product.cartProduct?.name ?? orderedLine?.name}
+        unitType={product.cartProduct?.unit_type ?? orderedLine?.unit_type ?? ''}
         cartQuantity={cartQty}
         orderedQuantity={orderedQty}
+        markedForRemoval={isMarkedForRemoval(product.cartProduct, orderedQty)}
         price={price}
         adjustedPrice={variant === 'current' ? orderedValue : cartValue}
         setAdjustedPrice={(adjustedPrice: number) => {
@@ -728,6 +849,7 @@ export const ProductAssignmentPanel = ({
                   <ProductGroupItem
                     key={product.product_id}
                     product={product}
+                    orderedProducts={orderedProducts}
                     renderPanel={renderProductPanel}
                   />
                 ))}
@@ -757,8 +879,9 @@ export const ProductAssignmentPanel = ({
           incrementQuantity={incrementQuantity}
           setAdjustedPrice={setAdjustedPrice}
           updateSelectedProducts={updateSelectedProducts}
+          orderedProducts={orderedProducts}
           onMakeOrder={() => {
-            onAssignProduct(cartProducts, patientVisit.id);
+            onAssignProduct(orderPayload, patientVisit.id);
             setSearchResults([]);
             cartDrawer.closeDrawer();
           }}
@@ -771,6 +894,7 @@ export const ProductAssignmentPanel = ({
 
 const ProductOrderConfirmation = ({
   products,
+  orderedProducts = [],
   subTotal,
   onMakeOrder,
   incrementQuantity,
@@ -779,7 +903,9 @@ const ProductOrderConfirmation = ({
   setAdjustedPrice,
   deleteProduct,
 }: ProductOrderConfirmationProps) => {
-  const checkoutProducts = products.filter((p) => p.quantity >= 0);
+  const checkoutProducts = products.filter(
+    (p) => p.quantity > 0 || (Boolean(p.marked_for_removal) && p.quantity === 0)
+  );
 
   return (
     <>
@@ -791,26 +917,33 @@ const ProductOrderConfirmation = ({
             </div>
           ) : (
             <ul className="space-y-1.5">
-              {checkoutProducts.map((product) => (
-                <li key={product.id}>
-                  <ProductQuantityPanel
-                    variant="checkout"
-                    name={product.name}
-                    unitType={product.unit_type}
-                    cartQuantity={product.quantity}
-                    orderedQuantity={product.quantity}
-                    price={product.price}
-                    adjustedPrice={product.adjusted_price ?? product.price * product.quantity}
-                    setAdjustedPrice={(adjustedPrice: number) => {
-                      setAdjustedPrice(product.id, adjustedPrice);
-                    }}
-                    decrementQuantity={() => decrementQuantity(product.id)}
-                    incrementQuantity={() => incrementQuantity(product.id)}
-                    setQuantity={(quantity: number) => setQuantity(product.id, quantity)}
-                    onRemove={() => deleteProduct(product.id)}
-                  />
-                </li>
-              ))}
+              {checkoutProducts.map((product) => {
+                const orderedQty =
+                  orderedProducts.find(
+                    (o) => Number(o.id_trx_institution_product) === Number(product.id)
+                  )?.quantity ?? 0;
+                return (
+                  <li key={product.id}>
+                    <ProductQuantityPanel
+                      variant="checkout"
+                      name={product.name}
+                      unitType={product.unit_type}
+                      cartQuantity={product.quantity}
+                      orderedQuantity={orderedQty}
+                      markedForRemoval={isMarkedForRemoval(product, orderedQty)}
+                      price={product.price}
+                      adjustedPrice={product.adjusted_price ?? product.price * product.quantity}
+                      setAdjustedPrice={(adjustedPrice: number) => {
+                        setAdjustedPrice(product.id, adjustedPrice);
+                      }}
+                      decrementQuantity={() => decrementQuantity(product.id)}
+                      incrementQuantity={() => incrementQuantity(product.id)}
+                      setQuantity={(quantity: number) => setQuantity(product.id, quantity)}
+                      onRemove={() => deleteProduct(product.id)}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
