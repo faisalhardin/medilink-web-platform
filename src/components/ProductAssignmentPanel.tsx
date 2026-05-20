@@ -1,15 +1,28 @@
 // Modified ProductAssignmentPanel.tsx with improved search panel functionality
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { ChevronDownIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { PatientVisit } from '@models/patient';
 import { ListProducts } from '@requests/products';
-import { Product, CheckoutProduct, TrxVisitProduct, ProductPanelProps, ProductOrderConfirmationProps } from '@models/product';
+import {
+  Product,
+  CheckoutProduct,
+  TrxVisitProduct,
+  ProductPanelProps,
+  ProductOrderConfirmationProps,
+  cartProductsForVisitUpdate,
+  hasCartPendingChange,
+  isMarkedForRemoval,
+  resolveOrderedLine,
+  visitProductOrderPostPayload,
+} from '@models/product';
 import { debounce } from 'lodash';
 import { UpdatePatientVisit } from '@requests/patient';
-import { convertProductToCheckoutProduct, formatPrice} from '@utils/common'
+import { convertProductToCheckoutProduct, formatPrice } from '@utils/common'
 import { useDrawer } from 'hooks/useDrawer';
 import { Drawer } from '@components/Drawer';
 import CloseIcon from 'assets/icons/CloseIcon';
 import { t } from 'i18next';
+import { FolderLabels } from '@components/FolderLabels';
 
 interface ProductAssignmentPanelProps {
   patientVisit: PatientVisit;
@@ -21,39 +34,88 @@ interface ProductAssignmentPanelProps {
   updatedOrderedProduct: (product: TrxVisitProduct[]) => void;
 }
 
-interface ProductListProps {
+type ProductPanelVariant = 'current' | 'pending' | 'checkout';
+
+interface ProductQuantityPanelProps {
   name: string | undefined;
   unitType: string;
   cartQuantity: number;
   orderedQuantity: number;
+  markedForRemoval?: boolean;
   price: number;
   adjustedPrice: number;
-  panelClass: 'product-panel-item-m' | 'product-panel-item-sm';
+  variant: ProductPanelVariant;
+  embedded?: boolean;
   decrementQuantity: () => void;
   incrementQuantity: () => void;
-  setQuantity: (id: number) => void;
+  setQuantity: (quantity: number) => void;
   setAdjustedPrice: (adjustedPrice: number) => void;
   onRemove: () => void;
 }
 
-const ProductQuantityPanel = ({ 
-  name, 
-  unitType, 
+interface ProductSummaryCardsProps {
+  currentTotalQty: number;
+  currentTotalValue: number;
+  netQtyChange: number;
+  netValueChange: number;
+}
+
+const ProductSummaryCards = ({
+  currentTotalQty,
+  currentTotalValue,
+  netQtyChange,
+  netValueChange,
+}: ProductSummaryCardsProps) => {
+  const qtyChangeLabel =
+    netQtyChange > 0 ? `+${netQtyChange}` : netQtyChange < 0 ? `${netQtyChange}` : '0';
+  const valueChangeLabel =
+    netValueChange > 0
+      ? `+${formatPrice(netValueChange)}`
+      : netValueChange < 0
+        ? `-${formatPrice(Math.abs(netValueChange))}`
+        : formatPrice(0);
+
+  return (
+    <div className="flex flex-wrap gap-1.5 text-[10px]">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-md bg-gray-50 px-2 py-1">
+        <span className="shrink-0 text-gray-500">{t('product.currentOrdersTotal')}</span>
+        <span className="font-semibold text-gray-900">{formatPrice(currentTotalValue)}</span>
+        <span className="text-gray-400">· {currentTotalQty}</span>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-md bg-blue-50 px-2 py-1">
+        <span className="shrink-0 text-blue-600">{t('product.pendingChangesNet')}</span>
+        <span className={`font-semibold ${netValueChange > 0 ? 'text-emerald-700' : netValueChange < 0 ? 'text-amber-700' : 'text-blue-900'}`}>{valueChangeLabel}</span>
+        <span className="text-blue-600/70">· {qtyChangeLabel}</span>
+      </div>
+    </div>
+  );
+};
+
+const ProductQuantityPanel = ({
+  name,
+  unitType,
   cartQuantity,
   adjustedPrice,
   orderedQuantity,
-  panelClass, 
-  decrementQuantity, 
-  incrementQuantity, 
-  setQuantity, 
+  markedForRemoval = false,
+  variant,
+  embedded = false,
+  decrementQuantity,
+  incrementQuantity,
+  setQuantity,
   setAdjustedPrice,
   onRemove,
-}: ProductListProps) => {
-  // const [adjustedPrice, setAdjustedPriceLocal] = useState<number>(price * cartQuantity);
-  const [priceDisplayValue, setPriceDisplayValue] = useState<string>('');
+}: ProductQuantityPanelProps) => {
+  const [priceDisplayValue, setPriceDisplayValue] = useState('');
   const [isEditingPrice, setIsEditingPrice] = useState(false);
-  
+
+  const isReadOnly = variant === 'current';
+  const isNewProduct = variant === 'pending' && orderedQuantity === 0;
+  const isRemovePending =
+    orderedQuantity > 0 && markedForRemoval && variant !== 'current';
+  const displayQuantity = isReadOnly ? orderedQuantity : cartQuantity;
   const quantityDiff = cartQuantity - orderedQuantity;
+  const showPriceEdit = variant === 'checkout';
 
   // Parse formatted price back to number
   const parsePrice = (str: string): number => {
@@ -67,90 +129,251 @@ const ProductQuantityPanel = ({
     }
   }, [adjustedPrice, isEditingPrice]);
 
-  // Update adjusted price when quantity or base price changes
   useEffect(() => {
-      setPriceDisplayValue(formatPrice(adjustedPrice));
-  }, [cartQuantity, isEditingPrice]);
+    setPriceDisplayValue(formatPrice(adjustedPrice));
+  }, [cartQuantity, isEditingPrice, adjustedPrice]);
 
   const handlePriceChange = (value: string) => {
-    // Allow typing without immediate formatting
     if (/^[\d,]*\.?\d*$/.test(value)) {
       setPriceDisplayValue(value);
-      const numericValue = parsePrice(value);
-      setAdjustedPrice(numericValue);
+      setAdjustedPrice(parsePrice(value));
     }
   };
 
   const handlePriceInputFocus = () => {
     setIsEditingPrice(true);
-    // Show raw number for easier editing
     setPriceDisplayValue(adjustedPrice.toString());
   };
+
+  // Compact shared row shell for narrow side panel and drawer.
+  const rowLayout = 'flex min-h-8 w-full min-w-0 items-start py-1.5 text-[11px]';
+  const rowInnerLayout = 'flex w-full min-w-0 flex-col gap-1';
+  const rowNameLayout = 'flex min-w-0 flex-wrap items-center gap-1';
+  const rowActionsLayout = 'flex w-full items-center justify-between gap-1';
+
+  // Row styling depends on variant + whether it sits inside an accordion group (embedded).
+  const cardClass =
+    embedded && variant === 'pending'
+      ? // Intended-change row nested under purchased: no card chrome; parent provides border/bg.
+      `${rowLayout} px-2`
+      : embedded && variant === 'current'
+        ? // Purchased summary inside accordion button: transparent, full width; button supplies hover/bg.
+        `${rowLayout} w-full px-0`
+        : variant === 'current'
+          ? // Standalone purchased (read-only): white card = current order on record.
+          `${rowLayout} rounded border border-gray-200 bg-white px-2`
+          : variant === 'pending'
+            ? // Standalone pending / new cart line: white card, blue left accent = editable change.
+            `${rowLayout} rounded border border-gray-200 border-l-2 bg-white px-2`
+            : // Checkout drawer line items.
+            `${rowLayout} rounded border border-gray-200 bg-white px-2`;
 
   const handlePriceInputBlur = () => {
     setIsEditingPrice(false);
   };
 
-  return (
-    <div className={`${panelClass}-border rounded p-1 mb-2 ${panelClass}-text`}>
-      <div className="flex justify-between items-center">
-        <div className="font-medium">{name} <span className={`${panelClass}-text ${panelClass}-font`}>({unitType})</span></div>
-        <div className='justify-end items-end  -m-2 p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500'>
-           <button
+  const showName = !(embedded && variant === 'pending');
+
+  const quantityNearName = isReadOnly ? (
+    <>
+      <span className="shrink-0 text-gray-300" aria-hidden>
+        ·
+      </span>
+      <span className="shrink-0 text-gray-600">{displayQuantity}</span>
+    </>
+  ) : null;
+
+  const quantityNearPrice = !isReadOnly ? (
+    <>
+      <div className="flex h-6 shrink-0 items-stretch overflow-hidden rounded border border-gray-300 bg-white text-[11px] leading-none">
+        <button
+          type="button"
+          className="flex items-center justify-center px-1 text-gray-600 hover:bg-gray-50"
+          onClick={decrementQuantity}
+        >
+          −
+        </button>
+        <input
+          id={name}
+          className="h-full w-7 border-x border-gray-200 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          type="number"
+          value={cartQuantity}
+          onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 0)}
+        />
+        <button
+          type="button"
+          className="flex items-center justify-center px-1 text-gray-600 hover:bg-gray-50"
+          onClick={incrementQuantity}
+        >
+          +
+        </button>
+      </div>
+      {variant === 'pending' && orderedQuantity > 0 && quantityDiff !== 0 && (
+        <span
+          className={`shrink-0 font-semibold ${isRemovePending
+            ? 'text-rose-600'
+            : quantityDiff > 0
+              ? 'text-emerald-600'
+              : 'text-amber-600'
+            }`}
+        >
+          {isRemovePending
+            ? `-${orderedQuantity}`
+            : quantityDiff > 0
+              ? `+${quantityDiff}`
+              : quantityDiff}
+        </span>
+      )}
+    </>
+  ) : null;
+
+  const cardContent = (
+    <div className={cardClass}>
+      <div className={rowInnerLayout}>
+        <div className={rowNameLayout}>
+          {showName && (
+            <span className="min-w-0 break-words text-[11px] font-medium leading-tight text-gray-900">{name}</span>
+          )}
+          {showName && unitType && <span className="shrink-0 text-[11px] text-gray-500">({unitType})</span>}
+          {quantityNearName}
+        </div>
+        <div className={rowActionsLayout}>
+          {quantityNearPrice}
+          {showPriceEdit ? (
+            <div className="flex items-center gap-1">
+              <input
+                className="h-6 w-16 rounded border border-gray-300 px-1 text-center text-[11px]"
+                type="text"
+                value={priceDisplayValue}
+                onFocus={handlePriceInputFocus}
+                onBlur={handlePriceInputBlur}
+                onChange={(e) => handlePriceChange(e.target.value)}
+              />
+            </div>
+          ) : (
+            <span className="font-medium text-gray-700 whitespace-nowrap text-[10px]">{formatPrice(adjustedPrice)}</span>
+          )}
+          {!isReadOnly && (
+            <button
               type="button"
               onClick={onRemove}
-              className="relative -m-2 p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              aria-label="Close drawer"
+              className="flex h-4 w-4 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Remove"
             >
-              <CloseIcon/>
+              <CloseIcon />
             </button>
+          )}
         </div>
       </div>
-      <div className="grid grid-cols-2">
-        <div className="flex items-center gap-2 mb-2">
-        <div className={`flex items-center border rounded ${panelClass}-quantity`}>
-          <button className="px-1.5 py-0.5" onClick={decrementQuantity}>-</button>
-          <input
-            id={name}
-            className="px-1 py-0.5 border-l border-r w-6 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            type="number"
-            value={cartQuantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-          />
-          <button className="px-1.5 py-0.5" onClick={incrementQuantity}>+</button>
-        </div>
-        {quantityDiff !== 0 && (
-          <span className={quantityDiff > 0 ? "positive-quantity" : "negative-quantity"}>
-            {quantityDiff > 0 ? `+${quantityDiff}` : quantityDiff}
-          </span>
-        )}
-      </div>
-      
-      {/* Price Box with Thousand Separators */}
-      {panelClass === 'product-panel-item-m' && 
-      <div className="flex items-center justify-end gap-2 text-xs">
-        <span className="text-gray-600">{t('product.price')}:</span>
-        <div className="flex items-center border rounded">
-          <input
-            className="px-2 py-0.5 w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            type="text"
-            value={priceDisplayValue}
-            onFocus={handlePriceInputFocus}
-            onBlur={handlePriceInputBlur}
-            onChange={(e) => handlePriceChange(e.target.value)}
-            placeholder="0.00"
-          />
-        </div>
-      </div>
-      
-      }
-      
-      </div>
-      
     </div>
+  );
+
+  // Purchased accordion wraps the whole group with REMOVE; avoid duplicate label on embedded row.
+  if (isRemovePending && !embedded) {
+    return (
+      <FolderLabels labels={[{ text: t('product.remove'), color: 'rose' }]} className="py-0">
+        {cardContent}
+      </FolderLabels>
+    );
+  }
+
+  if (!isNewProduct) return cardContent;
+
+  return (
+    <FolderLabels labels={[{ text: t('product.new'), color: 'violet' }]} className="py-0">
+      {cardContent}
+    </FolderLabels>
   );
 };
 
+interface ProductGroupItemProps {
+  product: ProductPanelProps;
+  orderedProducts: TrxVisitProduct[];
+  renderPanel: (
+    product: ProductPanelProps,
+    variant: ProductPanelVariant,
+    embedded?: boolean
+  ) => React.ReactNode;
+}
+
+function ProductGroupItem({ product, orderedProducts, renderPanel }: ProductGroupItemProps) {
+  const orderedLine = resolveOrderedLine(product, orderedProducts);
+  const orderedQty = orderedLine?.quantity ?? 0;
+  const cartQty = product.cartProduct?.quantity ?? 0;
+  const hasPurchased = orderedQty > 0;
+  const cart = product.cartProduct;
+  const hasPendingChange = hasCartPendingChange(cart, orderedQty);
+  const isRemovePending = isMarkedForRemoval(cart, orderedQty);
+  const quantityDiff = cartQty - orderedQty;
+
+  const [expanded, setExpanded] = useState(false);
+
+  if (!hasPurchased && !hasPendingChange) {
+    return null;
+  }
+
+  const purchasedAccordion = (
+    <>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-label={t('product.expandToChangeQuantity')}
+        onClick={() => setExpanded((open) => !open)}
+        className="flex min-h-8 w-full items-center gap-1.5 border-b border-gray-100 bg-white px-2 py-0 text-left transition-colors hover:bg-gray-100/90 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+      >
+        <div className="min-w-0 flex-1">{renderPanel(product, 'current', true)}</div>
+        <div className="flex shrink-0 items-center gap-1">
+          {hasPendingChange && !expanded && (
+            <span
+              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${isRemovePending
+                ? 'bg-rose-100 text-rose-700'
+                : quantityDiff > 0
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-amber-100 text-amber-700'
+                }`}
+            >
+              {isRemovePending
+                ? `-${orderedQty}`
+                : quantityDiff > 0
+                  ? `+${quantityDiff}`
+                  : quantityDiff}
+            </span>
+          )}
+          <ChevronDownIcon
+            className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          />
+        </div>
+      </button>
+      {expanded && (
+        <div
+          className={
+            isRemovePending ? 'border-t border-rose-100 bg-rose-50/30' : 'border-t border-blue-100 bg-blue-50'
+          }
+        >
+          {renderPanel(product, 'pending', true)}
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <li>
+      {hasPurchased &&
+        (isRemovePending ? (
+          <FolderLabels labels={[{ text: t('product.remove'), color: 'rose' }]} className="py-0">
+            {purchasedAccordion}
+          </FolderLabels>
+        ) : (
+          <div className="overflow-hidden rounded-md border border-gray-200">{purchasedAccordion}</div>
+        ))}
+      {!hasPurchased && hasPendingChange && (
+        <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+          {renderPanel(product, 'pending', false)}
+        </div>
+      )}
+    </li>
+  );
+}
 
 
 export const ProductAssignmentPanel = ({
@@ -166,18 +389,25 @@ export const ProductAssignmentPanel = ({
   const [isSearching, setIsSearching] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const cartDrawer = useDrawer();
-  
-  const updateVisitCart = async (patientVisit: PatientVisit, productsCart: CheckoutProduct[]) => {
-      await UpdatePatientVisit({
-        id: patientVisit.id,
-        product_cart: productsCart
-      });
+
+  const updateVisitCart = async (
+    patientVisit: PatientVisit,
+    productsCart: CheckoutProduct[],
+    ordered: TrxVisitProduct[]
+  ) => {
+    await UpdatePatientVisit({
+      id: patientVisit.id,
+      product_cart: cartProductsForVisitUpdate(productsCart, ordered),
+    });
   };
-  
+
   const debouncedUpdateCart = useCallback(
-    debounce(async (patientVisit: PatientVisit, products: CheckoutProduct[]) => {
-      updateVisitCart(patientVisit, products);
-    }, 1000),
+    debounce(
+      async (patientVisit: PatientVisit, products: CheckoutProduct[], ordered: TrxVisitProduct[]) => {
+        await updateVisitCart(patientVisit, products, ordered);
+      },
+      1000
+    ),
     []
   );
 
@@ -187,8 +417,11 @@ export const ProductAssignmentPanel = ({
     if (term.length < 3) {
       setSearchResults([]);
       setShowResults(false);
+      setIsSearching(false);
       return;
     }
+
+    setIsSearching(true);
 
     try {
       const response = await ListProducts({
@@ -211,14 +444,14 @@ export const ProductAssignmentPanel = ({
     const updatedProducts = addProduct({ ...product, quantity: 1 });
     setSearchTerm(product.name);
     setShowResults(false);
-    debouncedUpdateCart(patientVisit, updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
   };
 
   useEffect(() => {
     // 1. Safe null/undefined handling
     const _cartProducts = cartProducts || [];
     const orderedProductsList = orderedProducts || [];
-    
+
     // 2. Early return for empty data
     if (_cartProducts.length === 0 && orderedProductsList.length === 0) {
       updateSelectedProducts([]);
@@ -226,45 +459,48 @@ export const ProductAssignmentPanel = ({
     }
 
     // 3. Create a comprehensive product list
-    const cartProductIds = new Set(_cartProducts.map(p => p?.id).filter(Boolean));
+    const cartProductIds = new Set(
+      _cartProducts.map((p) => Number(p?.id)).filter((id) => !Number.isNaN(id) && id !== 0)
+    );
 
     // 4. Find ordered products that aren't in cart
-    const missingFromCart = orderedProductsList.filter(prod => 
-      prod?.id_trx_institution_product && 
-      !cartProductIds.has(prod.id_trx_institution_product)
+    const missingFromCart = orderedProductsList.filter(
+      (prod) =>
+        prod?.id_trx_institution_product &&
+        !cartProductIds.has(Number(prod.id_trx_institution_product))
     );
-    
+
     // 5. Convert missing ordered products to cart format
-  const missingProducts:CheckoutProduct[] = missingFromCart.map(prod => ({
-    id: prod.id_trx_institution_product,
-    name: prod.name || 'Unknown Product',
-    price: prod.price || 0,
-    quantity: 0, // Start with 0 for ordered products not in cart
-    is_item: prod.is_item || false,
-    is_treatment: prod.is_treatment || false,
-    unit_type: prod.unit_type || '',
-    adjusted_price: prod.adjusted_price || 0,
-    total_price: prod.total_price || 0,
-  })).filter(p => p.id); // Remove any products without valid IDs
+    const missingProducts: CheckoutProduct[] = missingFromCart.map(prod => ({
+      id: prod.id_trx_institution_product,
+      name: prod.name || 'Unknown Product',
+      price: prod.price || 0,
+      quantity: 0, // Start with 0 for ordered products not in cart
+      is_item: prod.is_item || false,
+      is_treatment: prod.is_treatment || false,
+      unit_type: prod.unit_type || '',
+      adjusted_price: prod.adjusted_price || 0,
+      total_price: prod.total_price || 0,
+    })).filter(p => p.id); // Remove any products without valid IDs
 
-  // 6. Combine cart products with missing ordered products
-  const combinedProducts = [
-    ..._cartProducts,
-    ...missingProducts
-  ];
+    // 6. Combine cart products with missing ordered products
+    const combinedProducts = [
+      ..._cartProducts,
+      ...missingProducts
+    ];
 
-  // 7. Remove duplicates based on ID
-  const uniqueProducts = combinedProducts.reduce((acc, product) => {
-    if (product?.id && !acc.some(p => p.id === product.id)) {
-      acc.push(product);
-    }
-    return acc;
-  }, [] as CheckoutProduct[]);
+    // 7. Remove duplicates based on ID
+    const uniqueProducts = combinedProducts.reduce((acc, product) => {
+      if (product?.id && !acc.some(p => p.id === product.id)) {
+        acc.push(product);
+      }
+      return acc;
+    }, [] as CheckoutProduct[]);
 
-  // 8. Only update if there's actually a change
-  updateSelectedProducts(uniqueProducts);
+    // 8. Only update if there's actually a change
+    updateSelectedProducts(uniqueProducts);
 
-}, [cartProducts, orderedProducts]);
+  }, [cartProducts, orderedProducts]);
 
   // Handle clicks outside of the search container
   useEffect(() => {
@@ -310,40 +546,120 @@ export const ProductAssignmentPanel = ({
     }
   };
 
-  let productPanelList = useMemo(() => {
+  const productPanelList = useMemo(() => {
     const cartProduct = cartProducts.reduce((prev, prod) => {
-      prev[prod.id] = prod;
+      const id = Number(prod.id);
+      prev[id] = prod;
       return prev;
-    }, {} as { [key: number]: CheckoutProduct });
+    }, {} as Record<number, CheckoutProduct>);
+
     const panelProps: ProductPanelProps[] = orderedProducts.map((prod) => {
-      
-      let _cartProduct = cartProduct && cartProduct[prod.id_trx_institution_product];
+      const oid = Number(prod.id_trx_institution_product);
+      let _cartProduct = cartProduct[oid];
       if (_cartProduct) {
-        delete cartProduct[prod.id_trx_institution_product];
+        delete cartProduct[oid];
       }
 
       return {
-        product_id: prod.id_trx_institution_product,
+        product_id: oid,
         cartProduct: _cartProduct,
         orderedProduct: prod,
       } as ProductPanelProps;
-    })
-    const isEmpty = !cartProduct || Object.entries(cartProduct).length === 0;
-    if (isEmpty) {
-      return panelProps;
-    }
+    });
 
-    for (const key in cartProduct) {
+    for (const oid of Object.keys(cartProduct).map((k) => Number(k))) {
+      const cartLine = cartProduct[oid];
+      const orderedMatch = orderedProducts.find(
+        (o) => Number(o.id_trx_institution_product) === oid
+      );
       panelProps.push({
-        product_id: cartProduct[key].id,
-
-        name: cartProduct[key].name,
-        cartProduct: cartProduct[key],
-      })
+        product_id: oid,
+        name: cartLine.name,
+        cartProduct: cartLine,
+        orderedProduct: orderedMatch,
+      });
     }
 
-    return panelProps
-  }, [orderedProducts, cartProducts])
+    return panelProps;
+  }, [orderedProducts, cartProducts]);
+
+  const productGroups = useMemo(() => {
+    return productPanelList.filter((product) => {
+      const orderedLine = resolveOrderedLine(product, orderedProducts);
+      const orderedQty = orderedLine?.quantity ?? 0;
+      return orderedQty > 0 || hasCartPendingChange(product.cartProduct, orderedQty);
+    });
+  }, [productPanelList, orderedProducts]);
+
+  const hasPendingChanges = useMemo(
+    () =>
+      productGroups.some((product) => {
+        const orderedLine = resolveOrderedLine(product, orderedProducts);
+        const orderedQty = orderedLine?.quantity ?? 0;
+        return hasCartPendingChange(product.cartProduct, orderedQty);
+      }),
+    [productGroups, orderedProducts]
+  );
+
+  const orderPayload = useMemo(
+    () => visitProductOrderPostPayload(productGroups, orderedProducts),
+    [productGroups, orderedProducts]
+  );
+
+  const summary = useMemo(() => {
+    const currentTotalQty = orderedProducts.reduce(
+      (acc, p) => acc + (p.quantity > 0 ? p.quantity : 0),
+      0
+    );
+    const currentTotalValue = orderedProducts.reduce(
+      (acc, p) =>
+        acc +
+        (p.quantity > 0 ? p.adjusted_price || p.total_price || p.price * p.quantity : 0),
+      0
+    );
+
+    let netQtyChange = 0;
+    let netValueChange = 0;
+
+    productPanelList.forEach((p) => {
+      const orderedLine = resolveOrderedLine(p, orderedProducts);
+      const orderedQty = orderedLine?.quantity ?? 0;
+      const cartQty = p.cartProduct?.quantity ?? 0;
+      const price = p.cartProduct?.price ?? orderedLine?.price ?? 0;
+      const orderedValue =
+        orderedLine?.adjusted_price ?? orderedLine?.total_price ?? orderedQty * price;
+
+      if (isMarkedForRemoval(p.cartProduct, orderedQty)) {
+        netQtyChange -= orderedQty;
+        netValueChange -= orderedValue;
+        return;
+      }
+
+      if (cartQty !== orderedQty) {
+        netQtyChange += cartQty - orderedQty;
+        const cartValue = p.cartProduct?.adjusted_price ?? cartQty * price;
+        netValueChange += cartValue - orderedValue;
+      }
+    });
+
+    return { currentTotalQty, currentTotalValue, netQtyChange, netValueChange };
+  }, [orderedProducts, productPanelList]);
+
+  const applyCartLineUpdate = (
+    id: number,
+    quantity: number,
+    options?: { markForRemoval?: boolean }
+  ): CheckoutProduct[] =>
+    cartProducts.map((p) => {
+      if (p.id !== id) return p;
+      const markForRemoval = options?.markForRemoval ?? false;
+      return {
+        ...p,
+        quantity,
+        adjusted_price: quantity * p.price,
+        marked_for_removal: markForRemoval,
+      };
+    });
 
   const incrementQuantity = (id: number) => {
     const updatedProducts = cartProducts.map(p => {
@@ -353,140 +669,196 @@ export const ProductAssignmentPanel = ({
           ...p,
           quantity: newQuantity,
           adjusted_price: newQuantity * p.price,
+          marked_for_removal: false,
         };
       }
       return p;
     }
     );
     updateSelectedProducts(updatedProducts);
-    debouncedUpdateCart(patientVisit, updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
 
   };
 
   const decrementQuantity = (id: number) => {
-    const updatedProducts = cartProducts.map(p => {
-      if (p.id === id && p.quantity) {
-        const newQuantity = p.quantity - 1;
-        return {
-          ...p,
-          quantity: newQuantity >= 0 ? newQuantity : 0,
-          adjusted_price: (newQuantity >= 0 ? newQuantity : 0) * p.price
-        };
-      } 
-      return p;
-      
+    const ordered = orderedProducts.find(
+      (o) => Number(o.id_trx_institution_product) === Number(id)
+    );
+    const updatedProducts = cartProducts.map((p) => {
+      if (p.id !== id || !p.quantity) return p;
+      const newQuantity = Math.max(0, p.quantity - 1);
+      const markForRemoval = Boolean(ordered && newQuantity === 0);
+      return {
+        ...p,
+        quantity: newQuantity,
+        adjusted_price: newQuantity * p.price,
+        marked_for_removal: markForRemoval,
+      };
     });
     updateSelectedProducts(updatedProducts);
-    debouncedUpdateCart(patientVisit, updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
   };
 
   const setAdjustedPrice = (productID: number, adjustedPrice: number) => {
     const updatedProducts = cartProducts.map(p =>
-      p.id === productID  ? { ...p, adjusted_price: adjustedPrice } : p
+      p.id === productID ? { ...p, adjusted_price: adjustedPrice } : p
     );
     updateSelectedProducts(updatedProducts);
   }
 
   const setQuantity = (id: number, quantity: number) => {
-    const updatedProducts = cartProducts.map(p =>
-      p.id === id ? { ...p, quantity: quantity,  adjusted_price: p.quantity * p.price } : p
+    const ordered = orderedProducts.find(
+      (o) => Number(o.id_trx_institution_product) === Number(id)
     );
+    const safeQty = Math.max(0, quantity);
+    const markForRemoval = Boolean(ordered && safeQty === 0);
+    const updatedProducts = applyCartLineUpdate(id, safeQty, { markForRemoval });
 
     updateSelectedProducts(updatedProducts);
-    debouncedUpdateCart(patientVisit, updatedProducts);
-
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
   };
 
   const deleteProduct = (id: number) => {
-    const updatedProducts = cartProducts.map(p =>
-      p.id === id ? { ...p, quantity: -1} : p
+    const ordered = orderedProducts.find(
+      (o) => Number(o.id_trx_institution_product) === Number(id)
     );
+    const existing = cartProducts.find((p) => p.id === id);
 
-    // const updatededOrderedProducts = orderedProducts.filter(product => product.id_trx_institution_product !== id);
-    // updatedOrderedProduct(updatededOrderedProducts)
+    if (!ordered) {
+      const updatedProducts = cartProducts.filter((p) => p.id !== id);
+      updateSelectedProducts(updatedProducts);
+      debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
+      return;
+    }
+
+    // Toggle off: restore purchased quantity.
+    if (existing?.marked_for_removal) {
+      const updatedProducts = applyCartLineUpdate(id, ordered.quantity, { markForRemoval: false });
+      updateSelectedProducts(updatedProducts);
+      debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
+      return;
+    }
+
+    const updatedProducts = applyCartLineUpdate(id, 0, { markForRemoval: true });
     updateSelectedProducts(updatedProducts);
-    debouncedUpdateCart(patientVisit, updatedProducts);
+    debouncedUpdateCart(patientVisit, updatedProducts, orderedProducts);
+  };
+
+
+  const renderProductPanel = (
+    product: ProductPanelProps,
+    variant: ProductPanelVariant,
+    embedded = false
+  ) => {
+    const orderedLine = resolveOrderedLine(product, orderedProducts);
+    const orderedQty = orderedLine?.quantity ?? 0;
+    const cartQty = product.cartProduct?.quantity ?? 0;
+    const price = product.cartProduct?.price ?? orderedLine?.price ?? 0;
+    const orderedValue =
+      orderedLine?.adjusted_price ??
+      orderedLine?.total_price ??
+      orderedQty * price;
+    const cartValue =
+      product.cartProduct?.adjusted_price ??
+      product.cartProduct?.total_price ??
+      cartQty * price;
+
+    return (
+      <ProductQuantityPanel
+        key={product.product_id}
+        variant={variant}
+        embedded={embedded}
+        name={product.cartProduct?.name ?? orderedLine?.name}
+        unitType={product.cartProduct?.unit_type ?? orderedLine?.unit_type ?? ''}
+        cartQuantity={cartQty}
+        orderedQuantity={orderedQty}
+        markedForRemoval={isMarkedForRemoval(product.cartProduct, orderedQty)}
+        price={price}
+        adjustedPrice={variant === 'current' ? orderedValue : cartValue}
+        setAdjustedPrice={(adjustedPrice: number) => {
+          setAdjustedPrice(product.product_id, adjustedPrice);
+        }}
+        decrementQuantity={() => decrementQuantity(product.product_id)}
+        incrementQuantity={() => incrementQuantity(product.product_id)}
+        setQuantity={(quantity: number) => setQuantity(product.product_id, quantity)}
+        onRemove={() => deleteProduct(product.product_id)}
+      />
+    );
   };
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-base sm:text-lg font-medium mb-4">{t('product.assignProduct')}</h3>
+      <div className="w-full min-w-0 rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="space-y-2 border-b border-gray-100 px-3 py-2">
+          <h3 className="text-sm font-semibold text-gray-800">{t('product.assignProduct')}</h3>
+        </div>
 
-        {/* Search and assign section with improved search panel */}
-        <div className="mb-4">
-          <div ref={searchContainerRef} className="relative mb-2">
+        <div className="px-3 py-2">
+          <div ref={searchContainerRef} className="relative">
             <input
               type="text"
-              className="w-full border rounded px-2 py-1"
+              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder={t('product.searchProducts')}
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => setShowResults(searchResults.length > 0)}
             />
-
             {isSearching && (
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs sm:text-sm">
-                Searching...
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                {t('product.searching')}
               </div>
             )}
-
             {showResults && (
-              <ul className="absolute w-full max-h-40 overflow-y-auto mt-0 p-0 list-none border border-gray-300 rounded-b-md bg-white z-10 shadow-md">
-                {searchResults.map(product => (
+              <ul className="absolute z-10 mt-1 max-h-40 w-full list-none overflow-y-auto rounded-lg border border-gray-200 bg-white p-0 shadow-md">
+                {searchResults.map((product) => (
                   <li
                     key={product.id}
-                    className={`p-2 ${product.quantity && product.quantity > 0 ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-50'}`}
+                    className={`p-2 text-xs ${product.quantity && product.quantity > 0 ? 'cursor-pointer hover:bg-gray-50' : 'cursor-not-allowed opacity-50'}`}
                     onClick={() => product.quantity && product.quantity > 0 ? handleResultClick(product) : null}
                   >
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-xs sm:text-sm text-gray-600">
-                      Stock: {product.quantity} {product.unit_type}
+                    <div className="font-medium text-gray-900">{product.name}</div>
+                    <div className="text-xs text-gray-600">
+                      {t('product.stock')}: {product.quantity} {product.unit_type}
                     </div>
                   </li>
                 ))}
               </ul>
             )}
           </div>
-          <ul>
-            {
-              productPanelList.
-              filter(p => (p.cartProduct?.quantity && p.cartProduct?.quantity >= 0)).
-              map((product) => (
-                <li key={product.product_id}>
-                  <ProductQuantityPanel
-                    key={product.product_id}
-                    panelClass={'product-panel-item-sm'}
-                    name={product.cartProduct?.name ?? product.orderedProduct?.name}
-                    unitType={product.cartProduct?.unit_type ?? product.orderedProduct?.unit_type ?? ''}
-                    cartQuantity={product.cartProduct?.quantity ?? 0}
-                    orderedQuantity={product.orderedProduct?.quantity ?? 0}
-                    price={product.cartProduct?.price ?? product.orderedProduct?.price ?? 0}
-                    adjustedPrice={product.cartProduct?.adjusted_price ?? product.orderedProduct?.adjusted_price ?? 0}
-                    setAdjustedPrice={(adjustedPrice: number) => {
-                      setAdjustedPrice(product.product_id, adjustedPrice);
-                    }}
-                    decrementQuantity={() => { decrementQuantity(product.product_id) }}
-                    incrementQuantity={() => { incrementQuantity(product.product_id) }}
-                    setQuantity={(quantity: number) => {
-                      setQuantity(product.product_id, quantity);
-                    }}
-                    onRemove={() => {
-                      deleteProduct(product.product_id);
-                    }}
-
-                  />
-                </li>
-
-
-              ))}
-          </ul>
-
-          <button
-            onClick={cartDrawer.openDrawer}
-          > Order</button>
+          {hasPendingChanges && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={cartDrawer.openDrawer}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
+              >
+                <ShoppingCartIcon className="h-4 w-4" />
+                {t('product.proceedToOrder')}
+              </button>
+            </div>
+          )}
         </div>
+
+        <section className="border-t border-gray-100">
+          <div className="px-3 py-2">
+            {productGroups.length === 0 ? (
+              <p className="py-2 text-center text-xs text-gray-500">{t('product.noProducts')}</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {productGroups.map((product) => (
+                  <ProductGroupItem
+                    key={product.product_id}
+                    product={product}
+                    orderedProducts={orderedProducts}
+                    renderPanel={renderProductPanel}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
       </div>
+
       <Drawer
         isOpen={cartDrawer.isOpen}
         onClose={cartDrawer.closeDrawer}
@@ -498,14 +870,18 @@ export const ProductAssignmentPanel = ({
           products={cartProducts}
           visitID={patientVisit.id}
           onClose={cartDrawer.closeDrawer}
-          subTotal={(cartProducts.reduce((acc, p) => acc + (p.quantity > 0 ? (p.adjusted_price || p.total_price):0), 0))}
+          subTotal={cartProducts.reduce(
+            (acc, p) => acc + (p.quantity > 0 ? p.adjusted_price || p.total_price : 0),
+            0
+          )}
           setQuantity={setQuantity}
           decrementQuantity={decrementQuantity}
           incrementQuantity={incrementQuantity}
           setAdjustedPrice={setAdjustedPrice}
           updateSelectedProducts={updateSelectedProducts}
-          onMakeOrder={() => { 
-            onAssignProduct(cartProducts, patientVisit.id);
+          orderedProducts={orderedProducts}
+          onMakeOrder={() => {
+            onAssignProduct(orderPayload, patientVisit.id);
             setSearchResults([]);
             cartDrawer.closeDrawer();
           }}
@@ -513,13 +889,12 @@ export const ProductAssignmentPanel = ({
         />
       </Drawer>
     </>
-    
-    
   );
 };
 
 const ProductOrderConfirmation = ({
   products,
+  orderedProducts = [],
   subTotal,
   onMakeOrder,
   incrementQuantity,
@@ -528,65 +903,69 @@ const ProductOrderConfirmation = ({
   setAdjustedPrice,
   deleteProduct,
 }: ProductOrderConfirmationProps) => {
+  const checkoutProducts = products.filter(
+    (p) => p.quantity > 0 || (Boolean(p.marked_for_removal) && p.quantity === 0)
+  );
 
   return (
     <>
-      {/* Items List */}
-      <div className="px-4 py-6 sm:px-6">
+      <div className="px-3 py-3">
         <div className="flow-root">
-          {products.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Your cart is empty</p>
+          {checkoutProducts.length === 0 ? (
+            <div className="py-6 text-center">
+              <p className="text-xs text-gray-500">{t('product.cartEmpty')}</p>
             </div>
           ) : (
-            <ul role="list" className="-my-6 divide-y divide-gray-200">
-              {products.
-              filter(p => (p.quantity >= 0)).
-              map((product) => (
-                <li key={product.id}>
+            <ul className="space-y-1.5">
+              {checkoutProducts.map((product) => {
+                const orderedQty =
+                  orderedProducts.find(
+                    (o) => Number(o.id_trx_institution_product) === Number(product.id)
+                  )?.quantity ?? 0;
+                return (
+                  <li key={product.id}>
                     <ProductQuantityPanel
-                    key={product.id}
-                    name={product.name}
-                    panelClass={'product-panel-item-m'}
-                    unitType={product.unit_type}
-                    cartQuantity={product.quantity}
-                    orderedQuantity={product.quantity}
-                    price={product.price}
-                    adjustedPrice={product.adjusted_price ?? (product.price * product.quantity)}
-                    setAdjustedPrice={(adjustedPrice: number)=>{
-                      setAdjustedPrice(product.id, adjustedPrice);
-                    }}
-                    decrementQuantity={() => { decrementQuantity(product.id) }}
-                    incrementQuantity={() => { incrementQuantity(product.id) }}
-                    setQuantity={(quantity: number) => { setQuantity(product.id, quantity) }}
-                    onRemove={() => {
-                      deleteProduct(product.id);
-                    }}
-                  />
-                </li>
-              ))}
+                      variant="checkout"
+                      name={product.name}
+                      unitType={product.unit_type}
+                      cartQuantity={product.quantity}
+                      orderedQuantity={orderedQty}
+                      markedForRemoval={isMarkedForRemoval(product, orderedQty)}
+                      price={product.price}
+                      adjustedPrice={product.adjusted_price ?? product.price * product.quantity}
+                      setAdjustedPrice={(adjustedPrice: number) => {
+                        setAdjustedPrice(product.id, adjustedPrice);
+                      }}
+                      decrementQuantity={() => decrementQuantity(product.id)}
+                      incrementQuantity={() => incrementQuantity(product.id)}
+                      setQuantity={(quantity: number) => setQuantity(product.id, quantity)}
+                      onRemove={() => deleteProduct(product.id)}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
       </div>
 
-      {/* Footer */}
-      {products.length > 0 && (
-        <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
-          <div className="flex justify-between text-sm sm:text-base font-medium text-gray-900">
-            <p>Subtotal</p>
+      {checkoutProducts.length > 0 && (
+        <div className="border-t border-gray-200 px-3 py-3">
+          <div className="flex justify-between text-xs font-medium text-gray-900">
+            <p>{t('product.subtotal')}</p>
             <p>{formatPrice(subTotal)}</p>
           </div>
-          <div className="mt-6">
+          <div className="mt-3">
             <button
+              type="button"
               onClick={onMakeOrder}
-              className="flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-sm sm:text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="flex w-full items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Checkout
+              {t('product.checkout')}
             </button>
           </div>
         </div>
       )}
     </>
-  )
-}
+  );
+};

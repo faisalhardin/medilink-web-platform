@@ -31,13 +31,7 @@ function getVisitProductLines(detail: GetPatientVisitDetailedResponse): VisitPro
                     : p.price * p.quantity,
         }));
     }
-    return (detail.product_cart ?? []).map((p) => ({
-        id: p.id,
-        name: p.name,
-        quantity: p.quantity,
-        unit_type: p.unit_type,
-        lineTotal: p.price * p.quantity,
-    }));
+    return [];
 }
 
 function hasAnamnesaContent(anamnesa: NonNullable<GetPatientVisitDetailedResponse['anamnesa']>): boolean {

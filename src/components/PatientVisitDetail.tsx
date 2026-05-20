@@ -128,8 +128,8 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     }
 
     useEffect(() => {
-        fetchProducts();
-    }, [])
+        void fetchProducts();
+    }, [patientVisitId])
 
     useEffect(() => {
         const fetchData = async () => {
@@ -206,13 +206,17 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         try {
             // First add to the backend and get the response
             // (which might include an ID or other server-generated fields)
-            const cartProduct = visit.product_cart?.filter(p => p.quantity > 0) || [];
-
+            // Payload: pending deltas + unchanged purchased lines (visitProductOrderPostPayload).
             await OrderProduct({
                 visit_id: visit.id,
-                products: cartProduct
+                products: visit.product_cart ?? [],
             });
-            fetchProducts();
+            await fetchProducts();
+            const fresh = await GetPatientVisitDetailedByID(patientVisitId);
+            if (fresh !== undefined) {
+                setPatientVisit(fresh);
+                setSelectedProducts(convertProductsToCheckoutProducts(fresh.product_cart || []));
+            }
         } catch (error) {
             console.error("Failed to create visit:", error);
             // Handle error (show notification, etc.)
