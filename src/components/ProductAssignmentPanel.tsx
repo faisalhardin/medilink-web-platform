@@ -53,43 +53,6 @@ interface ProductQuantityPanelProps {
   onRemove: () => void;
 }
 
-interface ProductSummaryCardsProps {
-  currentTotalQty: number;
-  currentTotalValue: number;
-  netQtyChange: number;
-  netValueChange: number;
-}
-
-const ProductSummaryCards = ({
-  currentTotalQty,
-  currentTotalValue,
-  netQtyChange,
-  netValueChange,
-}: ProductSummaryCardsProps) => {
-  const qtyChangeLabel =
-    netQtyChange > 0 ? `+${netQtyChange}` : netQtyChange < 0 ? `${netQtyChange}` : '0';
-  const valueChangeLabel =
-    netValueChange > 0
-      ? `+${formatPrice(netValueChange)}`
-      : netValueChange < 0
-        ? `-${formatPrice(Math.abs(netValueChange))}`
-        : formatPrice(0);
-
-  return (
-    <div className="flex flex-wrap gap-1.5 text-[10px]">
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-md bg-gray-50 px-2 py-1">
-        <span className="shrink-0 text-gray-500">{t('product.currentOrdersTotal')}</span>
-        <span className="font-semibold text-gray-900">{formatPrice(currentTotalValue)}</span>
-        <span className="text-gray-400">· {currentTotalQty}</span>
-      </div>
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-md bg-blue-50 px-2 py-1">
-        <span className="shrink-0 text-blue-600">{t('product.pendingChangesNet')}</span>
-        <span className={`font-semibold ${netValueChange > 0 ? 'text-emerald-700' : netValueChange < 0 ? 'text-amber-700' : 'text-blue-900'}`}>{valueChangeLabel}</span>
-        <span className="text-blue-600/70">· {qtyChangeLabel}</span>
-      </div>
-    </div>
-  );
-};
 
 const ProductQuantityPanel = ({
   name,
@@ -605,45 +568,6 @@ export const ProductAssignmentPanel = ({
     () => visitProductOrderPostPayload(productGroups, orderedProducts),
     [productGroups, orderedProducts]
   );
-
-  const summary = useMemo(() => {
-    const currentTotalQty = orderedProducts.reduce(
-      (acc, p) => acc + (p.quantity > 0 ? p.quantity : 0),
-      0
-    );
-    const currentTotalValue = orderedProducts.reduce(
-      (acc, p) =>
-        acc +
-        (p.quantity > 0 ? p.adjusted_price || p.total_price || p.price * p.quantity : 0),
-      0
-    );
-
-    let netQtyChange = 0;
-    let netValueChange = 0;
-
-    productPanelList.forEach((p) => {
-      const orderedLine = resolveOrderedLine(p, orderedProducts);
-      const orderedQty = orderedLine?.quantity ?? 0;
-      const cartQty = p.cartProduct?.quantity ?? 0;
-      const price = p.cartProduct?.price ?? orderedLine?.price ?? 0;
-      const orderedValue =
-        orderedLine?.adjusted_price ?? orderedLine?.total_price ?? orderedQty * price;
-
-      if (isMarkedForRemoval(p.cartProduct, orderedQty)) {
-        netQtyChange -= orderedQty;
-        netValueChange -= orderedValue;
-        return;
-      }
-
-      if (cartQty !== orderedQty) {
-        netQtyChange += cartQty - orderedQty;
-        const cartValue = p.cartProduct?.adjusted_price ?? cartQty * price;
-        netValueChange += cartValue - orderedValue;
-      }
-    });
-
-    return { currentTotalQty, currentTotalValue, netQtyChange, netValueChange };
-  }, [orderedProducts, productPanelList]);
 
   const applyCartLineUpdate = (
     id: number,
