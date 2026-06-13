@@ -27,6 +27,9 @@ export const JOURNEY_URL_PATH = `/v1/journey`
 // path to recall
 export const RECALL_PATH = `/v1/recall`
 
+// path to staff
+export const STAFF_PATH = `/v1/staff`
+
 // url to auth
 export const AUTH_URL = `${MEDILINK_API_BASE_URL}/v1/auth`
 

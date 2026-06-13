@@ -14,6 +14,9 @@ import GoogleLogin from "@pages/GoogleLogin";
 import TokenExpired from "@pages/TokenExpired";
 import ProtectedRoute from "@components/ProtectedRoute";
 import RecallPage from "@pages/Recall";
+import StaffPage from "@pages/Staff";
+import Forbidden from "@pages/Forbidden";
+import NotFound from "@pages/NotFound";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 // import PatieVisitReg
@@ -105,6 +108,13 @@ const DefaultLayout = () => {
               <RecallPage />
             </ProtectedRoute>
           } />
+          <Route path="/staff" element={
+            <ProtectedRoute>
+              <StaffPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/forbidden" element={<Forbidden />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </main>

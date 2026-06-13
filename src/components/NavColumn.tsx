@@ -8,6 +8,8 @@ import UserComponent from "./UserComponent";
 import { useEffect } from "react";
 import { getJourneyBoardsCached } from "hooks/useJourneyBoards";
 import medianneDashboardLogo from "../assets/icons/MedianneDashboard.svg";
+import { getStorageUser } from "@utils/storage";
+import { hasStaffPermission } from "@utils/permissions";
 
 interface ColumnNavProps {
   isMobileNavOpen?: boolean;
@@ -17,6 +19,7 @@ interface ColumnNavProps {
 function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavProps) {
   const { isAuthenticated, isLoading } = useAuthState();
   const { t } = useTranslation();
+  const canReadStaff = hasStaffPermission(getStorageUser(), 'read');
 
   // Prevent body scroll when mobile nav is open
   useEffect(() => {
@@ -107,6 +110,25 @@ function ColumnNav({ isMobileNavOpen = false, setIsMobileNavOpen }: ColumnNavPro
           </svg>
           {t('navigation.institution')}
         </NavLink>
+
+        {canReadStaff && (
+          <NavLink
+            to="/staff"
+            onClick={handleNavClick}
+            className={({ isActive }) =>
+              `flex items-center px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
+                isActive
+                  ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+              }`
+            }
+          >
+            <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {t('navigation.staff', 'Staff')}
+          </NavLink>
+        )}
         
         <NavLink 
           to="/patient"
