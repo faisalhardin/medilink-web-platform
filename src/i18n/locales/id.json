@@ -45,6 +45,8 @@
   "navigation": {
     "dashboard": "Dasbor",
     "institution": "Institusi",
+    "institutionDashboard": "Dasbor",
+    "staff": "Staf",
     "patient": "Pasien",
     "inventory": "Inventori",
     "productReplenishment": "Pengisian Produk",
@@ -224,7 +226,49 @@
   "institution": {
     "institutionProfile": "Profil Institusi",
     "manageProducts": "Kelola Produk",
-    "editInstitution": "Edit Institusi"
+    "editInstitution": "Edit Institusi",
+    "manageStaff": "Kelola Staf"
+  },
+  "staff": {
+    "title": "Manajemen Staf",
+    "subtitle": "Kelola anggota staf, peran, dan akses untuk institusi Anda.",
+    "addStaff": "Tambah Staf",
+    "showInactive": "Tampilkan staf tidak aktif",
+    "accessDenied": "Akses Ditolak",
+    "noPermission": "Anda tidak memiliki akses ke manajemen staf.",
+    "noStaff": "Belum ada anggota staf.",
+    "columns": {
+      "name": "Nama",
+      "email": "Email",
+      "roles": "Peran",
+      "status": "Status",
+      "actions": "Tindakan"
+    },
+    "status": {
+      "active": "Aktif",
+      "inactive": "Tidak Aktif"
+    },
+    "actions": {
+      "deactivate": "Nonaktifkan",
+      "activate": "Aktifkan",
+      "addRole": "Tambah peran"
+    },
+    "form": {
+      "title": "Tambah Anggota Staf Baru",
+      "subtitle": "Anggota staf akan masuk dengan Google menggunakan alamat email yang diberikan.",
+      "name": "Nama Lengkap",
+      "namePlaceholder": "mis. Dr. Jane Smith",
+      "nameRequired": "Nama wajib diisi.",
+      "email": "Alamat Email",
+      "emailRequired": "Email wajib diisi.",
+      "emailInvalid": "Masukkan alamat email yang valid.",
+      "emailHelper": "Staf masuk dengan Google menggunakan alamat email ini. Email harus unik di antara staf aktif di semua institusi.",
+      "rolesLabel": "Peran",
+      "rolesRequired": "Pilih minimal satu peran.",
+      "create": "Buat Staf",
+      "creating": "Membuat...",
+      "createSuccess": "Anggota staf berhasil dibuat."
+    }
   },
   "journey": {
     "journeyBoard": "Papan Perjalanan",
@@ -276,6 +320,27 @@
   },
   "pages": {
     "home": "Halaman Beranda"
+  },
+  "errors": {
+    "forbidden": {
+      "title": "Akses Ditolak",
+      "subtitle": "Anda tidak memiliki izin untuk mengakses halaman ini.",
+      "goToDashboard": "Ke Dasbor",
+      "whyHappened": "Mengapa ini terjadi?",
+      "reasons": {
+        "noPermission": "Anda tidak memiliki izin yang diperlukan",
+        "restrictedAccess": "Halaman ini hanya dapat diakses oleh peran tertentu",
+        "contactAdmin": "Hubungi administrator Anda untuk mendapatkan akses"
+      }
+    },
+    "notFound": {
+      "title": "Halaman Tidak Ditemukan",
+      "code": "404",
+      "subtitle": "Halaman yang Anda cari tidak ada atau telah dipindahkan.",
+      "goToDashboard": "Ke Dasbor",
+      "goBack": "Kembali",
+      "quickLinks": "Tautan Cepat"
+    }
   },
   "editor": {
     "odontogram": {

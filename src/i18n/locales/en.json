@@ -46,6 +46,8 @@
   "navigation": {
     "dashboard": "Dashboard",
     "institution": "Institution",
+    "institutionDashboard": "Dashboard",
+    "staff": "Staff",
     "patient": "Patient",
     "inventory": "Inventory",
     "productReplenishment": "Product Replenishment",
@@ -224,7 +226,49 @@
   "institution": {
     "institutionProfile": "Institution Profile",
     "manageProducts": "Manage Products",
-    "editInstitution": "Edit Institution"
+    "editInstitution": "Edit Institution",
+    "manageStaff": "Manage Staff"
+  },
+  "staff": {
+    "title": "Staff Management",
+    "subtitle": "Manage staff members, roles, and access for your institution.",
+    "addStaff": "Add Staff",
+    "showInactive": "Show inactive staff",
+    "accessDenied": "Access Denied",
+    "noPermission": "You don't have access to staff management.",
+    "noStaff": "No staff members yet.",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "roles": "Roles",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "addRole": "Add role"
+    },
+    "form": {
+      "title": "Add New Staff Member",
+      "subtitle": "The staff member will log in with Google using the email address provided.",
+      "name": "Full Name",
+      "namePlaceholder": "e.g. Dr. Jane Smith",
+      "nameRequired": "Name is required.",
+      "email": "Email Address",
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "emailHelper": "Staff sign in with Google using this email address. Email must be unique among active staff across all institutions.",
+      "rolesLabel": "Roles",
+      "rolesRequired": "Select at least one role.",
+      "create": "Create Staff",
+      "creating": "Creating...",
+      "createSuccess": "Staff member created successfully."
+    }
   },
   "journey": {
     "journeyBoard": "Journey Board",
@@ -276,6 +320,27 @@
   },
   "pages": {
     "home": "Home Page"
+  },
+  "errors": {
+    "forbidden": {
+      "title": "Access Denied",
+      "subtitle": "You don't have permission to access this page.",
+      "goToDashboard": "Go to Dashboard",
+      "whyHappened": "Why did this happen?",
+      "reasons": {
+        "noPermission": "You don't have the required permissions",
+        "restrictedAccess": "This page is restricted to certain roles",
+        "contactAdmin": "Contact your administrator for access"
+      }
+    },
+    "notFound": {
+      "title": "Page Not Found",
+      "code": "404",
+      "subtitle": "The page you're looking for doesn't exist or has been moved.",
+      "goToDashboard": "Go to Dashboard",
+      "goBack": "Go Back",
+      "quickLinks": "Quick Links"
+    }
   },
   "editor": {
     "odontogram": {
