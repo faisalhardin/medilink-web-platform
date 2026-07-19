@@ -153,6 +153,58 @@
       }
     }
   },
+  "procedure": {
+    "loading": "Loading procedures...",
+    "requiredBeforeSave": "are required before saving",
+    "saving": "Saving...",
+    "saveProcedure": "Save Procedure",
+    "messages": {
+      "saveSuccess": "Procedures saved successfully"
+    },
+    "errors": {
+      "minOneProcedure": "Add at least one procedure row with a doctor and ICD-9-CM code",
+      "rowMissingRequired": "Row {{row}}: {{fields}} required",
+      "saveFailed": "Failed to save procedures. Please try again."
+    },
+    "table": {
+      "title": "Procedure Table",
+      "selectAll": "Select all",
+      "addRow": "Add Procedure",
+      "removeSelected": "Remove Selected",
+      "toggleDetails": "Toggle details",
+      "columns": {
+        "product": "Product",
+        "category": "Category",
+        "icd9cm": "ICD-9-CM",
+        "doctor": "Doctor"
+      },
+      "placeholders": {
+        "searchProduct": "Search treatment product...",
+        "selectCategory": "— Select Category —",
+        "searchIcd9cm": "Search ICD-9-CM code...",
+        "searchDoctor": "Search doctor..."
+      },
+      "empty": {
+        "prefix": "No procedure yet. Click",
+        "suffix": "to get started."
+      }
+    },
+    "detail": {
+      "plannedAt": "Planned At",
+      "duration": "Duration",
+      "durationPlaceholder": "e.g. 30 minutes",
+      "nurse": "Nurse / Midwife",
+      "searchNurse": "Search nurse...",
+      "toothPosition": "Tooth Position",
+      "toothPositionPlaceholder": "e.g. 36, 37",
+      "result": "Result",
+      "resultPlaceholder": "e.g. 120",
+      "description": "Procedure Steps",
+      "descriptionPlaceholder": "Describe the procedure steps...",
+      "notes": "Notes",
+      "notesPlaceholder": "Additional notes..."
+    }
+  },
   "inventory": {
     "inventoryManagement": "Inventory Management",
     "addProduct": "Add Product",

@@ -152,6 +152,58 @@
       }
     }
   },
+  "procedure": {
+    "loading": "Memuat tindakan...",
+    "requiredBeforeSave": "wajib diisi sebelum menyimpan",
+    "saving": "Menyimpan...",
+    "saveProcedure": "Simpan Tindakan",
+    "messages": {
+      "saveSuccess": "Tindakan berhasil disimpan"
+    },
+    "errors": {
+      "minOneProcedure": "Tambahkan minimal satu baris tindakan dengan dokter dan kode ICD-9-CM",
+      "rowMissingRequired": "Baris {{row}}: {{fields}} wajib diisi",
+      "saveFailed": "Gagal menyimpan tindakan. Coba lagi."
+    },
+    "table": {
+      "title": "Tabel Tindakan",
+      "selectAll": "Pilih semua",
+      "addRow": "Tambah Tindakan",
+      "removeSelected": "Hapus Terpilih",
+      "toggleDetails": "Buka detail",
+      "columns": {
+        "product": "Produk",
+        "category": "Kategori",
+        "icd9cm": "ICD-9-CM",
+        "doctor": "Dokter"
+      },
+      "placeholders": {
+        "searchProduct": "Cari produk tindakan...",
+        "selectCategory": "— Pilih Kategori —",
+        "searchIcd9cm": "Cari kode ICD-9-CM...",
+        "searchDoctor": "Cari dokter..."
+      },
+      "empty": {
+        "prefix": "Belum ada tindakan. Klik",
+        "suffix": "untuk memulai."
+      }
+    },
+    "detail": {
+      "plannedAt": "Tanggal Rencana",
+      "duration": "Lama Tindakan",
+      "durationPlaceholder": "mis. 30 menit",
+      "nurse": "Perawat / Bidan",
+      "searchNurse": "Cari perawat...",
+      "toothPosition": "Posisi Gigi",
+      "toothPositionPlaceholder": "mis. 36, 37",
+      "result": "Hasil",
+      "resultPlaceholder": "mis. 120",
+      "description": "Prosedur Tindakan",
+      "descriptionPlaceholder": "Uraikan langkah/prosedur tindakan...",
+      "notes": "Keterangan",
+      "notesPlaceholder": "Catatan tambahan..."
+    }
+  },
   "inventory": {
     "inventoryManagement": "Manajemen Inventori",
     "addProduct": "Tambah Produk",
