@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { GetPatientVisitDetailedByID, ListPatients, ListVisitsByParams, RegisterPatientRequest } from "@requests/patient";
 import { DiagnosisEntry, PROGNOSIS_OPTIONS } from "@models/diagnosis";
 import { GetPatientParam, GetPatientVisitDetailedResponse, Patient, Patient as PatientModel, PatientVisit, PatientVisitDetail, PatientVisitsComponentProps, RegisterPatient as RegisterPatientModel } from "@models/patient";
+import { procedureCategoryLabel } from "@models/procedure";
 import { EditorComponent } from "./EditorComponent";
 import { isValidIndonesianNIK, isValidIndonesianPhone, normalizeIndonesianPhone } from "@utils/common";
 import HorizontalScroll from "./HorizontalScroll";
@@ -589,6 +590,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
     const [activeTab, setActiveTab] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+    const [expandedProcedureKey, setExpandedProcedureKey] = useState<string | null>(null);
     // Pagination states
     const [currentOffset, setCurrentOffset] = useState(offset || 0);
     const [hasMoreVisits, setHasMoreVisits] = useState(true);
@@ -669,6 +671,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
     }, [patient_uuid, internalPatient]);
 
     useLayoutEffect(() => {
+        setExpandedProcedureKey(null);
         if (activeTab === 0) {
             setVisitDetail(null);
             setIsLoadingDetail(false);
@@ -771,17 +774,20 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
         const hasAnamnesa = rawAnamnesa != null && hasAnamnesaContent(rawAnamnesa);
         const diagnoses = [...(visitDetail.diagnoses ?? [])].sort((a, b) => a.rank - b.rank);
         const hasDiagnoses = diagnoses.length > 0;
+        const procedures = [...(visitDetail.procedures ?? [])].sort((a, b) => a.rank - b.rank);
+        const hasProcedures = procedures.length > 0;
         const hasProducts = productLines.length > 0;
         const hasJourney = journeyLen > 0;
-        const hasVisitWallContent = hasJourney || hasProducts || hasAnamnesa || hasDiagnoses;
+        const hasVisitWallContent = hasJourney || hasProducts || hasAnamnesa || hasDiagnoses || hasProcedures;
         const extraCards =
-            (hasAnamnesa ? 1 : 0) + (hasDiagnoses ? 1 : 0) + (hasProducts ? 1 : 0);
+            (hasAnamnesa ? 1 : 0) + (hasDiagnoses ? 1 : 0) + (hasProducts ? 1 : 0) + (hasProcedures ? 1 : 0);
         const totalWallItems = extraCards + journeyLen;
         const useNarrowWall = totalWallItems <= 1;
         const overviewParts: string[] = [];
         if (hasJourney) overviewParts.push(`${journeyLen} journey point${journeyLen !== 1 ? 's' : ''}`);
         if (hasAnamnesa) overviewParts.push('Anamnesa');
         if (hasDiagnoses) overviewParts.push(`${diagnoses.length} diagnosis${diagnoses.length !== 1 ? 'es' : ''}`);
+        if (hasProcedures) overviewParts.push(`${procedures.length} procedure${procedures.length !== 1 ? 's' : ''}`);
         if (hasProducts) overviewParts.push(`${productLines.length} product${productLines.length !== 1 ? 's' : ''}`);
         const overviewSummary =
             overviewParts.length > 0 ? overviewParts.join(' · ') : 'No recorded items';
@@ -792,6 +798,11 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
             if (!acc || new Date(d.updated_at) > new Date(acc)) return d.updated_at;
             return acc;
         }, undefined);
+        const latestProcedureUpdate = procedures.reduce<string | undefined>((acc, p) => {
+            if (!p.updated_at) return acc;
+            if (!acc || new Date(p.updated_at) > new Date(acc)) return p.updated_at;
+            return acc;
+        }, undefined);
         return {
             productLines,
             journeyLen,
@@ -800,12 +811,15 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
             anamnesaVitals,
             diagnoses,
             hasDiagnoses,
+            procedures,
+            hasProcedures,
             hasProducts,
             hasJourney,
             hasVisitWallContent,
             useNarrowWall,
             overviewSummary,
             latestDiagnosisUpdate,
+            latestProcedureUpdate,
         };
     }, [visitDetail]);
 
@@ -952,7 +966,7 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                 </div>
                                 <h3 className="text-sm font-medium text-gray-900 mb-2">No visit overview yet</h3>
                                 <p className="text-sm text-gray-500">
-                                    This visit has no journey points, anamnesa, diagnoses, or ordered products recorded.
+                                    This visit has no journey points, anamnesa, diagnoses, procedures, or ordered products recorded.
                                 </p>
                             </div>
                         ) : (
@@ -1074,6 +1088,135 @@ export const PatientVisitsComponent = ({ patient_uuid, limit, offset, patient, i
                                         <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100 text-xs text-gray-500">
                                             {visitWall.latestDiagnosisUpdate
                                                 ? `Last updated ${formatRelativeTime(visitWall.latestDiagnosisUpdate)}`
+                                                : null}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Procedures */}
+                                {visitWall.hasProcedures && (
+                                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 break-inside-avoid mb-6">
+                                        <div className="p-4 border-b border-gray-100">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="h-8 w-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center text-white">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243zm2.122-8.485a3 3 0 10-4.243-4.242 3 3 0 004.243 4.242z" />
+                                                        </svg>
+                                                    </div>
+                                                    <h4 className="text-base font-semibold text-gray-900">Procedures</h4>
+                                                </div>
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                                                    {visitWall.procedures.length} record{visitWall.procedures.length !== 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 space-y-2">
+                                            {visitWall.procedures.map((row) => {
+                                                const procKey = String(row.id ?? `proc-${row.rank}`);
+                                                const isExpanded = expandedProcedureKey === procKey;
+                                                const hasDetails = !!(
+                                                    row.nurse_name?.trim() ||
+                                                    row.planned_at ||
+                                                    row.duration?.trim() ||
+                                                    row.description?.trim() ||
+                                                    row.notes?.trim()
+                                                );
+                                                const formattedPlannedAt = row.planned_at
+                                                    ? (() => {
+                                                        const d = new Date(row.planned_at);
+                                                        return Number.isNaN(d.getTime()) || d.getUTCFullYear() < 1970
+                                                            ? null
+                                                            : d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                                                    })()
+                                                    : null;
+
+                                                return (
+                                                    <div
+                                                        key={procKey}
+                                                        className="border border-gray-100 rounded-lg bg-gray-50/80 overflow-hidden"
+                                                    >
+                                                        {/* Summary row — always visible, clickable when details exist */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => hasDetails && setExpandedProcedureKey(isExpanded ? null : procKey)}
+                                                            className={`w-full text-left p-3 flex items-start gap-2 transition-colors ${hasDetails ? 'cursor-pointer hover:bg-teal-50/60 active:bg-teal-100/40' : 'cursor-default'}`}
+                                                        >
+                                                            <div className="min-w-0 flex-1">
+                                                                {row.icd9cm_code ? (
+                                                                    <p className="text-xs font-mono text-gray-500">{row.icd9cm_code}</p>
+                                                                ) : null}
+                                                                {row.icd9cm_display ? (
+                                                                    <p className="text-sm font-medium text-gray-900 mt-0.5">{row.icd9cm_display}</p>
+                                                                ) : null}
+                                                                {row.doctor_name ? (
+                                                                    <p className="text-xs text-gray-500 mt-1">{row.doctor_name}</p>
+                                                                ) : null}
+                                                                {row.product_name ? (
+                                                                    <p className="text-xs text-gray-500 mt-0.5">{row.product_name}</p>
+                                                                ) : null}
+                                                            </div>
+                                                            <div className="shrink-0 flex items-center gap-1.5 mt-0.5">
+                                                                {row.category ? (
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-white border border-gray-200 text-gray-700">
+                                                                        {procedureCategoryLabel(row.category)}
+                                                                    </span>
+                                                                ) : null}
+                                                                {hasDetails && (
+                                                                    <svg
+                                                                        className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                                    >
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                )}
+                                                            </div>
+                                                        </button>
+
+                                                        {/* Expanded detail */}
+                                                        {isExpanded && (
+                                                            <div className="px-3 pb-3 pt-1 border-t border-gray-100 bg-white">
+                                                                <dl className="space-y-1.5">
+                                                                    {row.nurse_name?.trim() ? (
+                                                                        <div className="flex gap-2">
+                                                                            <dt className="text-[11px] text-gray-400 w-24 shrink-0 pt-px">Perawat</dt>
+                                                                            <dd className="text-xs text-gray-700">{row.nurse_name}</dd>
+                                                                        </div>
+                                                                    ) : null}
+                                                                    {formattedPlannedAt ? (
+                                                                        <div className="flex gap-2">
+                                                                            <dt className="text-[11px] text-gray-400 w-24 shrink-0 pt-px">Tanggal Rencana</dt>
+                                                                            <dd className="text-xs text-gray-700">{formattedPlannedAt}</dd>
+                                                                        </div>
+                                                                    ) : null}
+                                                                    {row.duration?.trim() ? (
+                                                                        <div className="flex gap-2">
+                                                                            <dt className="text-[11px] text-gray-400 w-24 shrink-0 pt-px">Durasi</dt>
+                                                                            <dd className="text-xs text-gray-700">{row.duration}</dd>
+                                                                        </div>
+                                                                    ) : null}
+                                                                    {row.description?.trim() ? (
+                                                                        <div className="flex gap-2">
+                                                                            <dt className="text-[11px] text-gray-400 w-24 shrink-0 pt-px">Prosedur</dt>
+                                                                            <dd className="text-xs text-gray-700 whitespace-pre-wrap">{row.description}</dd>
+                                                                        </div>
+                                                                    ) : null}
+                                                                    {row.notes?.trim() ? (
+                                                                        <div className="flex gap-2">
+                                                                            <dt className="text-[11px] text-gray-400 w-24 shrink-0 pt-px">Keterangan</dt>
+                                                                            <dd className="text-xs text-gray-700 whitespace-pre-wrap">{row.notes}</dd>
+                                                                        </div>
+                                                                    ) : null}
+                                                                </dl>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-100 text-xs text-gray-500">
+                                            {visitWall.latestProcedureUpdate
+                                                ? `Last updated ${formatRelativeTime(visitWall.latestProcedureUpdate)}`
                                                 : null}
                                         </div>
                                     </div>

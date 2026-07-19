@@ -3,6 +3,7 @@ import { CommonQueryParams } from "./common";
 import { DiagnosisEntry } from "./diagnosis";
 import { JourneyPoint } from "./journey";
 import { CheckoutProduct, Product } from "./product";
+import { ProcedureEntry } from "./procedure";
 
 
 export interface Patient {
@@ -67,6 +68,7 @@ export interface GetPatientVisitDetailedResponse {
   products?: CheckoutProduct[] | null;
   anamnesa?: AnamnesaData | null;
   diagnoses?: DiagnosisEntry[] | null;
+  procedures?: ProcedureEntry[] | null;
 }
 
 export interface PatientVisit {
