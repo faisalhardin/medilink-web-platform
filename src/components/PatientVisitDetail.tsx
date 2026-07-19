@@ -16,9 +16,10 @@ import Drawer from "./Drawer";
 import { PatientVisitsComponent } from './PatientComponent';
 import { AnamnesaTabContent } from './AnamnesaTabContent';
 import { DiagnosisTabContent } from './DiagnosisTabContent';
+import { ProcedureTabContent } from './ProcedureTabContent';
 
 
-type TabType = 'journey' | 'anamnesa' | 'diagnosis';
+type TabType = 'journey' | 'anamnesa' | 'diagnosis' | 'procedure';
 
 export interface journeyTab {
     id: Id,
@@ -42,6 +43,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const medicalTabs: journeyTab[] = [
         { id: 'anamnesa', name: 'Anamnesa', position: 999, is_owned: true, type: 'anamnesa' },
         { id: 'diagnosis', name: 'Diagnosis', position: 1000, is_owned: true, type: 'diagnosis' },
+        { id: 'procedure', name: 'Tindakan', position: 1001, is_owned: true, type: 'procedure' },
     ];
 
     const updateSelectedProducts = (products: CheckoutProduct[]) => {
@@ -280,7 +282,12 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         <DiagnosisTabContent visitId={patientVisitId} patient={patient} />
                     </div>
                 )}
-                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && (
+                {activeTab.type === 'procedure' && (
+                    <div className="w-full">
+                        <ProcedureTabContent visitId={patientVisitId} patient={patient} />
+                    </div>
+                )}
+                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' && (
                     <div className="flex flex-col lg:flex-row">
                         {/* Product assignment panel - appears first on small screens */}
                         <div className='w-full lg:w-3/12 order-1 lg:order-2 mb-4 lg:mb-0'>
