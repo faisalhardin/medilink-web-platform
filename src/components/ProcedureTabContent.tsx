@@ -12,11 +12,31 @@ import {
 } from '@models/procedure';
 import { Patient } from '@models/patient';
 import { getVisitProcedures, saveVisitProcedures } from '@requests/procedure';
-import { formatDateTime, formatDateTimeWithOffset } from '@utils/common';
+import { formatDateTime } from '@utils/common';
 
-/** ISO/API timestamp → value for <input type="datetime-local"> (YYYY-MM-DDTHH:mm). */
-function toDatetimeLocal(iso: string): string {
-  return formatDateTimeWithOffset(new Date(iso)).slice(0, 16);
+/**
+ * ISO/API timestamp → value for <input type="datetime-local"> (YYYY-MM-DDTHH:mm).
+ * Treats missing/zero/invalid API times as empty so save never hits Invalid Date.
+ */
+function toDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime()) || date.getUTCFullYear() < 1970) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/** datetime-local value → ISO UTC for the API, or null when empty/invalid. */
+function plannedAtToISO(local: string): string | null {
+  const trimmed = local.trim();
+  if (!trimmed) return null;
+  const date = new Date(trimmed);
+  if (Number.isNaN(date.getTime())) return null;
+  return formatDateTime(date);
 }
 
 function entryToFormRow(e: ProcedureEntry): ProcedureFormRow {
@@ -29,7 +49,7 @@ function entryToFormRow(e: ProcedureEntry): ProcedureFormRow {
     doctor_name: e.doctor_name,
     nurse_id: e.nurse_id ?? '',
     nurse_name: e.nurse_name ?? '',
-    planned_at: e.planned_at ? toDatetimeLocal(e.planned_at) : '',
+    planned_at: toDatetimeLocal(e.planned_at),
     category: e.category ?? '',
     duration: e.duration ?? '',
     icd9cm_code: e.icd9cm_code ?? '',
@@ -110,7 +130,7 @@ export const ProcedureTabContent = ({ visitId }: ProcedureTabContentProps) => {
       product_id: r.product_id,
       doctor_id: r.doctor_id,
       nurse_id: r.nurse_id.trim() === '' ? null : r.nurse_id,
-      planned_at: r.planned_at.trim() === '' ? null : formatDateTime(new Date(r.planned_at)),
+      planned_at: plannedAtToISO(r.planned_at),
       category: r.category === '' ? null : r.category,
       duration: r.duration.trim() === '' ? null : r.duration,
       icd9cm_code: r.icd9cm_code.trim() === '' ? null : r.icd9cm_code,

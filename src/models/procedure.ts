@@ -29,6 +29,11 @@ export const PROCEDURE_CATEGORY_OPTIONS: { value: ProcedureCategory; label: stri
   { value: '46947000', label: 'Terapi Chiropractic' },
 ];
 
+export function procedureCategoryLabel(code: string | null | undefined): string {
+  if (!code) return '';
+  return PROCEDURE_CATEGORY_OPTIONS.find((o) => o.value === code)?.label ?? code;
+}
+
 export interface ProcedureProductOption {
   id: number;
   name: string;
