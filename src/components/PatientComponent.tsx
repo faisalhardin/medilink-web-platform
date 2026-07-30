@@ -1358,8 +1358,9 @@ interface PatientRegistrationComponentProps {
 
 export function PatientRegistrationComponent({ isInDrawer = false, onPatientSelect }: PatientRegistrationComponentProps) {
     const { t } = useTranslation();
-    const { register, handleSubmit, formState: { errors } } = useForm<RegisterPatientModel>();
-
+    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<RegisterPatientModel>();
+    const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
+    const [submitSuccess, setSubmitSuccess] = useState(false);
 
     const normalizeRegisterPatientPayload = (data: RegisterPatientModel) => {
         return {
@@ -1371,7 +1372,7 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
     const onSubmit = async (data: RegisterPatientModel) => {
         const normalizePayload = normalizeRegisterPatientPayload(data);
         try {
-            const resp = await RegisterPatientRequest(normalizePayload);
+            const resp = await RegisterPatientRequest(normalizePayload, idempotencyKeyRef.current);
             onPatientSelect?.({
                 uuid: resp.uuid,
                 nik: resp.nik,
@@ -1389,8 +1390,13 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                 blood_type: resp.blood_type,
                 occupation: resp.occupation,
             });
+            // Rotate key and reset form for a subsequent registration
+            idempotencyKeyRef.current = crypto.randomUUID();
+            setSubmitSuccess(true);
+            reset();
         } catch (err) {
             console.log(err);
+            // Keep the same key so a retry is idempotent
         }
     };
 
@@ -1398,6 +1404,14 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
         <div className={`w-full h-full ${isInDrawer ? 'p-3' : 'min-h-screen p-3'}`}>
             <div className={`${isInDrawer ? '' : 'mx-auto'} bg-white `}>
 
+                {submitSuccess && (
+                    <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>{t('patient.registrationSuccess', 'Patient registered successfully.')}</span>
+                    </div>
+                )}
 
                 {/* Form Card */}
                 <div className={`${isInDrawer ? 'rounded-lg shadow-sm border border-gray-200' : 'rounded-2xl shadow-xl border border-gray-100'}`}>
@@ -1624,12 +1638,13 @@ export function PatientRegistrationComponent({ isInDrawer = false, onPatientSele
                         <div className={`${isInDrawer ? 'mt-6' : 'mt-8'} flex justify-center`}>
                             <button
                                 type="submit"
-                                className={`bg-gradient-to-r from-blue-600 to-indigo-600 text-white ${isInDrawer ? 'px-6 py-3' : 'px-8 py-4'} ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} font-semibold ${isInDrawer ? 'text-base' : 'text-lg'} shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center space-x-2`}
+                                disabled={isSubmitting}
+                                className={`bg-gradient-to-r from-blue-600 to-indigo-600 text-white ${isInDrawer ? 'px-6 py-3' : 'px-8 py-4'} ${isInDrawer ? 'rounded-lg' : 'rounded-xl'} font-semibold ${isInDrawer ? 'text-base' : 'text-lg'} shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none`}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
-                                <span>{t('patient.registerPatient')}</span>
+                                <span>{isSubmitting ? t('patient.registering', 'Registering…') : t('patient.registerPatient')}</span>
                             </button>
                         </div>
                     </form>
