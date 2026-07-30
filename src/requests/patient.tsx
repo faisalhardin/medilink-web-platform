@@ -4,11 +4,14 @@ import { CommonResponse } from "@models/common";
 import { ArchiveJourneyPointRequest } from "@models/journey";
 import authedClient from "@utils/apiClient";
 
-export const RegisterPatientRequest = async (patientForm: RegisterPatient): Promise<Patient> => {
+export const RegisterPatientRequest = async (patientForm: RegisterPatient, idempotencyKey: string): Promise<Patient> => {
     try {    
         const response = await authedClient.post(
             `${PATIENT_PATH}`, patientForm, {
                 withCredentials: true,
+                headers: {
+                    'Idempotency-Key': idempotencyKey,
+                },
               }
           );
 
