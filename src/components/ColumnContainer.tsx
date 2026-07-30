@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import PlusIcon from "assets/icons/PlusIcon";
 import TaskCard from "./TaskCard";
 import { JourneyPoint, PatientVisitTask } from "@models/journey";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { t } from "i18next";
 
 interface Props {
   column: JourneyPoint;
@@ -180,27 +182,10 @@ function ColumnContainer({
             />
           )}
         </div>
-        <button
-          onClick={() => {
-            deleteColumn(column.id);
-          }}
-          className="
-        stroke-white
-        stroke-opacity-70
-        hover:stroke-white
-        hover:bg-white
-        hover:bg-opacity-20
-        rounded-lg
-        p-2
-        transition-all
-        duration-200
-        hover:scale-105
-        active:scale-95
-        z-5
-        "
-        >
-          <TrashIcon />
-        </button>
+        <ColumnActionsMenu
+          columnId={column.id}
+          deleteColumn={deleteColumn}
+        />
       </div>
 
       {/* Column task container */}
@@ -253,5 +238,75 @@ function ColumnContainer({
     </div>
   );
 }
+
+interface ColumnActionsMenuProps {
+  columnId: Id;
+  deleteColumn: (id: Id) => void;
+}
+
+const ColumnActionsMenu = ({ columnId, deleteColumn }: ColumnActionsMenuProps) => {
+  return (
+    <Menu as="div" className="relative inline-block text-left">
+      <div>
+        <MenuButton
+          title="List actions"
+          aria-label="List actions"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+          }}
+          className="
+            inline-flex
+            items-center
+            justify-center
+            text-white
+            text-opacity-70
+            hover:text-white
+            hover:bg-white
+            hover:bg-opacity-20
+            rounded-lg
+            px-2
+            py-1
+            text-lg
+            leading-none
+            transition-all
+            duration-200
+            hover:scale-105
+            active:scale-95
+            z-5
+          "
+        >
+          ⋯
+        </MenuButton>
+      </div>
+
+      <MenuItems
+        transition
+        className="absolute right-0 z-30 mt-2 w-48 origin-top-right rounded-lg bg-white ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+      >
+        <div className="py-1">
+          <MenuItem>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteColumn(columnId);
+              }}
+              className="block w-full px-4 py-2 text-left text-xs sm:text-sm font-normal text-red-600 data-focus:bg-red-50 data-focus:text-red-700 data-focus:outline-hidden hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
+            >
+              <div className="flex items-center gap-2">
+                <TrashIcon />
+                {t('journey.removeColumn')}
+              </div>
+            </button>
+          </MenuItem>
+        </div>
+      </MenuItems>
+    </Menu>
+  );
+};
 
 export default ColumnContainer;

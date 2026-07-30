@@ -325,7 +325,8 @@
   "journey": {
     "journeyBoard": "Journey Board",
     "completed": "Completed",
-    "inProgress": "In Progress"
+    "inProgress": "In Progress",
+    "removeColumn": "Remove column"
   },
   "filter": {
     "timeRange": "Time Range",
