@@ -1,5 +1,6 @@
 // Modified PatientVisitDetail.tsx
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom';
 import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
 import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
@@ -14,6 +15,7 @@ import { t } from 'i18next';
 import { useDrawer } from 'hooks/useDrawer';
 import Drawer from "./Drawer";
 import { PatientVisitsComponent } from './PatientComponent';
+import { PatientDetailInfoContent } from './PatientDetailInfo';
 import { AnamnesaTabContent } from './AnamnesaTabContent';
 import { DiagnosisTabContent } from './DiagnosisTabContent';
 import { ProcedureTabContent } from './ProcedureTabContent';
@@ -39,6 +41,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [patient, setPatient] = useState<Patient>({} as Patient);
     const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
+    const [isPatientInfoOpen, setIsPatientInfoOpen] = useState(false);
     const viewPatientRecordDrawer = useDrawer();
     const medicalTabs: journeyTab[] = [
         { id: 'anamnesa', name: 'Anamnesa', position: 999, is_owned: true, type: 'anamnesa' },
@@ -238,18 +241,38 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             <h2 className='text-xl sm:text-2xl lg:text-3xl font-semibold  relative'>
                                 {patient.name}
                             </h2>
-                            <span className='group text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1 cursor-pointer'
-                                onClick={viewPatientRecordDrawer.openDrawer}>
-                                View Visits
-                                <svg
-                                    className="w-4 h-4 transition-all duration-300 group-hover:translate-x-2 group-hover:scale-110"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPatientInfoOpen(true)}
+                                    className="flex items-center gap-2 rounded-md border border-blue-600 bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </span>
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                        />
+                                    </svg>
+                                    {t('patient.detail', 'Patient Detail')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={viewPatientRecordDrawer.openDrawer}
+                                    className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                        />
+                                    </svg>
+                                    {t('patient.visits', 'Visits')}
+                                </button>
+                            </div>
                         </div>
 
                         <p>
@@ -333,6 +356,37 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     isInDrawer={true}
                 />
             </Drawer>
+            {isPatientInfoOpen && createPortal(
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/50 p-4"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setIsPatientInfoOpen(false);
+                    }}
+                >
+                    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-xl">
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setIsPatientInfoOpen(false)}
+                                className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+                                aria-label="Close"
+                            >
+                                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            <div className="p-6">
+                                <PatientDetailInfoContent
+                                    patient={patient}
+                                    isModal
+                                    onUpdate={(updated) => setPatient((prev) => ({ ...prev, ...updated }))}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
 
 

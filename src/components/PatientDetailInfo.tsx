@@ -3,15 +3,59 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { Patient } from '@models/patient';
 import { formatDate, formatDateForAPI, formatDateTimeForAPI, normalizeIndonesianPhone } from '@utils/common';
-import { UpdatePatient } from '@requests/patient';
+import { GetPatientByUUID, UpdatePatient } from '@requests/patient';
 
-interface PatientDetailInfoProps {
+export interface PatientDetailInfoProps {
     patient: Patient | null;
     onUpdate?: (updatedPatient: Patient) => void;
+    isModal?: boolean;
 }
 
-const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
+const ShimmerBar = ({ className }: { className: string }) => (
+    <div
+        className={`relative overflow-hidden rounded bg-gray-200 ${className}`}
+        aria-hidden
+    >
+        <div className="shimmer-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+    </div>
+);
+
+const PatientDetailInfoSkeleton = () => (
+    <>
+        <div className="border-b border-gray-200 bg-gray-10 pb-6">
+            <ShimmerBar className="h-7 w-48" />
+        </div>
+        <div className="py-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-4">
+                    <ShimmerBar className="mb-4 h-4 w-40" />
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={`personal-${i}`} className="space-y-1">
+                            <ShimmerBar className="h-3 w-24" />
+                            <ShimmerBar className="h-5 w-full max-w-[12rem]" />
+                        </div>
+                    ))}
+                </div>
+                <div className="space-y-4">
+                    <ShimmerBar className="mb-4 h-4 w-44" />
+                    <div className="space-y-1">
+                        <ShimmerBar className="h-3 w-20" />
+                        <ShimmerBar className="h-16 w-full" />
+                    </div>
+                    <div className="space-y-1">
+                        <ShimmerBar className="h-3 w-28" />
+                        <ShimmerBar className="h-5 w-40" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </>
+);
+
+export const PatientDetailInfoContent = ({ patient, onUpdate, isModal = false }: PatientDetailInfoProps) => {
     const { t } = useTranslation();
+    const [displayPatient, setDisplayPatient] = useState<Patient | null>(patient);
+    const [isFetching, setIsFetching] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { register, handleSubmit, reset } = useForm<Partial<Patient>>({
@@ -22,34 +66,77 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
     });
 
     useEffect(() => {
+        if (!isModal) {
+            setDisplayPatient(patient);
+        }
+    }, [isModal, patient]);
+
+    useEffect(() => {
+        if (!isModal) return;
+
+        const uuid = patient?.uuid;
+        if (!uuid) {
+            setDisplayPatient(patient);
+            return;
+        }
+
+        // Keep existing patient visible while soft-refreshing
         if (patient) {
+            setDisplayPatient(patient);
+        }
+
+        let cancelled = false;
+        const fetchPatient = async () => {
+            setIsFetching(true);
+            if (cancelled) return;
+            try {
+                const fullPatient = await GetPatientByUUID(uuid);
+                if (cancelled) return;
+                setDisplayPatient(fullPatient);
+                onUpdate?.(fullPatient);
+            } catch (error) {
+                console.error('Error fetching patient:', error);
+                if (!cancelled) setDisplayPatient(patient);
+            } finally {
+                if (!cancelled) setIsFetching(false);
+            }
+        };
+
+        void fetchPatient();
+        return () => {
+            cancelled = true;
+        };
+    }, [isModal, patient?.uuid]);
+
+    useEffect(() => {
+        if (displayPatient) {
             reset({
-                ...patient,
-                date_of_birth: patient.date_of_birth ? formatDateForAPI(patient.date_of_birth) : undefined
+                ...displayPatient,
+                date_of_birth: displayPatient.date_of_birth ? formatDateForAPI(displayPatient.date_of_birth) : undefined
             });
         }
-    }, [patient, reset]);
+    }, [displayPatient, reset]);
 
     const handleEdit = () => {
         setIsEditing(true);
-        if (patient) {
+        if (displayPatient) {
             reset({
-                ...patient,
-                date_of_birth: patient.date_of_birth ? formatDateForAPI(patient.date_of_birth) : undefined
+                ...displayPatient,
+                date_of_birth: displayPatient.date_of_birth ? formatDateForAPI(displayPatient.date_of_birth) : undefined
             });
         }
     };
 
     const handleCancel = () => {
         setIsEditing(false);
-        reset(patient || {});
+        reset(displayPatient || {});
     };
 
     const onSubmit = async (data: Partial<Patient>) => {
-        if (!patient?.uuid) return;
+        if (!displayPatient?.uuid) return;
 
-        data.uuid = patient.uuid;
-        
+        data.uuid = displayPatient.uuid;
+
         setIsLoading(true);
         try {
             // Normalize phone number if provided
@@ -58,9 +145,10 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                 ...(data.date_of_birth && { date_of_birth: formatDateForAPI(data.date_of_birth) }),
                 ...(data.phone_number && { phone_number: normalizeIndonesianPhone(data.phone_number) })
             };
-            
+
             await UpdatePatient(updateData);
             setIsEditing(false);
+            setDisplayPatient((prev) => ({ ...prev, ...updateData } as Patient));
             onUpdate?.(updateData as Patient);
         } catch (error) {
             console.error('Error updating patient:', error);
@@ -70,7 +158,12 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
         }
     };
 
-    if (!patient) {
+    // No patient yet while fetching — keep modal size stable with skeleton
+    if (isFetching && !displayPatient) {
+        return <PatientDetailInfoSkeleton />;
+    }
+
+    if (!displayPatient) {
         return (
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="text-center py-12">
@@ -86,21 +179,23 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
     }
 
     return (
-        <div className="bg-white overflow-hidden p-6 border border-t-0 shadow-md rounded-b-lg rounded-tr-lg">
+        <>
             {/* Header */}
             <div className="border-b pb-6 border-gray-200 bg-gray-10 flex items-center justify-between">
                 {isEditing ? (
                     <input
                         type="text"
                         {...register('name', { required: true })}
-                        defaultValue={patient.name}
+                        defaultValue={displayPatient.name}
                         className="text-xl font-semibold text-gray-900 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder={t('patient.name', 'Patient Name')}
                     />
+                ) : isFetching ? (
+                    <ShimmerBar className="h-7 w-48" />
                 ) : (
-                    <h2 className="text-xl font-semibold text-gray-900">{patient.name}</h2>
+                    <h2 className="text-xl font-semibold text-gray-900 truncate">{displayPatient.name}</h2>
                 )}
-                {!isEditing && (
+                {!isModal && !isEditing && (
                     <button
                         onClick={handleEdit}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
@@ -120,7 +215,7 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                         {/* Personal Information */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Personal Information</h3>
-                            
+
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">{t('patient.dateOfBirth')}</label>
@@ -128,14 +223,16 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                                         <input
                                             type="date"
                                             {...register('date_of_birth')}
-                                            defaultValue={patient.date_of_birth ? formatDateTimeForAPI(patient.date_of_birth) : ''}
+                                            defaultValue={displayPatient.date_of_birth ? formatDateTimeForAPI(displayPatient.date_of_birth) : ''}
                                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
+                                    ) : isFetching ? (
+                                        <ShimmerBar className="h-5 w-36" />
                                     ) : (
-                                        <p className="text-sm text-gray-900">{formatDate(patient.date_of_birth || '')}</p>
+                                        <p className="text-sm text-gray-900">{formatDate(displayPatient.date_of_birth || '')}</p>
                                     )}
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">{t('patient.placeOfBirth', 'Place of Birth')}</label>
                                     {isEditing ? (
@@ -145,15 +242,17 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             placeholder={t('patient.placeOfBirth', 'Place of Birth')}
                                         />
+                                    ) : isFetching ? (
+                                        <ShimmerBar className="h-5 w-40" />
                                     ) : (
-                                        patient.place_of_birth ? (
-                                            <p className="text-sm text-gray-900">{patient.place_of_birth}</p>
+                                        displayPatient.place_of_birth ? (
+                                            <p className="text-sm text-gray-900">{displayPatient.place_of_birth}</p>
                                         ) : (
                                             <p className="text-sm text-gray-400 italic">-</p>
                                         )
                                     )}
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">{t('patient.sex', 'Sex')}</label>
                                     {isEditing ? (
@@ -165,21 +264,22 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                                             <option value="male">Male</option>
                                             <option value="female">Female</option>
                                         </select>
+                                    ) : isFetching ? (
+                                        <ShimmerBar className="h-6 w-20 rounded-full" />
                                     ) : (
-                                        patient.sex ? (
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                                                patient.sex === 'male' 
-                                                    ? 'bg-blue-100 text-blue-800' 
-                                                    : 'bg-pink-100 text-pink-800'
-                                            }`}>
-                                                {patient.sex === 'male' ? '♂ Male' : '♀ Female'}
+                                        displayPatient.sex ? (
+                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${displayPatient.sex === 'male'
+                                                ? 'bg-blue-100 text-blue-800'
+                                                : 'bg-pink-100 text-pink-800'
+                                                }`}>
+                                                {displayPatient.sex === 'male' ? '♂ Male' : '♀ Female'}
                                             </span>
                                         ) : (
                                             <p className="text-sm text-gray-400 italic">-</p>
                                         )
                                     )}
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">{t('patient.occupation', 'Occupation')}</label>
                                     {isEditing ? (
@@ -189,9 +289,11 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             placeholder={t('patient.enterOccupation', 'Enter occupation')}
                                         />
+                                    ) : isFetching ? (
+                                        <ShimmerBar className="h-5 w-44" />
                                     ) : (
-                                        patient.occupation ? (
-                                            <p className="text-sm text-gray-900">{patient.occupation}</p>
+                                        displayPatient.occupation ? (
+                                            <p className="text-sm text-gray-900">{displayPatient.occupation}</p>
                                         ) : (
                                             <p className="text-sm text-gray-400 italic">-</p>
                                         )
@@ -203,7 +305,7 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                         {/* Contact Information */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Contact Information</h3>
-                            
+
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">{t('patient.address', 'Address')}</label>
@@ -214,15 +316,21 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                             placeholder={t('patient.address', 'Address')}
                                         />
+                                    ) : isFetching ? (
+                                        <div className="space-y-2">
+                                            <ShimmerBar className="h-4 w-full" />
+                                            <ShimmerBar className="h-4 w-4/5" />
+                                            <ShimmerBar className="h-4 w-2/3" />
+                                        </div>
                                     ) : (
-                                        patient.address ? (
-                                            <p className="text-sm text-gray-900">{patient.address}</p>
+                                        displayPatient.address ? (
+                                            <p className="text-sm text-gray-900">{displayPatient.address}</p>
                                         ) : (
                                             <p className="text-sm text-gray-400 italic">-</p>
                                         )
                                     )}
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">{t('patient.phoneNumber', 'Phone Number')}</label>
                                     {isEditing ? (
@@ -232,10 +340,12 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             placeholder={t('patient.phoneNumber', 'Phone Number')}
                                         />
+                                    ) : isFetching ? (
+                                        <ShimmerBar className="h-5 w-40" />
                                     ) : (
-                                        patient.phone_number ? (
+                                        displayPatient.phone_number ? (
                                             <p className="text-sm text-gray-900">
-                                                {patient.phone_number}
+                                                {displayPatient.phone_number}
                                             </p>
                                         ) : (
                                             <p className="text-sm text-gray-400 italic">-</p>
@@ -283,9 +393,16 @@ const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
                     </div>
                 )}
             </form>
+        </>
+    );
+};
+
+const PatientDetailInfo = ({ patient, onUpdate }: PatientDetailInfoProps) => {
+    return (
+        <div className="bg-white overflow-hidden p-6 border border-t-0 shadow-md rounded-b-lg rounded-tr-lg">
+            <PatientDetailInfoContent patient={patient} onUpdate={onUpdate} />
         </div>
     );
 };
 
 export default PatientDetailInfo;
-
