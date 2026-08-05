@@ -515,5 +515,10 @@
         "fld": "Full Denture"
       }
     }
+  },
+  "recall": {
+    "visitList": {
+      "title": "Recalls from this visit"
+    }
   }
 }

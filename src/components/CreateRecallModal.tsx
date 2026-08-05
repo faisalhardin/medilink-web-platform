@@ -12,6 +12,8 @@ import { formatDate } from "@utils/common";
 
 interface CreateRecallModalProps {
   initialDate: Date;
+  initialPatient?: Patient;
+  visitId?: number;
 }
 
 interface RecallFormValues {
@@ -41,13 +43,14 @@ const toISOWithTimezone = (date: Date): string => {
   );
 };
 
-export function CreateRecallModal({ initialDate }: CreateRecallModalProps) {
+export function CreateRecallModal({ initialDate, initialPatient, visitId }: CreateRecallModalProps) {
   const { t } = useTranslation();
   const { closeModal } = useModal();
 
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(initialPatient ?? null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const patientLocked = Boolean(initialPatient);
 
   const patientDrawer = useDrawer();
   const registerPatientDrawer = useDrawer();
@@ -59,6 +62,12 @@ export function CreateRecallModal({ initialDate }: CreateRecallModalProps) {
       notes: "",
     },
   });
+
+  useEffect(() => {
+    if (initialPatient) {
+      setSelectedPatient(initialPatient);
+    }
+  }, [initialPatient]);
 
   useEffect(() => {
     const d = new Date(initialDate);
@@ -78,6 +87,7 @@ export function CreateRecallModal({ initialDate }: CreateRecallModalProps) {
         scheduled_at: toISOWithTimezone(new Date(data.scheduled_at)),
         recall_type: data.recall_type || undefined,
         notes: data.notes || undefined,
+        id_trx_patient_visit: visitId || undefined,
       };
 
       await CreateRecall(payload);
@@ -111,68 +121,8 @@ export function CreateRecallModal({ initialDate }: CreateRecallModalProps) {
               {t("recall.form.patient", "Patient")} *
             </label>
 
-            <div className="flex gap-3">
-              {/* Select trigger — mirrors VisitForm pattern */}
-              <div className="relative flex-1">
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none cursor-pointer"
-                  value={selectedPatient?.uuid ?? ""}
-                  onClick={patientDrawer.openDrawer}
-                  onChange={() => { }}
-                >
-                  <option value="" disabled hidden>
-                    {t("recall.form.searchPatient", "Choose patient from database…")}
-                  </option>
-                  {selectedPatient && (
-                    <option value={selectedPatient.uuid}>
-                      {selectedPatient.name}
-                    </option>
-                  )}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Register new patient button */}
-              {!selectedPatient && (
-                <div className="relative group">
-                  <button
-                    type="button"
-                    onClick={registerPatientDrawer.openDrawer}
-                    title={t("patient.registerNewPatient", "Register new patient")}
-                    className="flex items-center justify-center h-full px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-                    </svg>
-                  </button>
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                    {t("patient.registerNewPatient", "Register new patient")}
-                  </div>
-                </div>
-              )}
-
-              {/* Clear selection button when a patient is already selected */}
-              {selectedPatient && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedPatient(null)}
-                  title={t("recall.form.changePatient", "Change patient")}
-                  className="flex items-center justify-center h-full px-3 border border-gray-300 text-gray-500 hover:text-red-500 hover:border-red-300 rounded-lg transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            {/* Selected patient card */}
-            {selectedPatient && (
-              <div className="mt-2 bg-white border border-gray-200 rounded-lg px-4 py-3 text-xs text-gray-600 space-y-0.5">
+            {patientLocked && selectedPatient ? (
+              <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-xs text-gray-600 space-y-0.5">
                 <p className="font-semibold text-gray-900 text-sm">{selectedPatient.name}</p>
                 {selectedPatient.nik && <p><span className="font-medium">NIK:</span> {selectedPatient.nik}</p>}
                 {selectedPatient.date_of_birth && (
@@ -182,6 +132,81 @@ export function CreateRecallModal({ initialDate }: CreateRecallModalProps) {
                   <p><span className="font-medium">{t("common.sex", "Sex")}:</span> {selectedPatient.sex}</p>
                 )}
               </div>
+            ) : (
+              <>
+                <div className="flex gap-3">
+                  {/* Select trigger — mirrors VisitForm pattern */}
+                  <div className="relative flex-1">
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none cursor-pointer"
+                      value={selectedPatient?.uuid ?? ""}
+                      onClick={patientDrawer.openDrawer}
+                      onChange={() => { }}
+                    >
+                      <option value="" disabled hidden>
+                        {t("recall.form.searchPatient", "Choose patient from database…")}
+                      </option>
+                      {selectedPatient && (
+                        <option value={selectedPatient.uuid}>
+                          {selectedPatient.name}
+                        </option>
+                      )}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Register new patient button */}
+                  {!selectedPatient && (
+                    <div className="relative group">
+                      <button
+                        type="button"
+                        onClick={registerPatientDrawer.openDrawer}
+                        title={t("patient.registerNewPatient", "Register new patient")}
+                        className="flex items-center justify-center h-full px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                        </svg>
+                      </button>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                        {t("patient.registerNewPatient", "Register new patient")}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Clear selection button when a patient is already selected */}
+                  {selectedPatient && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPatient(null)}
+                      title={t("recall.form.changePatient", "Change patient")}
+                      className="flex items-center justify-center h-full px-3 border border-gray-300 text-gray-500 hover:text-red-500 hover:border-red-300 rounded-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {/* Selected patient card */}
+                {selectedPatient && (
+                  <div className="mt-2 bg-white border border-gray-200 rounded-lg px-4 py-3 text-xs text-gray-600 space-y-0.5">
+                    <p className="font-semibold text-gray-900 text-sm">{selectedPatient.name}</p>
+                    {selectedPatient.nik && <p><span className="font-medium">NIK:</span> {selectedPatient.nik}</p>}
+                    {selectedPatient.date_of_birth && (
+                      <p><span className="font-medium">{t("patient.dob", "DOB")}:</span> {formatDate(selectedPatient.date_of_birth)}</p>
+                    )}
+                    {selectedPatient.sex && (
+                      <p><span className="font-medium">{t("common.sex", "Sex")}:</span> {selectedPatient.sex}</p>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
 

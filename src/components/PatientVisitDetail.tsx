@@ -19,6 +19,9 @@ import { PatientDetailInfoContent } from './PatientDetailInfo';
 import { AnamnesaTabContent } from './AnamnesaTabContent';
 import { DiagnosisTabContent } from './DiagnosisTabContent';
 import { ProcedureTabContent } from './ProcedureTabContent';
+import { useModal } from 'context/ModalContext';
+import { CreateRecallModal } from './CreateRecallModal';
+import { VisitRecallList } from './VisitRecallList';
 
 
 type TabType = 'journey' | 'anamnesa' | 'diagnosis' | 'procedure';
@@ -42,7 +45,9 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
     const [isPatientInfoOpen, setIsPatientInfoOpen] = useState(false);
+    const [recallRefreshKey, setRecallRefreshKey] = useState(0);
     const viewPatientRecordDrawer = useDrawer();
+    const { openModal } = useModal();
     const medicalTabs: journeyTab[] = [
         { id: 'anamnesa', name: 'Anamnesa', position: 999, is_owned: true, type: 'anamnesa' },
         { id: 'diagnosis', name: 'Diagnosis', position: 1000, is_owned: true, type: 'diagnosis' },
@@ -74,6 +79,24 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const updateActiveTab = (tab: journeyTab) => {
         setActiveTab(tab);
     }
+
+    const openAddRecall = () => {
+        if (!patient?.uuid) return;
+        const initialDate = new Date();
+        initialDate.setDate(initialDate.getDate() + 1);
+        initialDate.setHours(9, 0, 0, 0);
+        openModal(
+            <CreateRecallModal
+                initialDate={initialDate}
+                initialPatient={patient}
+                visitId={patientVisitId}
+            />,
+            {
+                onClose: () => setRecallRefreshKey((k) => k + 1),
+                maxWidth: 'lg',
+            }
+        );
+    };
 
     const GenerateVisitTab = async (_patientVisit: GetPatientVisitDetailedResponse, journeyPoints: JourneyPoint[]) => {
         const setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
@@ -272,6 +295,22 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                                     </svg>
                                     {t('patient.visits', 'Visits')}
                                 </button>
+                                <button
+                                    type="button"
+                                    onClick={openAddRecall}
+                                    disabled={!patient?.uuid}
+                                    className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                    {t('recall.addAppointment', 'Add Recall')}
+                                </button>
                             </div>
                         </div>
 
@@ -280,6 +319,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         </p>
                     </div>
                 </div>
+                <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
                 <div className='border-b border-gray-200 mb-6 pb-2'>
                     <ul className='flex'>
                         {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item, idx) => {
