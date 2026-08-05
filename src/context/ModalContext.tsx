@@ -1,5 +1,5 @@
 // src/context/ModalContext.tsx
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 
 export type ModalMaxWidth = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
@@ -8,50 +8,76 @@ export interface OpenModalOptions {
     maxWidth?: ModalMaxWidth;
 }
 
+export interface ModalEntry {
+    id: number;
+    content: ReactNode;
+    maxWidth: ModalMaxWidth;
+    onClose?: () => void;
+}
+
 interface ModalContextType {
     isOpen: boolean;
     modalContent: ReactNode | null;
     maxWidth: ModalMaxWidth;
+    modals: ModalEntry[];
     openModal: (content: ReactNode, onCloseOrOptions?: (() => void) | OpenModalOptions) => void;
     closeModal: () => void;
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
+let nextModalId = 1;
+
 export function ModalProvider({ children }: { children: ReactNode }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [modalContent, setModalContent] = useState<ReactNode | null>(null);
-    const [maxWidth, setMaxWidth] = useState<ModalMaxWidth>('2xl');
-    const [onCloseCallback, setOnCloseCallback] = useState<(() => void) | undefined>(undefined);
+    const [modals, setModals] = useState<ModalEntry[]>([]);
 
-    const openModal = (content: ReactNode, onCloseOrOptions?: (() => void) | OpenModalOptions) => {
-        setModalContent(content);
-        setIsOpen(true);
+    const openModal = useCallback((content: ReactNode, onCloseOrOptions?: (() => void) | OpenModalOptions) => {
+        let onClose: (() => void) | undefined;
+        let maxWidth: ModalMaxWidth = '2xl';
 
-        // Accept either a bare onClose callback (backwards-compatible) or an options object
         if (typeof onCloseOrOptions === 'function') {
-            setOnCloseCallback(() => onCloseOrOptions);
-            setMaxWidth('2xl');
+            onClose = onCloseOrOptions;
         } else if (onCloseOrOptions) {
-            if (onCloseOrOptions.onClose) setOnCloseCallback(() => onCloseOrOptions.onClose!);
-            setMaxWidth(onCloseOrOptions.maxWidth ?? '2xl');
-        } else {
-            setMaxWidth('2xl');
+            onClose = onCloseOrOptions.onClose;
+            maxWidth = onCloseOrOptions.maxWidth ?? '2xl';
         }
-    };
 
-    const closeModal = () => {
-        setIsOpen(false);
-        setModalContent(null);
-        setMaxWidth('2xl');
-        if (onCloseCallback) {
-            onCloseCallback();
-            setOnCloseCallback(undefined);
-        }
-    };
+        setModals((prev) => [
+            ...prev,
+            {
+                id: nextModalId++,
+                content,
+                maxWidth,
+                onClose,
+            },
+        ]);
+    }, []);
+
+    const closeModal = useCallback(() => {
+        setModals((prev) => {
+            if (prev.length === 0) return prev;
+            const top = prev[prev.length - 1];
+            // Defer onClose so state update isn't nested inside another update from the callback
+            if (top.onClose) {
+                queueMicrotask(() => top.onClose?.());
+            }
+            return prev.slice(0, -1);
+        });
+    }, []);
+
+    const top = modals[modals.length - 1];
+
+    const value = useMemo<ModalContextType>(() => ({
+        isOpen: modals.length > 0,
+        modalContent: top?.content ?? null,
+        maxWidth: top?.maxWidth ?? '2xl',
+        modals,
+        openModal,
+        closeModal,
+    }), [modals, top, openModal, closeModal]);
 
     return (
-        <ModalContext.Provider value={{ isOpen, modalContent, maxWidth, openModal, closeModal }}>
+        <ModalContext.Provider value={value}>
             {children}
         </ModalContext.Provider>
     );

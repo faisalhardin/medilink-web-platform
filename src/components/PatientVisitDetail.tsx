@@ -19,6 +19,9 @@ import { PatientDetailInfoContent } from './PatientDetailInfo';
 import { AnamnesaTabContent } from './AnamnesaTabContent';
 import { DiagnosisTabContent } from './DiagnosisTabContent';
 import { ProcedureTabContent } from './ProcedureTabContent';
+import { useModal } from 'context/ModalContext';
+import { CreateRecallModal } from './CreateRecallModal';
+import { VisitRecallList } from './VisitRecallList';
 
 
 type TabType = 'journey' | 'anamnesa' | 'diagnosis' | 'procedure';
@@ -42,7 +45,9 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [trxProduct, setTrxProduct] = useState<TrxVisitProduct[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
     const [isPatientInfoOpen, setIsPatientInfoOpen] = useState(false);
+    const [recallRefreshKey, setRecallRefreshKey] = useState(0);
     const viewPatientRecordDrawer = useDrawer();
+    const { openModal } = useModal();
     const medicalTabs: journeyTab[] = [
         { id: 'anamnesa', name: 'Anamnesa', position: 999, is_owned: true, type: 'anamnesa' },
         { id: 'diagnosis', name: 'Diagnosis', position: 1000, is_owned: true, type: 'diagnosis' },
@@ -74,6 +79,24 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const updateActiveTab = (tab: journeyTab) => {
         setActiveTab(tab);
     }
+
+    const openAddRecall = () => {
+        if (!patient?.uuid) return;
+        const initialDate = new Date();
+        initialDate.setDate(initialDate.getDate() + 1);
+        initialDate.setHours(9, 0, 0, 0);
+        openModal(
+            <CreateRecallModal
+                initialDate={initialDate}
+                initialPatient={patient}
+                visitId={patientVisitId}
+            />,
+            {
+                onClose: () => setRecallRefreshKey((k) => k + 1),
+                maxWidth: 'lg',
+            }
+        );
+    };
 
     const GenerateVisitTab = async (_patientVisit: GetPatientVisitDetailedResponse, journeyPoints: JourneyPoint[]) => {
         const setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
@@ -232,54 +255,71 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     return (
         <div className='flex-1 lg:p-6 h-screen'>
             <div className='bg-white p-6'>
-                <div className='flex items-center mb-6'>
-                    <div className='flex flex-col w-full'>
-                        <div
-                            className="flex items-center justify-between mb-2  w-full"
-
-                        >
-                            <h2 className='text-xl sm:text-2xl lg:text-3xl font-semibold  relative'>
-                                {patient.name}
-                            </h2>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPatientInfoOpen(true)}
-                                    className="flex items-center gap-2 rounded-md border border-blue-600 bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                        />
-                                    </svg>
-                                    {t('patient.detail', 'Patient Detail')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={viewPatientRecordDrawer.openDrawer}
-                                    className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                        />
-                                    </svg>
-                                    {t('patient.visits', 'Visits')}
-                                </button>
-                            </div>
-                        </div>
-
-                        <p>
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                        <h2 className="truncate text-xl font-semibold sm:text-2xl lg:text-3xl">
+                            {patient.name}
+                        </h2>
+                        <p className="text-sm text-gray-600 capitalize">
                             {t('common.' + String(patient.sex)).toLowerCase()}
                         </p>
                     </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setIsPatientInfoOpen(true)}
+                            aria-label={t('patient.detail', 'Patient Detail')}
+                            title={t('patient.detail', 'Patient Detail')}
+                            className="flex items-center gap-2 rounded-md border border-blue-600 bg-blue-600 px-2.5 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:px-3"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                />
+                            </svg>
+                            <span className="hidden lg:inline">{t('patient.detail', 'Patient Detail')}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={viewPatientRecordDrawer.openDrawer}
+                            aria-label={t('patient.visits', 'Visits')}
+                            title={t('patient.visits', 'Visits')}
+                            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:px-3"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                />
+                            </svg>
+                            <span className="hidden lg:inline">{t('patient.visits', 'Visits')}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={openAddRecall}
+                            disabled={!patient?.uuid}
+                            aria-label={t('recall.addAppointment', 'Add Recall')}
+                            title={t('recall.addAppointment', 'Add Recall')}
+                            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed lg:px-3"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                            </svg>
+                            <span className="hidden lg:inline">{t('recall.addAppointment', 'Add Recall')}</span>
+                        </button>
+                    </div>
                 </div>
+                <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
                 <div className='border-b border-gray-200 mb-6 pb-2'>
                     <ul className='flex'>
                         {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item, idx) => {

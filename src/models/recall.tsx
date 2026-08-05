@@ -9,11 +9,13 @@ export interface Recall {
   recall_type?: string;
   notes?: string;
   status?: string;
+  id_trx_patient_visit?: number;
   patient?: Patient;
 }
 
 export interface RecallQueryParams extends CommonQueryParams {
   patient_uuid?: string;
+  visit_id?: number;
 }
 
 export interface CreateRecallPayload {
@@ -21,6 +23,7 @@ export interface CreateRecallPayload {
   scheduled_at: string;
   recall_type?: string;
   notes?: string;
+  id_trx_patient_visit?: number;
 }
 
 export interface UpdateRecallPayload {

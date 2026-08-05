@@ -515,5 +515,10 @@
         "fld": "Gigi Tiruan Lengkap"
       }
     }
+  },
+  "recall": {
+    "visitList": {
+      "title": "Jadwal kontrol dari kunjungan ini"
+    }
   }
 }
