@@ -519,6 +519,14 @@
   "recall": {
     "visitList": {
       "title": "Jadwal kontrol dari kunjungan ini"
+    },
+    "detail": {
+      "delete": "Hapus",
+      "deleteConfirm": "Hapus jadwal kontrol ini?",
+      "deleteConfirmAction": "Ya, hapus"
+    },
+    "form": {
+      "deleteError": "Gagal menghapus jadwal kontrol. Silakan coba lagi."
     }
   }
 }

@@ -10,6 +10,7 @@ export interface Recall {
   notes?: string;
   status?: string;
   id_trx_patient_visit?: number;
+  create_time?: string;
   patient?: Patient;
 }
 
@@ -31,5 +32,9 @@ export interface UpdateRecallPayload {
   scheduled_at?: string;
   recall_type?: string;
   notes?: string;
+}
+
+export interface DeleteRecallPayload {
+  id: number;
 }
 
