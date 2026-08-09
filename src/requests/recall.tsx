@@ -1,6 +1,6 @@
 import { RECALL_PATH } from "constants/constants";
 import authedClient from "@utils/apiClient";
-import { Recall, RecallQueryParams, CreateRecallPayload, UpdateRecallPayload } from "@models/recall";
+import { Recall, RecallQueryParams, CreateRecallPayload, UpdateRecallPayload, DeleteRecallPayload } from "@models/recall";
 import { CommonResponse } from "@models/common";
 
 export const ListRecalls = async (params: RecallQueryParams): Promise<Recall[]> => {
@@ -53,6 +53,22 @@ export const UpdateRecall = async (payload: UpdateRecallPayload): Promise<Common
     return response.data.data;
   } catch (error) {
     console.error("Error updating recall:", error);
+    throw error;
+  }
+};
+
+export const DeleteRecall = async (payload: DeleteRecallPayload): Promise<string> => {
+  try {
+    const response = await authedClient.delete(
+      `${RECALL_PATH}`,
+      {
+        data: payload,
+        withCredentials: true,
+      }
+    );
+    return response.data.data as string;
+  } catch (error) {
+    console.error("Error deleting recall:", error);
     throw error;
   }
 };

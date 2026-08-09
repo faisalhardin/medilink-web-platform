@@ -519,6 +519,14 @@
   "recall": {
     "visitList": {
       "title": "Recalls from this visit"
+    },
+    "detail": {
+      "delete": "Remove",
+      "deleteConfirm": "Remove this recall?",
+      "deleteConfirmAction": "Yes, remove"
+    },
+    "form": {
+      "deleteError": "Failed to remove recall. Please try again."
     }
   }
 }
