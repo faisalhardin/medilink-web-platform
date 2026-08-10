@@ -123,9 +123,6 @@ export async function OrderProduct(payload: OrderProductRequest): Promise<Common
         const responseData = await response.data;
         return responseData;
     } catch (error:any) {
-        if(error.response.data.error_messages.length > 0) {
-            alert(error.response.data.error_messages[0].error_description)
-        }
         throw error;
     }
 }
@@ -141,9 +138,6 @@ export async function ListOrderedProduct(param: ListOrderProductRequest) {
         const responseData = await response.data;
         return responseData.data;
     } catch (error:any) {
-        if(error.response.data.error_messages.length > 0) {
-            console.error(error.response.data.error_messages[0]);
-        }
         throw error;
     }
 }

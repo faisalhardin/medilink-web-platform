@@ -8,12 +8,10 @@ import {
   Typography,
   Box,
   Divider,
-  Alert,
   Chip,
 } from '@mui/material';
 import { useModal } from '../context/ModalContext';
-import { showSuccessToast, showErrorToast } from '@utils/toast';
-import { getApiErrorMessage } from '@utils/apiErrors';
+import { showSuccessToast } from '@utils/toast';
 import { STAFF_ROLES, StaffRoleCatalogItem } from '../constants/staffRoles';
 import { CreateStaff } from '@requests/staff';
 
@@ -38,7 +36,6 @@ const CreateStaffForm = ({ onSuccess }: CreateStaffFormProps) => {
   const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [roleSearch, setRoleSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -124,16 +121,13 @@ const CreateStaffForm = ({ onSuccess }: CreateStaffFormProps) => {
     if (!validate()) return;
 
     setSubmitting(true);
-    setSubmitError(null);
     try {
       await CreateStaff({ name: name.trim(), email: email.trim().toLowerCase(), role_ids: selectedRoleIds });
       showSuccessToast(t('staff.form.createSuccess', 'Staff member created successfully.'));
       closeModal();
       onSuccess();
-    } catch (err) {
-      const msg = getApiErrorMessage(err);
-      setSubmitError(msg);
-      showErrorToast(msg);
+    } catch {
+      // 4xx messages are shown by the global API error modal
     } finally {
       setSubmitting(false);
     }
@@ -147,12 +141,6 @@ const CreateStaffForm = ({ onSuccess }: CreateStaffFormProps) => {
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         {t('staff.form.subtitle', 'The staff member will log in with Google using the email address provided.')}
       </Typography>
-
-      {submitError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {submitError}
-        </Alert>
-      )}
 
       <TextField
         label={t('staff.form.name', 'Full Name')}
