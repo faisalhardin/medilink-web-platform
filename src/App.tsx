@@ -1,4 +1,5 @@
 import { Modal } from '@components/Modal';
+import ApiErrorReportModal from '@components/ApiErrorReportModal';
 import DomainRedirect from '@components/DomainRedirect';
 import './App.css'
 import React from "react";
@@ -12,6 +13,7 @@ const App = () => {
           <DefaultLayout />
         </DomainRedirect>
         <Modal />
+        <ApiErrorReportModal />
       </ModalProvider>
   )
 }

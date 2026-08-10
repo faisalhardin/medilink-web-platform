@@ -148,20 +148,7 @@ export const ProcedureTabContent = ({ visitId }: ProcedureTabContentProps) => {
       await loadProcedures();
     } catch (err: any) {
       console.error('Error saving procedures:', err);
-      
-      // Parse backend error response
-      if (err.response?.data?.error_list) {
-        const errors = err.response.data.error_list;
-        errors.forEach((error: { error_name: string; error_description: string }) => {
-          toast.error(`${error.error_name}: ${error.error_description}`);
-        });
-      } else if (err.response?.data?.message) {
-        toast.error(err.response.data.message);
-      } else if (err.message) {
-        toast.error(err.message);
-      } else {
-        toast.error(t('procedure.errors.saveFailed'));
-      }
+      // 4xx messages are shown by the global API error modal
     } finally {
       setIsSaving(false);
     }

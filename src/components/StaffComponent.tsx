@@ -19,14 +19,12 @@ import {
   MenuItem,
   FormControl,
   CircularProgress,
-  Alert,
 } from '@mui/material';
 import { Add, AddCircleOutline } from '@mui/icons-material';
 import { useModal } from '../context/ModalContext';
 import { getStorageUser } from '@utils/storage';
 import { hasStaffPermission } from '@utils/permissions';
-import { showSuccessToast, showErrorToast } from '@utils/toast';
-import { getApiErrorMessage } from '@utils/apiErrors';
+import { showSuccessToast } from '@utils/toast';
 import { STAFF_ROLES, getRoleLabel } from '../constants/staffRoles';
 import { ListStaff, AssignRole, UnassignRole, DeactivateStaff, ActivateStaff } from '@requests/staff';
 import { StaffMember } from '@models/staff';
@@ -63,19 +61,17 @@ const StaffManagementComponent = () => {
 
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [includeInactive, setIncludeInactive] = useState(false);
   const [mutatingUuid, setMutatingUuid] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<ConfirmState>(DEFAULT_CONFIRM);
 
   const fetchStaff = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const result = await ListStaff(includeInactive);
       setStaff(result.staff ?? []);
-    } catch (err) {
-      setError(getApiErrorMessage(err));
+    } catch {
+      // 4xx messages are shown by the global API error modal
     } finally {
       setLoading(false);
     }
@@ -99,8 +95,8 @@ const StaffManagementComponent = () => {
       await AssignRole({ staff_uuid: member.uuid, role_id: roleId });
       showSuccessToast('Role assigned successfully.');
       await fetchStaff();
-    } catch (err) {
-      showErrorToast(getApiErrorMessage(err));
+    } catch {
+      // 4xx messages are shown by the global API error modal
     } finally {
       setMutatingUuid(null);
     }
@@ -123,8 +119,8 @@ const StaffManagementComponent = () => {
           await UnassignRole({ staff_uuid: member.uuid, role_id: roleId });
           showSuccessToast('Role removed successfully.');
           await fetchStaff();
-        } catch (err) {
-          showErrorToast(getApiErrorMessage(err));
+        } catch {
+          // 4xx messages are shown by the global API error modal
         } finally {
           setMutatingUuid(null);
         }
@@ -146,8 +142,8 @@ const StaffManagementComponent = () => {
           await DeactivateStaff(member.uuid);
           showSuccessToast('Staff deactivated successfully.');
           await fetchStaff();
-        } catch (err) {
-          showErrorToast(getApiErrorMessage(err));
+        } catch {
+          // 4xx messages are shown by the global API error modal
         } finally {
           setMutatingUuid(null);
         }
@@ -169,8 +165,8 @@ const StaffManagementComponent = () => {
           await ActivateStaff(member.uuid);
           showSuccessToast('Staff activated successfully.');
           await fetchStaff();
-        } catch (err) {
-          showErrorToast(getApiErrorMessage(err));
+        } catch {
+          // 4xx messages are shown by the global API error modal
         } finally {
           setMutatingUuid(null);
         }
@@ -235,12 +231,6 @@ const StaffManagementComponent = () => {
 
       {/* Table */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        {error && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {error}
-          </Alert>
-        )}
-
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
             <CircularProgress />

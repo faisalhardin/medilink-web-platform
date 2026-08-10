@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { setupAxiosTokenExpirationInterceptor } from './tokenExpiration';
 import { JWT_TOKEN_KEY } from "constants/constants";
+import { showApiErrorReport } from './apiErrorReport';
 
 // Create axios instance
 export const authedClient = axios.create({
@@ -33,8 +34,10 @@ authedClient.interceptors.response.use(
             console.error('Network error:', error.message);
         }
         
+        const status = error.response?.status;
+
         // Handle specific error codes
-        switch (error.response?.status) {
+        switch (status) {
             case 401:
                 console.log('Unauthorized - token may be expired');
                 break;
@@ -46,6 +49,11 @@ authedClient.interceptors.response.use(
                 break;
             default:
                 console.error('API Error:', error.response?.data || error.message);
+        }
+
+        // Show backend messages for client errors (except 401 — auth refresh handles it)
+        if (status && status >= 400 && status < 500 && status !== 401) {
+            showApiErrorReport(error);
         }
         
         return Promise.reject(error);

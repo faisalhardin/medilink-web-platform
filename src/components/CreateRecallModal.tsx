@@ -49,7 +49,6 @@ export function CreateRecallModal({ initialDate, initialPatient, visitId }: Crea
 
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(initialPatient ?? null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const patientLocked = Boolean(initialPatient);
 
   const patientDrawer = useDrawer();
@@ -80,7 +79,6 @@ export function CreateRecallModal({ initialDate, initialPatient, visitId }: Crea
 
     try {
       setIsSubmitting(true);
-      setSubmitError(null);
 
       const payload: CreateRecallPayload = {
         patient_uuid: selectedPatient.uuid,
@@ -93,9 +91,7 @@ export function CreateRecallModal({ initialDate, initialPatient, visitId }: Crea
       await CreateRecall(payload);
       closeModal();
     } catch {
-      setSubmitError(
-        t("recall.form.submitError", "Failed to save recall. Please try again.")
-      );
+      // 4xx messages are shown by the global API error modal
     } finally {
       setIsSubmitting(false);
     }
@@ -255,12 +251,6 @@ export function CreateRecallModal({ initialDate, initialPatient, visitId }: Crea
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white resize-none"
             />
           </div>
-
-          {submitError && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-              {submitError}
-            </p>
-          )}
 
           <div className="flex justify-end gap-3 pt-1">
             <button

@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { useModal } from "context/ModalContext";
 import { DeleteRecall, UpdateRecall } from "@requests/recall";
 import { Recall, UpdateRecallPayload } from "@models/recall";
-import { getApiErrorMessage } from "@utils/apiErrors";
 
 interface RecallDetailModalProps {
   recall: Recall;
@@ -58,8 +57,6 @@ export function RecallDetailModal({ recall }: RecallDetailModalProps) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<EditFormValues>({
     defaultValues: {
@@ -72,7 +69,6 @@ export function RecallDetailModal({ recall }: RecallDetailModalProps) {
   const onSubmit = async (data: EditFormValues) => {
     try {
       setIsSubmitting(true);
-      setSubmitError(null);
 
       const payload: UpdateRecallPayload = {
         id: recall.id,
@@ -84,9 +80,7 @@ export function RecallDetailModal({ recall }: RecallDetailModalProps) {
       await UpdateRecall(payload);
       closeModal();
     } catch {
-      setSubmitError(
-        t("recall.form.updateError", "Failed to update recall. Please try again.")
-      );
+      // 4xx messages are shown by the global API error modal
     } finally {
       setIsSubmitting(false);
     }
@@ -94,21 +88,16 @@ export function RecallDetailModal({ recall }: RecallDetailModalProps) {
 
   const handleCancelEdit = () => {
     reset();
-    setSubmitError(null);
     setIsEditing(false);
   };
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      setDeleteError(null);
       await DeleteRecall({ id: recall.id });
       closeModal();
-    } catch (err) {
-      setDeleteError(
-        getApiErrorMessage(err) ||
-          t("recall.form.deleteError", "Failed to remove recall. Please try again.")
-      );
+    } catch {
+      // 4xx messages are shown by the global API error modal
       setIsConfirmingDelete(false);
     } finally {
       setIsDeleting(false);
@@ -193,12 +182,6 @@ export function RecallDetailModal({ recall }: RecallDetailModalProps) {
             />
           </div>
 
-          {submitError && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-              {submitError}
-            </p>
-          )}
-
           <div className="flex justify-end gap-3 pt-1">
             <button
               type="button"
@@ -266,12 +249,6 @@ export function RecallDetailModal({ recall }: RecallDetailModalProps) {
             </div>
           </div>
 
-          {deleteError && (
-            <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-              {deleteError}
-            </p>
-          )}
-
           {isConfirmingDelete ? (
             <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
               <p className="text-sm text-gray-700">
@@ -307,7 +284,6 @@ export function RecallDetailModal({ recall }: RecallDetailModalProps) {
               <button
                 type="button"
                 onClick={() => {
-                  setDeleteError(null);
                   setIsConfirmingDelete(true);
                 }}
                 className="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50"
