@@ -326,7 +326,17 @@
     "journeyBoard": "Journey Board",
     "completed": "Completed",
     "inProgress": "In Progress",
-    "removeColumn": "Remove column"
+    "removeColumn": "Remove column",
+    "currentPoint": "Current journey point",
+    "moveVisit": "Move visit",
+    "move": "Move",
+    "board": "Board",
+    "list": "List",
+    "selectDestination": "Select destination",
+    "selectJourneyPoint": "Select a journey point",
+    "loadingPoints": "Loading…",
+    "moveSuccess": "Visit moved",
+    "moveFailed": "Failed to move visit"
   },
   "filter": {
     "timeRange": "Time Range",

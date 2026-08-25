@@ -326,7 +326,17 @@
     "journeyBoard": "Papan Perjalanan",
     "completed": "Selesai",
     "inProgress": "Sedang Berlangsung",
-    "removeColumn": "Hapus kolom"
+    "removeColumn": "Hapus kolom",
+    "currentPoint": "Titik perjalanan saat ini",
+    "moveVisit": "Pindahkan kunjungan",
+    "move": "Pindah",
+    "board": "Papan",
+    "list": "Daftar",
+    "selectDestination": "Pilih tujuan",
+    "selectJourneyPoint": "Pilih titik perjalanan",
+    "loadingPoints": "Memuat…",
+    "moveSuccess": "Kunjungan dipindahkan",
+    "moveFailed": "Gagal memindahkan kunjungan"
   },
   "filter": {
     "timeRange": "Rentang Waktu",

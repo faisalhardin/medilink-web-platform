@@ -1,5 +1,5 @@
 // Modified PatientVisitDetail.tsx
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
@@ -13,6 +13,7 @@ import { JourneyPoint } from '@models/journey';
 import { Id } from 'types';
 import { t } from 'i18next';
 import { useDrawer } from 'hooks/useDrawer';
+import { useJourneyBoards } from 'hooks/useJourneyBoards';
 import Drawer from "./Drawer";
 import { PatientVisitsComponent } from './PatientComponent';
 import { PatientDetailInfoContent } from './PatientDetailInfo';
@@ -21,6 +22,8 @@ import { DiagnosisTabContent } from './DiagnosisTabContent';
 import { ProcedureTabContent } from './ProcedureTabContent';
 import { useModal } from 'context/ModalContext';
 import { CreateRecallModal } from './CreateRecallModal';
+import { CurrentJourneyPointBadge } from './CurrentJourneyPointBadge';
+import { MoveVisitJourneyPointModal } from './MoveVisitJourneyPointModal';
 import { VisitRecallList } from './VisitRecallList';
 
 
@@ -33,6 +36,39 @@ export interface journeyTab {
     servicePointID?: number
     is_owned: boolean,
     type: TabType,
+}
+
+function buildJourneyTabs(
+    detailedVisit: GetPatientVisitDetailedResponse,
+    journeyPoints: JourneyPoint[],
+): { activeTab: journeyTab; journeyPointTabs: journeyTab[] } {
+    const setOfJourneyPointID = new Set([detailedVisit.journey_point_id]);
+    const journeyPointMap = new Map<Id, JourneyPoint>();
+    for (const jp of journeyPoints) {
+        journeyPointMap.set(jp.id, jp);
+    }
+    const activeTab: journeyTab = {
+        id: detailedVisit.journey_point_id,
+        name: detailedVisit.journey_point.name,
+        position: journeyPointMap.get(detailedVisit.journey_point.id)?.position || 0,
+        servicePointID: detailedVisit.service_point_id,
+        is_owned: journeyPointMap.get(detailedVisit.journey_point.id)?.is_owned || false,
+        type: 'journey',
+    };
+    const journeyPointTabs: journeyTab[] = [activeTab];
+    for (const patientVisitJourneyPoint of detailedVisit.patient_journeypoints) {
+        if (!setOfJourneyPointID.has(patientVisitJourneyPoint.journey_point_id)) {
+            setOfJourneyPointID.add(patientVisitJourneyPoint.journey_point_id);
+            journeyPointTabs.push({
+                id: patientVisitJourneyPoint.journey_point_id,
+                name: patientVisitJourneyPoint.name_mst_journey_point,
+                position: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.position || 0,
+                is_owned: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.is_owned || false,
+                type: 'journey',
+            } as journeyTab);
+        }
+    }
+    return { activeTab, journeyPointTabs };
 }
 
 export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComponentProps) => {
@@ -48,6 +84,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [recallRefreshKey, setRecallRefreshKey] = useState(0);
     const viewPatientRecordDrawer = useDrawer();
     const { openModal } = useModal();
+    const { boards } = useJourneyBoards();
     const medicalTabs: journeyTab[] = [
         { id: 'anamnesa', name: 'Anamnesa', position: 999, is_owned: true, type: 'anamnesa' },
         { id: 'diagnosis', name: 'Diagnosis', position: 1000, is_owned: true, type: 'diagnosis' },
@@ -98,40 +135,6 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         );
     };
 
-    const GenerateVisitTab = async (_patientVisit: GetPatientVisitDetailedResponse, journeyPoints: JourneyPoint[]) => {
-        const setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
-        const journeyPointMap = new Map<Id, JourneyPoint>();
-        for (const jp of journeyPoints) {
-            journeyPointMap.set(jp.id, jp);
-        }
-        const _activeTab: journeyTab = {
-            id: _patientVisit.journey_point_id,
-            name: _patientVisit.journey_point.name,
-            position: journeyPointMap.get(_patientVisit.journey_point.id)?.position || 0,
-            servicePointID: _patientVisit.service_point_id,
-            is_owned: journeyPointMap.get(_patientVisit.journey_point.id)?.is_owned || false,
-            type: 'journey',
-        }
-        updateActiveTab(_activeTab);
-        const journeyPointTabs: journeyTab[] = [
-            _activeTab,
-        ];
-        for (const patientVisitJourneyPoint of _patientVisit.patient_journeypoints) {
-            if (!setOfJourneyPointID.has(patientVisitJourneyPoint.journey_point_id)) {
-                setOfJourneyPointID.add(patientVisitJourneyPoint.journey_point_id);
-                journeyPointTabs.push({
-                    id: patientVisitJourneyPoint.journey_point_id,
-                    name: patientVisitJourneyPoint.name_mst_journey_point,
-                    position: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.position || 0,
-                    is_owned: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.is_owned || false,
-                    type: 'journey',
-                } as journeyTab);
-            }
-        }
-
-        setJourneyPointTab(journeyPointTabs);
-    }
-
     async function fetchProducts() {
         try {
             const trxProducts = await ListOrderedProduct({
@@ -155,32 +158,50 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
     }
 
+    const loadVisit = useCallback(async () => {
+        try {
+            const detailedVisit = await GetPatientVisitDetailedByID(patientVisitId);
+            if (detailedVisit !== undefined) {
+                setPatientVisit(detailedVisit);
+                const journeyPoints = await fetchBoardJourneyPoints(detailedVisit.board_id);
+                setBoardJourneyPoints(journeyPoints);
+                const tabs = buildJourneyTabs(detailedVisit, journeyPoints);
+                setActiveTab(tabs.activeTab);
+                setJourneyPointTab(tabs.journeyPointTabs);
+                setVisitDetails(detailedVisit.patient_journeypoints);
+                setPatient(detailedVisit.patient);
+                setSelectedProducts(convertProductsToCheckoutProducts(detailedVisit.product_cart || []));
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            setVisitDetails([]);
+        }
+    }, [patientVisitId]);
+
+    const openMoveJourneyPointModal = () => {
+        if (!patientVisit.id) return;
+        openModal(
+            <MoveVisitJourneyPointModal
+                visitId={patientVisit.id}
+                currentBoardId={patientVisit.board_id}
+                currentJourneyPointId={patientVisit.journey_point_id}
+                boards={boards}
+                journeyPoints={boardJourneyPoints}
+                onMoved={() => {
+                    void loadVisit();
+                }}
+            />,
+            { maxWidth: 'sm' },
+        );
+    };
+
     useEffect(() => {
         void fetchProducts();
     }, [patientVisitId])
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
-                if (patientVisit !== undefined) {
-                    setPatientVisit(patientVisit);
-                    const journeyPoints = await fetchBoardJourneyPoints(patientVisit.board_id);
-                    setBoardJourneyPoints(journeyPoints);
-                    GenerateVisitTab(patientVisit, journeyPoints);
-                    setVisitDetails(patientVisit.patient_journeypoints);
-                    setPatient(patientVisit.patient);
-                    setSelectedProducts(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
-                }
-
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                setVisitDetails([]);
-            }
-        }
-
-        fetchData();
-    }, [patientVisitId])
+        void loadVisit();
+    }, [loadVisit])
 
     /**
      * Upserts (creates or updates) a patient visit detail record
@@ -255,8 +276,17 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     return (
         <div className='flex-1 lg:p-6 h-screen'>
             <div className='bg-white p-6'>
-                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
+                        <CurrentJourneyPointBadge
+                            journeyPointName={
+                                boardJourneyPoints.find(
+                                    (point) => String(point.id) === String(patientVisit.journey_point_id)
+                                )?.name
+                            }
+                            disabled={!patientVisit.id}
+                            onClick={openMoveJourneyPointModal}
+                        />
                         <h2 className="truncate text-xl font-semibold sm:text-2xl lg:text-3xl">
                             {patient.name}
                         </h2>
@@ -264,7 +294,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             {t('common.' + String(patient.sex)).toLowerCase()}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-start justify-between gap-2 shrink-0 ">
                         <button
                             type="button"
                             onClick={() => setIsPatientInfoOpen(true)}
