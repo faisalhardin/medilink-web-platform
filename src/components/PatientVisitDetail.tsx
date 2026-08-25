@@ -1,9 +1,11 @@
 // Modified PatientVisitDetail.tsx
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
-import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
+import { PatientVisitlDetailNotes, VisitNotesHandle } from './PatientVisitlDetailNotes';
+import { VisitNotesSaveBar } from './VisitNotesSaveBar';
+import { UnsavedNotesModal } from './UnsavedNotesModal';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
 import { CheckoutProduct, TrxVisitProduct, } from '@models/product';
 import { ListOrderedProduct, OrderProduct } from '@requests/products';
@@ -82,8 +84,11 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
     const [isPatientInfoOpen, setIsPatientInfoOpen] = useState(false);
     const [recallRefreshKey, setRecallRefreshKey] = useState(0);
+    const [notesDirty, setNotesDirty] = useState(false);
+    const [notesSaving, setNotesSaving] = useState(false);
+    const notesHandleRef = useRef<VisitNotesHandle | null>(null);
     const viewPatientRecordDrawer = useDrawer();
-    const { openModal } = useModal();
+    const { openModal, closeModal } = useModal();
     const { boards } = useJourneyBoards();
     const medicalTabs: journeyTab[] = [
         { id: 'anamnesa', name: 'Anamnesa', position: 999, is_owned: true, type: 'anamnesa' },
@@ -113,9 +118,48 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     };
 
 
-    const updateActiveTab = (tab: journeyTab) => {
-        setActiveTab(tab);
-    }
+    const handleNotesDirtyChange = useCallback((dirty: boolean) => {
+        setNotesDirty(dirty);
+    }, []);
+
+    const handleSaveNotes = async () => {
+        setNotesSaving(true);
+        try {
+            await notesHandleRef.current?.save();
+        } finally {
+            setNotesSaving(false);
+        }
+    };
+
+    const handleTabClick = (tab: journeyTab) => {
+        if (tab.id === activeTab.id) {
+            return;
+        }
+        if (!notesHandleRef.current?.isDirty()) {
+            setNotesDirty(false);
+            setActiveTab(tab);
+            return;
+        }
+        openModal(
+            <UnsavedNotesModal
+                onDiscard={() => {
+                    closeModal();
+                    setNotesDirty(false);
+                    setActiveTab(tab);
+                }}
+                onSaveAndContinue={async () => {
+                    const saved = await notesHandleRef.current?.save();
+                    if (!saved) {
+                        return;
+                    }
+                    closeModal();
+                    setNotesDirty(false);
+                    setActiveTab(tab);
+                }}
+            />,
+            { maxWidth: 'sm' },
+        );
+    };
 
     const openAddRecall = () => {
         if (!patient?.uuid) return;
@@ -294,7 +338,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             {t('common.' + String(patient.sex)).toLowerCase()}
                         </p>
                     </div>
-                    <div className="flex items-start justify-between gap-2 shrink-0 ">
+                    <div className="flex items-start md:justify-between gap-2 shrink-0 ">
                         <button
                             type="button"
                             onClick={() => setIsPatientInfoOpen(true)}
@@ -350,20 +394,35 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     </div>
                 </div>
                 <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
-                <div className='border-b border-gray-200 mb-6 pb-2'>
-                    <ul className='flex'>
-                        {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item, idx) => {
-                            return (
-                                <li onClick={() => {
-                                    updateActiveTab(item)
-                                }} className='mr-6' key={idx}>
-                                    <a className={`pb-2 border-b-2 cursor-pointer ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-grey-8'}`}>
-                                        {item.name}
-                                    </a>
-                                </li>
-                            )
-                        })}
-                    </ul>
+                <div className="sticky top-14 z-20 mb-6 bg-white lg:top-0">
+                    <div className="border-b border-gray-200 pb-2">
+                        <ul className="flex overflow-x-auto">
+                            {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item) => {
+                                return (
+                                    <li
+                                        onClick={() => {
+                                            handleTabClick(item)
+                                        }}
+                                        className="mr-6 shrink-0"
+                                        key={String(item.id)}
+                                    >
+                                        <a className={`pb-2 border-b-2 cursor-pointer whitespace-nowrap ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-grey-8'}`}>
+                                            {item.name}
+                                        </a>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    </div>
+                    {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' && activeTab.is_owned ? (
+                        <VisitNotesSaveBar
+                            isChanged={notesDirty}
+                            isSaving={notesSaving}
+                            onSave={() => {
+                                void handleSaveNotes();
+                            }}
+                        />
+                    ) : null}
                 </div>
                 {activeTab.type === 'anamnesa' && (
                     <div className="w-full">
@@ -402,12 +461,14 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         {/* Notes panel - appears second on small screens */}
                         <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1">
                             <PatientVisitlDetailNotes
+                                ref={notesHandleRef}
                                 visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
                                 activeTab={activeTab}
                                 patientVisit={patientVisit}
                                 journeyPoints={boardJourneyPoints}
                                 upsertVisitDetailFunc={upsertVisitDetail}
                                 updateVisitFunc={updateProductOrder}
+                                onDirtyChange={handleNotesDirtyChange}
                             />
                         </div>
                     </div>
