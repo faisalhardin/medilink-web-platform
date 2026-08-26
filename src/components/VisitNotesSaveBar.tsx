@@ -4,14 +4,34 @@ import { t } from 'i18next';
 interface VisitNotesSaveBarProps {
   isChanged: boolean;
   isSaving?: boolean;
+  showSaved?: boolean;
   onSave: () => void;
 }
 
-export function VisitNotesSaveBar({ isChanged, isSaving = false, onSave }: VisitNotesSaveBarProps) {
+export function VisitNotesSaveBar({
+  isChanged,
+  isSaving = false,
+  showSaved = false,
+  onSave,
+}: VisitNotesSaveBarProps) {
+  if (!isChanged && !isSaving && !showSaved) {
+    return null;
+  }
+
+  const isSavedState = !isChanged && !isSaving && showSaved;
+
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[100] flex justify-center px-4">
       <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-white/95 px-4 py-2.5 shadow-lg ring-1 ring-black/5 backdrop-blur-sm">
-        {isChanged || isSaving ? (
+        {isSavedState ? (
+          <p
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700"
+            aria-live="polite"
+          >
+            <CheckIcon className="h-4 w-4" aria-hidden="true" />
+            {t('patient.notesSaved')}
+          </p>
+        ) : (
           <>
             <span
               className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-800"
@@ -32,11 +52,6 @@ export function VisitNotesSaveBar({ isChanged, isSaving = false, onSave }: Visit
               {isSaving ? t('common.saving') : t('patient.saveNotes')}
             </button>
           </>
-        ) : (
-          <p className="flex items-center gap-1.5 text-xs text-gray-500">
-            <CheckIcon className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
-            {t('patient.notesSaved')}
-          </p>
         )}
       </div>
     </div>

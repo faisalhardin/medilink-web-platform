@@ -86,6 +86,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [recallRefreshKey, setRecallRefreshKey] = useState(0);
     const [notesDirty, setNotesDirty] = useState(false);
     const [notesSaving, setNotesSaving] = useState(false);
+    const [notesJustSaved, setNotesJustSaved] = useState(false);
     const notesHandleRef = useRef<VisitNotesHandle | null>(null);
     const viewPatientRecordDrawer = useDrawer();
     const { openModal, closeModal } = useModal();
@@ -120,12 +121,18 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
 
     const handleNotesDirtyChange = useCallback((dirty: boolean) => {
         setNotesDirty(dirty);
+        if (dirty) {
+            setNotesJustSaved(false);
+        }
     }, []);
 
     const handleSaveNotes = async () => {
         setNotesSaving(true);
         try {
-            await notesHandleRef.current?.save();
+            const saved = await notesHandleRef.current?.save();
+            if (saved) {
+                setNotesJustSaved(true);
+            }
         } finally {
             setNotesSaving(false);
         }
@@ -137,6 +144,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
         if (!notesHandleRef.current?.isDirty()) {
             setNotesDirty(false);
+            setNotesJustSaved(false);
             setActiveTab(tab);
             return;
         }
@@ -145,6 +153,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 onDiscard={() => {
                     closeModal();
                     setNotesDirty(false);
+                    setNotesJustSaved(false);
                     setActiveTab(tab);
                 }}
                 onSaveAndContinue={async () => {
@@ -154,6 +163,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     }
                     closeModal();
                     setNotesDirty(false);
+                    setNotesJustSaved(false);
                     setActiveTab(tab);
                 }}
             />,
@@ -466,6 +476,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     <VisitNotesSaveBar
                         isChanged={notesDirty}
                         isSaving={notesSaving}
+                        showSaved={notesJustSaved}
                         onSave={() => {
                             void handleSaveNotes();
                         }}
