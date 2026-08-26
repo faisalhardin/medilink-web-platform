@@ -111,6 +111,7 @@
     "selectPatientButton": "Select Patient",
     "fillPatientInformation": "Please fill in the patient information below",
     "saveNotes": "Save Notes",
+    "notesSaved": "Saved",
     "unsavedNotes": "Unsaved",
     "unsavedNotesTitle": "Unsaved notes",
     "unsavedNotesMessage": "You have unsaved notes. Save before switching tabs?",

@@ -394,35 +394,24 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     </div>
                 </div>
                 <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
-                <div className="sticky top-14 z-20 mb-6 bg-white lg:top-0">
-                    <div className="border-b border-gray-200 pb-2">
-                        <ul className="flex overflow-x-auto">
-                            {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item) => {
-                                return (
-                                    <li
-                                        onClick={() => {
-                                            handleTabClick(item)
-                                        }}
-                                        className="mr-6 shrink-0"
-                                        key={String(item.id)}
-                                    >
-                                        <a className={`pb-2 border-b-2 cursor-pointer whitespace-nowrap ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-grey-8'}`}>
-                                            {item.name}
-                                        </a>
-                                    </li>
-                                )
-                            })}
-                        </ul>
-                    </div>
-                    {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' && activeTab.is_owned ? (
-                        <VisitNotesSaveBar
-                            isChanged={notesDirty}
-                            isSaving={notesSaving}
-                            onSave={() => {
-                                void handleSaveNotes();
-                            }}
-                        />
-                    ) : null}
+                <div className="mb-6 overflow-x-auto overflow-y-hidden border-b border-gray-200">
+                    <ul className="flex flex-nowrap">
+                        {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item) => {
+                            return (
+                                <li
+                                    onClick={() => {
+                                        handleTabClick(item)
+                                    }}
+                                    className="mr-6 shrink-0"
+                                    key={String(item.id)}
+                                >
+                                    <a className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 pb-2 text-sm ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-grey-8'}`}>
+                                        {item.name}
+                                    </a>
+                                </li>
+                            )
+                        })}
+                    </ul>
                 </div>
                 {activeTab.type === 'anamnesa' && (
                     <div className="w-full">
@@ -439,7 +428,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         <ProcedureTabContent visitId={patientVisitId} patient={patient} />
                     </div>
                 )}
-                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' && (
+                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' ? (
                     <div className="flex flex-col lg:flex-row">
                         {/* Product assignment panel - appears first on small screens */}
                         <div className='w-full lg:w-3/12 order-1 lg:order-2 mb-4 lg:mb-0'>
@@ -459,7 +448,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             />
                         </div>
                         {/* Notes panel - appears second on small screens */}
-                        <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1">
+                        <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1 pb-24">
                             <PatientVisitlDetailNotes
                                 ref={notesHandleRef}
                                 visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
@@ -472,7 +461,17 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             />
                         </div>
                     </div>
-                )}
+                ) : null}
+                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' && activeTab.is_owned ? createPortal(
+                    <VisitNotesSaveBar
+                        isChanged={notesDirty}
+                        isSaving={notesSaving}
+                        onSave={() => {
+                            void handleSaveNotes();
+                        }}
+                    />,
+                    document.body
+                ) : null}
             </div>
             <Drawer
                 isOpen={viewPatientRecordDrawer.isOpen}

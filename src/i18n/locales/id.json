@@ -110,6 +110,7 @@
     "patientDetail": "Detail Pasien {{name}}",
     "fillPatientInformation": "Silakan isi informasi pasien di bawah ini",
     "saveNotes": "Simpan Catatan",
+    "notesSaved": "Tersimpan",
     "unsavedNotes": "Belum disimpan",
     "unsavedNotesTitle": "Catatan belum disimpan",
     "unsavedNotesMessage": "Anda memiliki catatan yang belum disimpan. Simpan sebelum pindah tab?",
