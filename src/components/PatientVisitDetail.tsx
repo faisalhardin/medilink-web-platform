@@ -1,9 +1,11 @@
 // Modified PatientVisitDetail.tsx
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { GetPatientVisitDetailedByID, UpsertPatientVisitDetailRequest } from '@requests/patient';
 import { GetPatientVisitDetailedResponse, Patient, PatientVisit, PatientVisitDetail, PatientVisitDetailComponentProps, UpdatePatientVisitRequest, PatientVisitDetail as VisitDetail } from "@models/patient";
-import { PatientVisitlDetailNotes } from './PatientVisitlDetailNotes';
+import { PatientVisitlDetailNotes, VisitNotesHandle } from './PatientVisitlDetailNotes';
+import { VisitNotesSaveBar } from './VisitNotesSaveBar';
+import { UnsavedNotesModal } from './UnsavedNotesModal';
 import { ProductAssignmentPanel } from './ProductAssignmentPanel';
 import { CheckoutProduct, TrxVisitProduct, } from '@models/product';
 import { ListOrderedProduct, OrderProduct } from '@requests/products';
@@ -13,6 +15,7 @@ import { JourneyPoint } from '@models/journey';
 import { Id } from 'types';
 import { t } from 'i18next';
 import { useDrawer } from 'hooks/useDrawer';
+import { useJourneyBoards } from 'hooks/useJourneyBoards';
 import Drawer from "./Drawer";
 import { PatientVisitsComponent } from './PatientComponent';
 import { PatientDetailInfoContent } from './PatientDetailInfo';
@@ -21,6 +24,8 @@ import { DiagnosisTabContent } from './DiagnosisTabContent';
 import { ProcedureTabContent } from './ProcedureTabContent';
 import { useModal } from 'context/ModalContext';
 import { CreateRecallModal } from './CreateRecallModal';
+import { CurrentJourneyPointBadge } from './CurrentJourneyPointBadge';
+import { MoveVisitJourneyPointModal } from './MoveVisitJourneyPointModal';
 import { VisitRecallList } from './VisitRecallList';
 
 
@@ -35,6 +40,39 @@ export interface journeyTab {
     type: TabType,
 }
 
+function buildJourneyTabs(
+    detailedVisit: GetPatientVisitDetailedResponse,
+    journeyPoints: JourneyPoint[],
+): { activeTab: journeyTab; journeyPointTabs: journeyTab[] } {
+    const setOfJourneyPointID = new Set([detailedVisit.journey_point_id]);
+    const journeyPointMap = new Map<Id, JourneyPoint>();
+    for (const jp of journeyPoints) {
+        journeyPointMap.set(jp.id, jp);
+    }
+    const activeTab: journeyTab = {
+        id: detailedVisit.journey_point_id,
+        name: detailedVisit.journey_point.name,
+        position: journeyPointMap.get(detailedVisit.journey_point.id)?.position || 0,
+        servicePointID: detailedVisit.service_point_id,
+        is_owned: journeyPointMap.get(detailedVisit.journey_point.id)?.is_owned || false,
+        type: 'journey',
+    };
+    const journeyPointTabs: journeyTab[] = [activeTab];
+    for (const patientVisitJourneyPoint of detailedVisit.patient_journeypoints) {
+        if (!setOfJourneyPointID.has(patientVisitJourneyPoint.journey_point_id)) {
+            setOfJourneyPointID.add(patientVisitJourneyPoint.journey_point_id);
+            journeyPointTabs.push({
+                id: patientVisitJourneyPoint.journey_point_id,
+                name: patientVisitJourneyPoint.name_mst_journey_point,
+                position: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.position || 0,
+                is_owned: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.is_owned || false,
+                type: 'journey',
+            } as journeyTab);
+        }
+    }
+    return { activeTab, journeyPointTabs };
+}
+
 export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComponentProps) => {
     const [journeyPointTab, setJourneyPointTab] = useState<journeyTab[]>([]);
     const [boardJourneyPoints, setBoardJourneyPoints] = useState<JourneyPoint[]>([]);
@@ -46,8 +84,12 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     const [selectedProducts, setSelectedProducts] = useState<CheckoutProduct[]>(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
     const [isPatientInfoOpen, setIsPatientInfoOpen] = useState(false);
     const [recallRefreshKey, setRecallRefreshKey] = useState(0);
+    const [notesDirty, setNotesDirty] = useState(false);
+    const [notesSaving, setNotesSaving] = useState(false);
+    const notesHandleRef = useRef<VisitNotesHandle | null>(null);
     const viewPatientRecordDrawer = useDrawer();
-    const { openModal } = useModal();
+    const { openModal, closeModal } = useModal();
+    const { boards } = useJourneyBoards();
     const medicalTabs: journeyTab[] = [
         { id: 'anamnesa', name: 'Anamnesa', position: 999, is_owned: true, type: 'anamnesa' },
         { id: 'diagnosis', name: 'Diagnosis', position: 1000, is_owned: true, type: 'diagnosis' },
@@ -76,9 +118,48 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     };
 
 
-    const updateActiveTab = (tab: journeyTab) => {
-        setActiveTab(tab);
-    }
+    const handleNotesDirtyChange = useCallback((dirty: boolean) => {
+        setNotesDirty(dirty);
+    }, []);
+
+    const handleSaveNotes = async () => {
+        setNotesSaving(true);
+        try {
+            await notesHandleRef.current?.save();
+        } finally {
+            setNotesSaving(false);
+        }
+    };
+
+    const handleTabClick = (tab: journeyTab) => {
+        if (tab.id === activeTab.id) {
+            return;
+        }
+        if (!notesHandleRef.current?.isDirty()) {
+            setNotesDirty(false);
+            setActiveTab(tab);
+            return;
+        }
+        openModal(
+            <UnsavedNotesModal
+                onDiscard={() => {
+                    closeModal();
+                    setNotesDirty(false);
+                    setActiveTab(tab);
+                }}
+                onSaveAndContinue={async () => {
+                    const saved = await notesHandleRef.current?.save();
+                    if (!saved) {
+                        return;
+                    }
+                    closeModal();
+                    setNotesDirty(false);
+                    setActiveTab(tab);
+                }}
+            />,
+            { maxWidth: 'sm' },
+        );
+    };
 
     const openAddRecall = () => {
         if (!patient?.uuid) return;
@@ -97,40 +178,6 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
             }
         );
     };
-
-    const GenerateVisitTab = async (_patientVisit: GetPatientVisitDetailedResponse, journeyPoints: JourneyPoint[]) => {
-        const setOfJourneyPointID = new Set([_patientVisit.journey_point_id]);
-        const journeyPointMap = new Map<Id, JourneyPoint>();
-        for (const jp of journeyPoints) {
-            journeyPointMap.set(jp.id, jp);
-        }
-        const _activeTab: journeyTab = {
-            id: _patientVisit.journey_point_id,
-            name: _patientVisit.journey_point.name,
-            position: journeyPointMap.get(_patientVisit.journey_point.id)?.position || 0,
-            servicePointID: _patientVisit.service_point_id,
-            is_owned: journeyPointMap.get(_patientVisit.journey_point.id)?.is_owned || false,
-            type: 'journey',
-        }
-        updateActiveTab(_activeTab);
-        const journeyPointTabs: journeyTab[] = [
-            _activeTab,
-        ];
-        for (const patientVisitJourneyPoint of _patientVisit.patient_journeypoints) {
-            if (!setOfJourneyPointID.has(patientVisitJourneyPoint.journey_point_id)) {
-                setOfJourneyPointID.add(patientVisitJourneyPoint.journey_point_id);
-                journeyPointTabs.push({
-                    id: patientVisitJourneyPoint.journey_point_id,
-                    name: patientVisitJourneyPoint.name_mst_journey_point,
-                    position: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.position || 0,
-                    is_owned: journeyPointMap.get(patientVisitJourneyPoint.journey_point_id)?.is_owned || false,
-                    type: 'journey',
-                } as journeyTab);
-            }
-        }
-
-        setJourneyPointTab(journeyPointTabs);
-    }
 
     async function fetchProducts() {
         try {
@@ -155,32 +202,50 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
     }
 
+    const loadVisit = useCallback(async () => {
+        try {
+            const detailedVisit = await GetPatientVisitDetailedByID(patientVisitId);
+            if (detailedVisit !== undefined) {
+                setPatientVisit(detailedVisit);
+                const journeyPoints = await fetchBoardJourneyPoints(detailedVisit.board_id);
+                setBoardJourneyPoints(journeyPoints);
+                const tabs = buildJourneyTabs(detailedVisit, journeyPoints);
+                setActiveTab(tabs.activeTab);
+                setJourneyPointTab(tabs.journeyPointTabs);
+                setVisitDetails(detailedVisit.patient_journeypoints);
+                setPatient(detailedVisit.patient);
+                setSelectedProducts(convertProductsToCheckoutProducts(detailedVisit.product_cart || []));
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            setVisitDetails([]);
+        }
+    }, [patientVisitId]);
+
+    const openMoveJourneyPointModal = () => {
+        if (!patientVisit.id) return;
+        openModal(
+            <MoveVisitJourneyPointModal
+                visitId={patientVisit.id}
+                currentBoardId={patientVisit.board_id}
+                currentJourneyPointId={patientVisit.journey_point_id}
+                boards={boards}
+                journeyPoints={boardJourneyPoints}
+                onMoved={() => {
+                    void loadVisit();
+                }}
+            />,
+            { maxWidth: 'sm' },
+        );
+    };
+
     useEffect(() => {
         void fetchProducts();
     }, [patientVisitId])
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const patientVisit = await GetPatientVisitDetailedByID(patientVisitId);
-                if (patientVisit !== undefined) {
-                    setPatientVisit(patientVisit);
-                    const journeyPoints = await fetchBoardJourneyPoints(patientVisit.board_id);
-                    setBoardJourneyPoints(journeyPoints);
-                    GenerateVisitTab(patientVisit, journeyPoints);
-                    setVisitDetails(patientVisit.patient_journeypoints);
-                    setPatient(patientVisit.patient);
-                    setSelectedProducts(convertProductsToCheckoutProducts(patientVisit.product_cart || []));
-                }
-
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                setVisitDetails([]);
-            }
-        }
-
-        fetchData();
-    }, [patientVisitId])
+        void loadVisit();
+    }, [loadVisit])
 
     /**
      * Upserts (creates or updates) a patient visit detail record
@@ -255,8 +320,17 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
     return (
         <div className='flex-1 lg:p-6 h-screen'>
             <div className='bg-white p-6'>
-                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
+                        <CurrentJourneyPointBadge
+                            journeyPointName={
+                                boardJourneyPoints.find(
+                                    (point) => String(point.id) === String(patientVisit.journey_point_id)
+                                )?.name
+                            }
+                            disabled={!patientVisit.id}
+                            onClick={openMoveJourneyPointModal}
+                        />
                         <h2 className="truncate text-xl font-semibold sm:text-2xl lg:text-3xl">
                             {patient.name}
                         </h2>
@@ -264,7 +338,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             {t('common.' + String(patient.sex)).toLowerCase()}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-start md:justify-between gap-2 shrink-0 ">
                         <button
                             type="button"
                             onClick={() => setIsPatientInfoOpen(true)}
@@ -320,14 +394,18 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     </div>
                 </div>
                 <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
-                <div className='border-b border-gray-200 mb-6 pb-2'>
-                    <ul className='flex'>
-                        {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item, idx) => {
+                <div className="mb-6 overflow-x-auto overflow-y-hidden border-b border-gray-200">
+                    <ul className="flex flex-nowrap">
+                        {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item) => {
                             return (
-                                <li onClick={() => {
-                                    updateActiveTab(item)
-                                }} className='mr-6' key={idx}>
-                                    <a className={`pb-2 border-b-2 cursor-pointer ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-grey-8'}`}>
+                                <li
+                                    onClick={() => {
+                                        handleTabClick(item)
+                                    }}
+                                    className="mr-6 shrink-0"
+                                    key={String(item.id)}
+                                >
+                                    <a className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 pb-2 text-sm ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-grey-8'}`}>
                                         {item.name}
                                     </a>
                                 </li>
@@ -350,7 +428,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         <ProcedureTabContent visitId={patientVisitId} patient={patient} />
                     </div>
                 )}
-                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' && (
+                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' ? (
                     <div className="flex flex-col lg:flex-row">
                         {/* Product assignment panel - appears first on small screens */}
                         <div className='w-full lg:w-3/12 order-1 lg:order-2 mb-4 lg:mb-0'>
@@ -370,18 +448,30 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                             />
                         </div>
                         {/* Notes panel - appears second on small screens */}
-                        <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1">
+                        <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1 pb-24">
                             <PatientVisitlDetailNotes
+                                ref={notesHandleRef}
                                 visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
                                 activeTab={activeTab}
                                 patientVisit={patientVisit}
                                 journeyPoints={boardJourneyPoints}
                                 upsertVisitDetailFunc={upsertVisitDetail}
                                 updateVisitFunc={updateProductOrder}
+                                onDirtyChange={handleNotesDirtyChange}
                             />
                         </div>
                     </div>
-                )}
+                ) : null}
+                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' && activeTab.is_owned ? createPortal(
+                    <VisitNotesSaveBar
+                        isChanged={notesDirty}
+                        isSaving={notesSaving}
+                        onSave={() => {
+                            void handleSaveNotes();
+                        }}
+                    />,
+                    document.body
+                ) : null}
             </div>
             <Drawer
                 isOpen={viewPatientRecordDrawer.isOpen}

@@ -1,5 +1,5 @@
 import PlusIcon from "assets/icons/PlusIcon";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Id } from "../types";
 import { CreateJourneyPointRequest, JourneyPoint, PatientVisitTask } from "@models/journey";
 import ColumnContainer from "./ColumnContainer";
@@ -26,6 +26,7 @@ import React from "react";
 import VisitFormComponent from "./VisitForm";
 import FilterBar, { FilterPresetToday } from "./FilterBar";
 import { formatDateTimeForAPI, formatDateTimeWithOffset } from "@utils/common";
+import { PATIENT_VISIT_UPDATED_EVENT } from "@utils/visitEvents";
 
 // Function to map PatientVisit to PatientVisitTask
 function mapPatientVisitsToTasks(visits: PatientVisit[]): PatientVisitTask[] {
@@ -77,14 +78,17 @@ function KanbanBoard() {
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
   const [createColumnError, setCreateColumnError] = useState<string | null>(null);
 
-  const fetchVisitsData = async () => {
+  const queryParamsRef = useRef(queryParams);
+  queryParamsRef.current = queryParams;
+
+  const fetchVisitsData = useCallback(async () => {
     try {
-      const patientVisits = await ListVisitsByParams(queryParams);
+      const patientVisits = await ListVisitsByParams(queryParamsRef.current);
       setTasks(mapPatientVisitsToTasks(patientVisits));
     } catch (error) {
       console.error("Error fetching data:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,8 +117,18 @@ function KanbanBoard() {
   }, [boardID]);
 
   useEffect(() => {
-    fetchVisitsData();
-  }, [queryParams])
+    void fetchVisitsData();
+  }, [queryParams, fetchVisitsData]);
+
+  useEffect(() => {
+    const handler = () => {
+      void fetchVisitsData();
+    };
+    window.addEventListener(PATIENT_VISIT_UPDATED_EVENT, handler);
+    return () => {
+      window.removeEventListener(PATIENT_VISIT_UPDATED_EVENT, handler);
+    };
+  }, [fetchVisitsData]);
 
   const onFilterChange = (filter: Record<string, any>) => {
     const updatedParams: GetPatientVisitParam = {
