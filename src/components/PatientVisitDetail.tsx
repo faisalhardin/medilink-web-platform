@@ -405,7 +405,6 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     </div>
                 </div>
                 <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
-                {patientVisitId ? <VisitContributorPanel visitId={patientVisitId} /> : null}
                 <div className="mb-6 overflow-x-auto overflow-y-hidden border-b border-gray-200">
                     <ul className="flex flex-nowrap">
                         {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item) => {
@@ -458,6 +457,11 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                                 }}
                                 updatedOrderedProduct={setTrxProduct}
                             />
+                            {patientVisitId ? (
+                                <div className="mt-3">
+                                    <VisitContributorPanel visitId={patientVisitId} />
+                                </div>
+                            ) : null}
                         </div>
                         {/* Notes panel - appears second on small screens */}
                         <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1 pb-24">
