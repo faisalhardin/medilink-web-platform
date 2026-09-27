@@ -169,6 +169,7 @@ export interface PatientVisitsComponentProps extends GetPatientVisitParam {
 
 export interface PatientVisitDetailComponentProps {
   patientVisitId: number;
+  isModal?: boolean;
 }
 
 export interface UpsertPatientVisitDetailParam {
