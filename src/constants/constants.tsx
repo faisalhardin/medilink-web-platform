@@ -30,6 +30,10 @@ export const RECALL_PATH = `/v1/recall`
 // path to staff
 export const STAFF_PATH = `/v1/staff`
 
+export const COMPENSATION_PERIOD_PATH = `/v1/compensation-period`
+export const WORKSHEET_PATH = `/v1/worksheet`
+export const VISIT_COMMISSIONS_PATH = `/v1/visit-commissions`
+
 // url to auth
 export const AUTH_URL = `${MEDILINK_API_BASE_URL}/v1/auth`
 

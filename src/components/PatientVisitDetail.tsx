@@ -27,6 +27,7 @@ import { CreateRecallModal } from './CreateRecallModal';
 import { CurrentJourneyPointBadge } from './CurrentJourneyPointBadge';
 import { MoveVisitJourneyPointModal } from './MoveVisitJourneyPointModal';
 import { VisitRecallList } from './VisitRecallList';
+import VisitContributorPanel from './compensation/VisitContributorPanel';
 
 
 type TabType = 'journey' | 'anamnesa' | 'diagnosis' | 'procedure';
@@ -404,6 +405,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                     </div>
                 </div>
                 <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
+                {patientVisitId ? <VisitContributorPanel visitId={patientVisitId} /> : null}
                 <div className="mb-6 overflow-x-auto overflow-y-hidden border-b border-gray-200">
                     <ul className="flex flex-nowrap">
                         {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item) => {
