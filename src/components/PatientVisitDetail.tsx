@@ -441,24 +441,26 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                 )}
                 {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' ? (
                     <div className="flex flex-col lg:flex-row">
-                        {/* Product assignment panel - appears first on small screens */}
-                        <div className='w-full lg:w-3/12 order-1 lg:order-2 mb-4 lg:mb-0'>
-                            <ProductAssignmentPanel
-                                patientVisit={patientVisit}
-                                journeyPointId={activeTab.id as string}
-                                cartProducts={selectedProducts}
-                                orderedProducts={trxProduct}
-                                updateSelectedProducts={updateSelectedProducts}
-                                onAssignProduct={(productRequest: CheckoutProduct[]) => {
-                                    updateProductOrder({
-                                        id: patientVisit.id,
-                                        product_cart: productRequest,
-                                    })
-                                }}
-                                updatedOrderedProduct={setTrxProduct}
-                            />
+                        {/* Fixed-width cards scroll sideways above the notes below lg, then stack in the sidebar */}
+                        <div className="order-1 mb-4 flex w-full min-w-0 gap-3 overflow-x-auto lg:order-2 lg:mb-0 lg:w-3/12 lg:flex-col lg:items-stretch lg:overflow-visible">
+                            <div className="w-80 shrink-0 lg:w-full lg:shrink">
+                                <ProductAssignmentPanel
+                                    patientVisit={patientVisit}
+                                    journeyPointId={activeTab.id as string}
+                                    cartProducts={selectedProducts}
+                                    orderedProducts={trxProduct}
+                                    updateSelectedProducts={updateSelectedProducts}
+                                    onAssignProduct={(productRequest: CheckoutProduct[]) => {
+                                        updateProductOrder({
+                                            id: patientVisit.id,
+                                            product_cart: productRequest,
+                                        })
+                                    }}
+                                    updatedOrderedProduct={setTrxProduct}
+                                />
+                            </div>
                             {patientVisitId ? (
-                                <div className="mt-3">
+                                <div className="w-80 shrink-0 lg:w-full lg:shrink">
                                     <VisitContributorPanel visitId={patientVisitId} />
                                 </div>
                             ) : null}
