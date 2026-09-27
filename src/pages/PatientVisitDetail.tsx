@@ -7,8 +7,8 @@ interface PatientVisitDetailPageProps {
 }
 
 export default function PatientVisitDetailPage(props: PatientVisitDetailPageProps) {
-  const { id } = useRouteParams(props);
+  const { id, isModal } = useRouteParams(props);
   const visitId = id ? parseInt(id, 10) : 0;
 
-  return <PatientVisitComponent patientVisitId={visitId} />;
+  return <PatientVisitComponent patientVisitId={visitId} isModal={Boolean(isModal)} />;
 }

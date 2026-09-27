@@ -28,9 +28,53 @@ import { CurrentJourneyPointBadge } from './CurrentJourneyPointBadge';
 import { MoveVisitJourneyPointModal } from './MoveVisitJourneyPointModal';
 import { VisitRecallList } from './VisitRecallList';
 import VisitContributorPanel from './compensation/VisitContributorPanel';
+import ContentCard from './compensation/ContentCard';
 
 
 type TabType = 'journey' | 'anamnesa' | 'diagnosis' | 'procedure';
+
+function VisitFolderTab({
+    name,
+    isActive,
+    onClick,
+}: {
+    name: string;
+    isActive: boolean;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={onClick}
+            className={`group relative shrink-0 whitespace-nowrap px-4 text-[13px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[#0B57D0] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F4F8FF] ${isActive ? 'z-10 -mb-px h-11 text-[#0D1B2A]' : 'h-9 text-[#3D4F6F] hover:text-[#0D1B2A]'
+                }`}
+        >
+            <span
+                aria-hidden
+                className={`absolute inset-0 rounded-t-xl ${isActive ? 'bg-white' : 'bg-[#E8F1FF] group-hover:bg-[#DCE8FA]'
+                    }`}
+            />
+            {isActive ? (
+                <>
+                    <span
+                        aria-hidden
+                        className="pointer-events-none absolute bottom-0 -left-3 h-3 w-3"
+                        style={{ background: 'radial-gradient(circle at 0 0, transparent 12px, #fff 12px)' }}
+                    />
+                    <span
+                        aria-hidden
+                        className="pointer-events-none absolute bottom-0 -right-3 h-3 w-3"
+                        style={{ background: 'radial-gradient(circle at 100% 0, transparent 12px, #fff 12px)' }}
+                    />
+                </>
+            ) : null}
+            <span className="relative">{name}</span>
+        </button>
+    );
+}
 
 export interface journeyTab {
     id: Id,
@@ -74,7 +118,7 @@ function buildJourneyTabs(
     return { activeTab, journeyPointTabs };
 }
 
-export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComponentProps) => {
+export const PatientVisitComponent = ({ patientVisitId, isModal = false }: PatientVisitDetailComponentProps) => {
     const [journeyPointTab, setJourneyPointTab] = useState<journeyTab[]>([]);
     const [boardJourneyPoints, setBoardJourneyPoints] = useState<JourneyPoint[]>([]);
     const [activeTab, setActiveTab] = useState<journeyTab>({} as journeyTab);
@@ -328,120 +372,209 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
         }
     }
 
+    const orderedTabs = [...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs);
+    const isFirstTabActive = orderedTabs[0] != null && orderedTabs[0].id === activeTab.id;
+    const isJourneyNotesTab = activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure';
+    const panelClassName = isModal
+        ? `relative z-0 -mt-px bg-white pt-5 px-5 ${isJourneyNotesTab ? 'pb-6' : 'pb-1'}`
+        : `relative z-0 -mt-px bg-white px-5 pt-5 shadow-[0_12px_40px_rgba(13,27,42,0.08)] sm:px-6 sm:pt-6 ${isJourneyNotesTab ? 'pb-6' : 'pb-5 sm:pb-6'
+        } ${isFirstTabActive ? 'rounded-b-[28px] rounded-tr-[28px]' : 'rounded-[28px]'}`;
+
+    const tabList = (
+        <div className="relative z-10 overflow-x-auto px-3 pb-px">
+            <div className="inline-flex w-max min-w-full items-end gap-4" role="tablist">
+                {orderedTabs.map((item) => (
+                    <VisitFolderTab
+                        key={String(item.id)}
+                        name={item.name}
+                        isActive={activeTab.id === item.id}
+                        onClick={() => handleTabClick(item)}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+
     return (
-        <div className='flex-1 lg:p-6 h-screen'>
-            <div className='bg-white p-6'>
-                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                        <CurrentJourneyPointBadge
-                            journeyPointName={
-                                boardJourneyPoints.find(
-                                    (point) => String(point.id) === String(patientVisit.journey_point_id)
-                                )?.name
-                            }
-                            disabled={!patientVisit.id}
-                            onClick={openMoveJourneyPointModal}
-                        />
-                        <h2 className="truncate text-xl font-semibold sm:text-2xl lg:text-3xl">
-                            {patient.name}
-                        </h2>
-                        <p className="text-sm text-gray-600 capitalize">
-                            {t('common.' + String(patient.sex)).toLowerCase()}
-                        </p>
+        <div className={isModal ? 'bg-white' : 'flex-1 overflow-y-auto bg-[#F4F8FF] p-4 sm:p-5 lg:px-8 lg:py-5'}>
+            {isModal ? (
+                <div className='p-5'>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                            <CurrentJourneyPointBadge
+                                journeyPointName={
+                                    boardJourneyPoints.find(
+                                        (point) => String(point.id) === String(patientVisit.journey_point_id)
+                                    )?.name
+                                }
+                                disabled={!patientVisit.id}
+                                onClick={openMoveJourneyPointModal}
+                            />
+                            <h2 className="truncate text-2xl font-semibold leading-none tracking-[-0.03em] text-[#0D1B2A]">
+                                {patient.name}
+                            </h2>
+                            <p className="mt-1.5 text-[13px] capitalize text-[#5C6B80]">
+                                {t('common.' + String(patient.sex)).toLowerCase()}
+                            </p>
+                        </div>
+                        <div className="flex shrink-0 items-start gap-2 pr-6">
+                            <button
+                                type="button"
+                                onClick={() => setIsPatientInfoOpen(true)}
+                                aria-label={t('patient.detail', 'Patient Detail')}
+                                title={t('patient.detail', 'Patient Detail')}
+                                className="flex h-9 items-center gap-2 rounded-full bg-[#0B57D0] px-3 text-sm font-semibold text-white outline-none transition-colors hover:bg-[#0847B0] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/25 lg:px-4"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                    />
+                                </svg>
+                                <span className="hidden lg:inline">{t('patient.detail', 'Patient Detail')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={viewPatientRecordDrawer.openDrawer}
+                                aria-label={t('patient.visits', 'Visits')}
+                                title={t('patient.visits', 'Visits')}
+                                className="flex h-9 items-center gap-2 rounded-full bg-white px-3 text-sm font-semibold text-[#3D4F6F] outline-none ring-1 ring-[#D7E3F4] transition-colors hover:bg-[#E8F1FF] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/20 lg:px-4"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                    />
+                                </svg>
+                                <span className="hidden lg:inline">{t('patient.visits', 'Visits')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={openAddRecall}
+                                disabled={!patient?.uuid}
+                                aria-label={t('recall.addAppointment', 'Add Recall')}
+                                title={t('recall.addAppointment', 'Add Recall')}
+                                className="flex h-9 items-center gap-2 rounded-full bg-white px-3 text-sm font-semibold text-[#3D4F6F] outline-none ring-1 ring-[#D7E3F4] transition-colors hover:bg-[#E8F1FF] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/20 disabled:cursor-not-allowed disabled:opacity-50 lg:px-4"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    />
+                                </svg>
+                                <span className="hidden lg:inline">{t('recall.addAppointment', 'Add Recall')}</span>
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex items-start md:justify-between gap-2 shrink-0 ">
-                        <button
-                            type="button"
-                            onClick={() => setIsPatientInfoOpen(true)}
-                            aria-label={t('patient.detail', 'Patient Detail')}
-                            title={t('patient.detail', 'Patient Detail')}
-                            className="flex items-center gap-2 rounded-md border border-blue-600 bg-blue-600 px-2.5 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:px-3"
-                        >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                />
-                            </svg>
-                            <span className="hidden lg:inline">{t('patient.detail', 'Patient Detail')}</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={viewPatientRecordDrawer.openDrawer}
-                            aria-label={t('patient.visits', 'Visits')}
-                            title={t('patient.visits', 'Visits')}
-                            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:px-3"
-                        >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                />
-                            </svg>
-                            <span className="hidden lg:inline">{t('patient.visits', 'Visits')}</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={openAddRecall}
-                            disabled={!patient?.uuid}
-                            aria-label={t('recall.addAppointment', 'Add Recall')}
-                            title={t('recall.addAppointment', 'Add Recall')}
-                            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed lg:px-3"
-                        >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
-                            <span className="hidden lg:inline">{t('recall.addAppointment', 'Add Recall')}</span>
-                        </button>
+                    <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
+                </div>
+            ) : (
+                <ContentCard>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                            <CurrentJourneyPointBadge
+                                journeyPointName={
+                                    boardJourneyPoints.find(
+                                        (point) => String(point.id) === String(patientVisit.journey_point_id)
+                                    )?.name
+                                }
+                                disabled={!patientVisit.id}
+                                onClick={openMoveJourneyPointModal}
+                            />
+                            <h2 className="truncate text-2xl font-semibold leading-none tracking-[-0.03em] text-[#0D1B2A]">
+                                {patient.name}
+                            </h2>
+                            <p className="mt-1.5 text-[13px] capitalize text-[#5C6B80]">
+                                {t('common.' + String(patient.sex)).toLowerCase()}
+                            </p>
+                        </div>
+                        <div className="flex shrink-0 items-start gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsPatientInfoOpen(true)}
+                                aria-label={t('patient.detail', 'Patient Detail')}
+                                title={t('patient.detail', 'Patient Detail')}
+                                className="flex h-9 items-center gap-2 rounded-full bg-[#0B57D0] px-3 text-sm font-semibold text-white outline-none transition-colors hover:bg-[#0847B0] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/25 lg:px-4"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                    />
+                                </svg>
+                                <span className="hidden lg:inline">{t('patient.detail', 'Patient Detail')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={viewPatientRecordDrawer.openDrawer}
+                                aria-label={t('patient.visits', 'Visits')}
+                                title={t('patient.visits', 'Visits')}
+                                className="flex h-9 items-center gap-2 rounded-full bg-white px-3 text-sm font-semibold text-[#3D4F6F] outline-none ring-1 ring-[#D7E3F4] transition-colors hover:bg-[#E8F1FF] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/20 lg:px-4"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                    />
+                                </svg>
+                                <span className="hidden lg:inline">{t('patient.visits', 'Visits')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={openAddRecall}
+                                disabled={!patient?.uuid}
+                                aria-label={t('recall.addAppointment', 'Add Recall')}
+                                title={t('recall.addAppointment', 'Add Recall')}
+                                className="flex h-9 items-center gap-2 rounded-full bg-white px-3 text-sm font-semibold text-[#3D4F6F] outline-none ring-1 ring-[#D7E3F4] transition-colors hover:bg-[#E8F1FF] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/20 disabled:cursor-not-allowed disabled:opacity-50 lg:px-4"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    />
+                                </svg>
+                                <span className="hidden lg:inline">{t('recall.addAppointment', 'Add Recall')}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
+                </ContentCard>
+            )}
+            {isModal ? (
+                <div className="relative mt-1 sm:mx-1">
+                    <div className="rounded-[18px] bg-[#F4F8FF] px-2 pt-5 shadow-[inset_0_12px_40px_rgba(13,27,42,0.08)]">
+                        {tabList}
                     </div>
                 </div>
-                <VisitRecallList visitId={patientVisitId} refreshKey={recallRefreshKey} />
-                <div className="mb-6 overflow-x-auto overflow-y-hidden border-b border-gray-200">
-                    <ul className="flex flex-nowrap">
-                        {[...journeyPointTab].sort((a, b) => a.position - b.position).concat(medicalTabs).map((item) => {
-                            return (
-                                <li
-                                    onClick={() => {
-                                        handleTabClick(item)
-                                    }}
-                                    className="mr-6 shrink-0"
-                                    key={String(item.id)}
-                                >
-                                    <a className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 pb-2 text-sm ${activeTab.id === item.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-grey-8'}`}>
-                                        {item.name}
-                                    </a>
-                                </li>
-                            )
-                        })}
-                    </ul>
+            ) : (
+                <div className="mt-6">
+                    {tabList}
                 </div>
+            )}
+            <div className={panelClassName}>
                 {activeTab.type === 'anamnesa' && (
-                    <div className="w-full">
-                        <AnamnesaTabContent visitId={patientVisitId} patient={patient} />
-                    </div>
+                    <AnamnesaTabContent visitId={patientVisitId} patient={patient} />
                 )}
                 {activeTab.type === 'diagnosis' && (
-                    <div className="w-full">
-                        <DiagnosisTabContent visitId={patientVisitId} patient={patient} />
-                    </div>
+                    <DiagnosisTabContent visitId={patientVisitId} patient={patient} />
                 )}
                 {activeTab.type === 'procedure' && (
-                    <div className="w-full">
-                        <ProcedureTabContent visitId={patientVisitId} patient={patient} />
-                    </div>
+                    <ProcedureTabContent visitId={patientVisitId} patient={patient} />
                 )}
-                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' ? (
+                {isJourneyNotesTab ? (
                     <div className="flex flex-col lg:flex-row">
-                        {/* Fixed-width cards scroll sideways above the notes below lg, then stack in the sidebar */}
                         <div className="order-1 mb-4 flex w-full min-w-0 gap-3 overflow-x-auto lg:order-2 lg:mb-0 lg:w-3/12 lg:flex-col lg:items-stretch lg:overflow-visible">
                             <div className="w-80 shrink-0 lg:w-full lg:shrink">
                                 <ProductAssignmentPanel
@@ -465,8 +598,7 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                                 </div>
                             ) : null}
                         </div>
-                        {/* Notes panel - appears second on small screens */}
-                        <div className="w-full lg:w-9/12 lg:pr-4 order-2 lg:order-1 pb-24">
+                        <div className="order-2 w-full pb-24 lg:order-1 lg:w-9/12 lg:pr-4">
                             <PatientVisitlDetailNotes
                                 ref={notesHandleRef}
                                 visitDetail={visitDetails.filter(p => p.journey_point_id === activeTab.id)[0]}
@@ -480,18 +612,18 @@ export const PatientVisitComponent = ({ patientVisitId }: PatientVisitDetailComp
                         </div>
                     </div>
                 ) : null}
-                {activeTab.type !== 'anamnesa' && activeTab.type !== 'diagnosis' && activeTab.type !== 'procedure' && activeTab.is_owned ? createPortal(
-                    <VisitNotesSaveBar
-                        isChanged={notesDirty}
-                        isSaving={notesSaving}
-                        showSaved={notesJustSaved}
-                        onSave={() => {
-                            void handleSaveNotes();
-                        }}
-                    />,
-                    document.body
-                ) : null}
             </div>
+            {isJourneyNotesTab && activeTab.is_owned ? createPortal(
+                <VisitNotesSaveBar
+                    isChanged={notesDirty}
+                    isSaving={notesSaving}
+                    showSaved={notesJustSaved}
+                    onSave={() => {
+                        void handleSaveNotes();
+                    }}
+                />,
+                document.body
+            ) : null}
             <Drawer
                 isOpen={viewPatientRecordDrawer.isOpen}
                 onClose={viewPatientRecordDrawer.closeDrawer}

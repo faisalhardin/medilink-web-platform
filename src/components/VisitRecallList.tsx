@@ -49,7 +49,7 @@ export function VisitRecallList({ visitId, refreshKey = 0 }: VisitRecallListProp
 
   if (loading && recalls.length === 0) {
     return (
-      <div className="mb-4 text-sm text-gray-400">
+      <div className="mt-4 text-[13px] text-[#5C6B80]">
         {t("recall.loading", "Loading recalls…")}
       </div>
     );
@@ -60,8 +60,8 @@ export function VisitRecallList({ visitId, refreshKey = 0 }: VisitRecallListProp
   }
 
   return (
-    <div className="mb-4">
-      <p className="text-xs font-medium text-gray-500 mb-2">
+    <div className="mt-4">
+      <p className="mb-2 text-[13px] font-medium text-[#5C6B80]">
         {t("recall.visitList.title", "Recalls from this visit")}
       </p>
       <div className="flex flex-wrap gap-2">
@@ -82,13 +82,13 @@ export function VisitRecallList({ visitId, refreshKey = 0 }: VisitRecallListProp
                   { onClose: fetchRecalls, maxWidth: "lg" }
                 )
               }
-              className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-left text-xs text-gray-700 hover:border-blue-300 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="inline-flex items-center gap-2 rounded-full bg-[#F4F8FF] px-3 py-1.5 text-left text-xs text-[#3D4F6F] ring-1 ring-[#D7E3F4] hover:bg-[#E8F1FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B57D0]"
             >
-              <span className="font-medium text-gray-900 text-xs">
+              <span className="text-xs font-medium text-[#0D1B2A]">
                 {formatScheduled(recall.scheduled_at)}
               </span>
               {typeLabel && (
-                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 capitalize">
+                <span className="rounded-full bg-[#E8F1FF] px-1.5 py-0.5 text-xs font-medium capitalize text-[#0B57D0]">
                   {typeLabel}
                 </span>
               )}
