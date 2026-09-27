@@ -20,8 +20,16 @@ export const PERMISSIONS = {
   product: {
     statistics: 'product.statistics',
   },
+
+  compensation: {
+    read: 'compensation.read',
+    assign: 'compensation.assign',
+    finalize: 'compensation.finalize',
+    manage: 'compensation.manage',
+  },
 } as const;
 
 export type PermissionCode =
   | (typeof PERMISSIONS.staff)[keyof typeof PERMISSIONS.staff]
-  | (typeof PERMISSIONS.product)[keyof typeof PERMISSIONS.product];
+  | (typeof PERMISSIONS.product)[keyof typeof PERMISSIONS.product]
+  | (typeof PERMISSIONS.compensation)[keyof typeof PERMISSIONS.compensation];

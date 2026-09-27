@@ -15,11 +15,17 @@ import TokenExpired from "@pages/TokenExpired";
 import ProtectedRoute from "@components/ProtectedRoute";
 import RecallPage from "@pages/Recall";
 import StaffPage from "@pages/Staff";
+import CompensationPage from "@pages/Compensation";
 import Forbidden from "@pages/Forbidden";
 import NotFound from "@pages/NotFound";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 // import PatieVisitReg
+
+const CompensationRedirect = () => {
+  const { pathname, search } = useLocation();
+  return <Navigate to={`${pathname.replace(/^\/compensation/, '/payroll')}${search}`} replace />;
+};
 
 const DefaultLayout = () => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -111,6 +117,12 @@ const DefaultLayout = () => {
           <Route path="/staff" element={
             <ProtectedRoute>
               <StaffPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/compensation/*" element={<CompensationRedirect />} />
+          <Route path="/payroll/*" element={
+            <ProtectedRoute>
+              <CompensationPage />
             </ProtectedRoute>
           } />
           <Route path="/forbidden" element={<Forbidden />} />
