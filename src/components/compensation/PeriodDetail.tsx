@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@utils/common';
 import { GetCompensationPeriod } from '@requests/compensationPeriod';
-import { ListWorksheetsForPeriod } from '@requests/worksheet';
+import PeriodLifecycleActions from '@components/compensation/PeriodLifecycleActions';
+import { ListWorksheetsByDates, ListWorksheetsForPeriod } from '@requests/worksheet';
 import { ListStaff } from '@requests/staff';
 import ContentCard from '@components/compensation/ContentCard';
 import { useCompensationTrail, type CompensationNavState } from '@components/compensation/CompensationBreadcrumb';
@@ -33,6 +34,11 @@ const generateTone: Record<WorksheetGenerateStatus, string> = {
   succeeded: 'text-[#0B57D0]',
   failed: 'text-[#9B2C2C]',
 };
+
+const worksheetTabClass = (active: boolean) =>
+  `relative z-10 rounded-full border-0 px-4 py-1.5 text-left text-[15px] font-semibold tracking-[-0.01em] shadow-none outline-0 ring-0 focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 ${
+    active ? 'text-white' : 'text-[#3D4F6F] hover:text-[#0D1B2A]'
+  }`;
 
 const formatShortDate = (iso: string) => {
   const dateOnly = iso.slice(0, 10);
@@ -100,12 +106,24 @@ const PeriodDetail = () => {
   const [staffNames, setStaffNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(Boolean(periodId));
   const [error, setError] = useState<string | null>(null);
+  const [worksheetTab, setWorksheetTab] = useState<'linked' | 'dates'>('linked');
+  const tablistRef = useRef<HTMLDivElement>(null);
+  const linkedTabRef = useRef<HTMLButtonElement>(null);
+  const datesTabRef = useRef<HTMLButtonElement>(null);
+  const [indicator, setIndicator] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  const [indicatorMoves, setIndicatorMoves] = useState(false);
+  const [sameDateWorksheets, setSameDateWorksheets] = useState<Worksheet[] | null>(null);
+  const [sameDateLoading, setSameDateLoading] = useState(false);
+  const [sameDateError, setSameDateError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!periodId) return;
     let cancelled = false;
     setPeriod(null);
     setWorksheets([]);
+    setWorksheetTab('linked');
+    setSameDateWorksheets(null);
+    setSameDateError(null);
     setLoading(true);
     setError(null);
     (async () => {
@@ -139,6 +157,72 @@ const PeriodDetail = () => {
       : null,
   );
 
+  const loadSameDateWorksheets = async () => {
+    if (!period) return;
+    const start = period.period_start.slice(0, 10);
+    const end = period.period_end.slice(0, 10);
+    setSameDateLoading(true);
+    setSameDateError(null);
+    try {
+      const rows = await ListWorksheetsByDates(start, end);
+      setSameDateWorksheets(
+        rows.filter(
+          (row) => row.period_start.slice(0, 10) === start && row.period_end.slice(0, 10) === end
+        )
+      );
+    } catch {
+      setSameDateError(t('compensation.loadError'));
+    } finally {
+      setSameDateLoading(false);
+    }
+  };
+
+  const dateRangeLabel = period
+    ? `${formatShortDate(period.period_start)} – ${formatShortDate(period.period_end)}`
+    : '';
+  const placeIndicator = useCallback(() => {
+    const list = tablistRef.current;
+    const button = (worksheetTab === 'linked' ? linkedTabRef : datesTabRef).current;
+    if (!list || !button) return;
+    const listRect = list.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    setIndicator({
+      left: buttonRect.left - listRect.left,
+      top: buttonRect.top - listRect.top,
+      width: buttonRect.width,
+      height: buttonRect.height,
+    });
+  }, [worksheetTab]);
+
+  useLayoutEffect(() => {
+    placeIndicator();
+  }, [placeIndicator, dateRangeLabel]);
+
+  useEffect(() => {
+    const list = tablistRef.current;
+    if (!list) return;
+    const observer = new ResizeObserver(() => placeIndicator());
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [placeIndicator, dateRangeLabel]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setIndicatorMoves(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const visibleWorksheets = worksheetTab === 'linked' ? worksheets : sameDateWorksheets ?? [];
+  const openWorksheet = (uuid: string) => {
+    if (!period) return;
+    navigate(`/payroll/worksheet/${uuid}`, {
+      state: {
+        via: 'period',
+        periodId: period.uuid,
+        periodLabel: period.label,
+      } satisfies CompensationNavState,
+    });
+  };
+
   return (
     <div className="space-y-4">
       {!periodId ? (
@@ -156,17 +240,30 @@ const PeriodDetail = () => {
       {period ? (
         <div className="space-y-4">
           <ContentCard>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold leading-none tracking-[-0.03em] text-[#0D1B2A]">
-                {period.label}
-              </h1>
-              <span className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${periodStatusTone[period.status]}`}>
-                {t(`compensation.status.${period.status}`)}
-              </span>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-semibold leading-none tracking-[-0.03em] text-[#0D1B2A]">
+                    {period.label}
+                  </h1>
+                  <span className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${periodStatusTone[period.status]}`}>
+                    {t(`compensation.status.${period.status}`)}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-[13px] leading-snug text-[#5C6B80]">
+                  {formatShortDate(period.period_start)} – {formatShortDate(period.period_end)}
+                </p>
+                {period.status === 'draft' || period.status === 'finalized' ? (
+                  <Link
+                    to={`/payroll/summary?period=${period.uuid}`}
+                    className="mt-2 inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline"
+                  >
+                    {t('compensation.paymentSummary')}
+                  </Link>
+                ) : null}
+              </div>
+              <PeriodLifecycleActions period={period} onPeriodChange={setPeriod} />
             </div>
-            <p className="mt-1.5 text-[13px] leading-snug text-[#5C6B80]">
-              {formatShortDate(period.period_start)} – {formatShortDate(period.period_end)}
-            </p>
             <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
               <div>
                 <dt className="text-[13px] text-[#5C6B80]">{t('compensation.worksheets')}</dt>
@@ -206,36 +303,86 @@ const PeriodDetail = () => {
           </ContentCard>
 
           <ContentCard>
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">
-              {t('compensation.linkedWorksheets')}
-            </h2>
-            {worksheets.length === 0 ? (
-              <div className="mt-3 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
-                <p className="text-[15px] text-[#5C6B80]">{t('compensation.noLinkedWorksheets')}</p>
-              </div>
-            ) : (
-              <ul className="mt-2">
-                {worksheets.map((row) => (
-                  <LinkedWorksheetRow
-                    key={row.uuid}
-                    row={row}
-                    staffName={staffNames.get(row.staff_id) ?? row.staff_id}
-                    statusLabel={t(`compensation.worksheetStatus.${row.status}`)}
-                    generateLabel={t(`compensation.generateStatus.${row.generate_status}`)}
-                    visitsLabel={t('compensation.visits')}
-                    onOpen={(uuid) =>
-                      navigate(`/payroll/worksheet/${uuid}`, {
-                        state: {
-                          via: 'period',
-                          periodId: period.uuid,
-                          periodLabel: period.label,
-                        } satisfies CompensationNavState,
-                      })
-                    }
-                  />
-                ))}
-              </ul>
-            )}
+            <div ref={tablistRef} role="tablist" aria-label={t('compensation.worksheets')} className="relative inline-flex max-w-full flex-wrap gap-1 rounded-[20px] bg-[#F4F8FF] p-1">
+              {indicator ? (
+                <span
+                  aria-hidden
+                  className={`pointer-events-none absolute rounded-full bg-[#0B57D0] ${
+                    indicatorMoves
+                      ? 'motion-safe:transition-[left,top,width,height] motion-safe:duration-200 motion-safe:ease-out motion-reduce:transition-none'
+                      : ''
+                  }`}
+                  style={{ left: indicator.left, top: indicator.top, width: indicator.width, height: indicator.height }}
+                />
+              ) : null}
+              <button
+                ref={linkedTabRef}
+                type="button"
+                role="tab"
+                id="period-worksheets-linked"
+                aria-selected={worksheetTab === 'linked'}
+                aria-controls="period-worksheets-panel"
+                className={worksheetTabClass(worksheetTab === 'linked')}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setWorksheetTab('linked')}
+              >
+                {t('compensation.linkedWorksheets')}
+              </button>
+              <button
+                ref={datesTabRef}
+                type="button"
+                role="tab"
+                id="period-worksheets-dates"
+                aria-selected={worksheetTab === 'dates'}
+                aria-controls="period-worksheets-panel"
+                aria-label={t('compensation.sameDateWorksheetsHeading', { range: dateRangeLabel })}
+                className={worksheetTabClass(worksheetTab === 'dates')}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  setWorksheetTab('dates');
+                  if (sameDateWorksheets === null && !sameDateLoading) {
+                    void loadSameDateWorksheets();
+                  }
+                }}
+              >
+                {dateRangeLabel}
+              </button>
+            </div>
+            <div
+              role="tabpanel"
+              id="period-worksheets-panel"
+              aria-labelledby={worksheetTab === 'linked' ? 'period-worksheets-linked' : 'period-worksheets-dates'}
+            >
+              {worksheetTab === 'dates' && sameDateLoading ? (
+                <div className="mt-3 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
+                  <p className="text-[15px] text-[#5C6B80]">{t('common.loading')}</p>
+                </div>
+              ) : worksheetTab === 'dates' && sameDateError ? (
+                <p className="mt-3 text-sm text-[#9B2C2C]">{sameDateError}</p>
+              ) : visibleWorksheets.length === 0 ? (
+                <div className="mt-3 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
+                  <p className="text-[15px] text-[#5C6B80]">
+                    {worksheetTab === 'linked'
+                      ? t('compensation.noLinkedWorksheets')
+                      : t('compensation.noSameDateWorksheets')}
+                  </p>
+                </div>
+              ) : (
+                <ul className="mt-2">
+                  {visibleWorksheets.map((row) => (
+                    <LinkedWorksheetRow
+                      key={row.uuid}
+                      row={row}
+                      staffName={staffNames.get(row.staff_id) ?? row.staff_id}
+                      statusLabel={t(`compensation.worksheetStatus.${row.status}`)}
+                      generateLabel={t(`compensation.generateStatus.${row.generate_status}`)}
+                      visitsLabel={t('compensation.visits')}
+                      onOpen={openWorksheet}
+                    />
+                  ))}
+                </ul>
+              )}
+            </div>
           </ContentCard>
         </div>
       ) : loading ? (

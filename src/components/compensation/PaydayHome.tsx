@@ -128,7 +128,6 @@ const PaydayHome = () => {
   const [monthTo, setMonthTo] = useState(currentMonthValue);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [newLabel, setNewLabel] = useState('');
@@ -176,17 +175,12 @@ const PaydayHome = () => {
     setBusy(true);
     setCreateError(null);
     try {
-      await CreateCompensationPeriod({
+      const created = await CreateCompensationPeriod({
         label: newLabel.trim(),
         period_start: newStart,
         period_end: newEnd,
       });
-      setCreateOpen(false);
-      setNewLabel('');
-      setNewStart('');
-      setNewEnd('');
-      await loadPeriods();
-      setToast(t('compensation.periodCreated'));
+      navigate(`/payroll/period/${created.uuid}`);
     } catch (err) {
       setCreateError(getApiErrorMessage(err));
     } finally {
@@ -230,15 +224,6 @@ const PaydayHome = () => {
         <div className="mt-6 flex items-start justify-between gap-4 rounded-2xl bg-[#FDECEC] px-4 py-3 text-sm text-[#9B2C2C]">
           <p>{error}</p>
           <button type="button" onClick={() => setError(null)} className="font-medium underline">
-            {t('common.close')}
-          </button>
-        </div>
-      ) : null}
-
-      {toast ? (
-        <div className="mt-6 flex items-start justify-between gap-4 rounded-2xl bg-[#E8F1FF] px-4 py-3 text-sm text-[#0B57D0]">
-          <p>{toast}</p>
-          <button type="button" onClick={() => setToast(null)} className="font-medium underline">
             {t('common.close')}
           </button>
         </div>
