@@ -56,6 +56,26 @@ export const ListWorksheetsForPeriod = async (
   return worksheets;
 };
 
+export const ListWorksheetsByDates = async (
+  periodStart: string,
+  periodEnd: string
+): Promise<Worksheet[]> => {
+  const worksheets: Worksheet[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < 20; page += 1) {
+    const resp = await ListWorksheets({
+      period_start: periodStart.slice(0, 10),
+      period_end: periodEnd.slice(0, 10),
+      limit: 100,
+      cursor,
+    });
+    worksheets.push(...(resp.worksheets ?? []));
+    if (!resp.next_cursor) break;
+    cursor = resp.next_cursor;
+  }
+  return worksheets;
+};
+
 export const GetWorksheet = async (id: string): Promise<Worksheet> => {
   const response = await authedClient.get(`${WORKSHEET_PATH}/${id}`);
   return data(response);

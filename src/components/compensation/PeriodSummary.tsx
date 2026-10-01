@@ -14,6 +14,7 @@ import {
 import { formatPrice } from '@utils/common';
 import { useCompensationTrail, type CompensationNavState } from '@components/compensation/CompensationBreadcrumb';
 import { GetCompensationPeriod, ListPeriodStaff } from '@requests/compensationPeriod';
+import PeriodLifecycleActions from '@components/compensation/PeriodLifecycleActions';
 import { ListWorksheetsForPeriod } from '@requests/worksheet';
 import type { CompensationPeriod, CompensationPeriodStatus, StaffPeriodRow, Worksheet } from '@models/compensation';
 
@@ -63,6 +64,29 @@ const PeriodSummary = () => {
     };
   }, [periodId, t]);
 
+  const handlePeriodChange = (next: CompensationPeriod) => {
+    setPeriod(next);
+    void (async () => {
+      try {
+        const [staffResp, worksheets] = await Promise.all([
+          ListPeriodStaff(next.uuid),
+          ListWorksheetsForPeriod(next.uuid),
+        ]);
+        const byStaff = new Map<string, Worksheet>();
+        worksheets.forEach((w) => byStaff.set(w.staff_id, w));
+        setStaff(
+          (staffResp.staff ?? []).map((row) => ({
+            ...row,
+            roles: row.roles ?? [],
+            worksheet_uuid: byStaff.get(row.staff_id)?.uuid,
+          }))
+        );
+      } catch {
+        setError(t('compensation.loadError'));
+      }
+    })();
+  };
+
   useCompensationTrail(
     period
       ? [
@@ -87,11 +111,16 @@ const PeriodSummary = () => {
     <div className="w-full space-y-4">
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="p-6">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h1 className="text-2xl font-semibold text-gray-900">{t('compensation.paymentSummary')}</h1>
-            <Chip size="small" label={t(`compensation.status.${period.status}`)} color={statusColor(period.status)} />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-semibold text-gray-900">{t('compensation.paymentSummary')}</h1>
+                <Chip size="small" label={t(`compensation.status.${period.status}`)} color={statusColor(period.status)} />
+              </div>
+              <p className="text-sm text-gray-500">{period.label}</p>
+            </div>
+            <PeriodLifecycleActions period={period} onPeriodChange={handlePeriodChange} />
           </div>
-          <p className="text-sm text-gray-500">{period.label}</p>
           <p className="mt-4 text-3xl font-semibold">{formatPrice(period.total_payout)}</p>
           <p className="text-sm text-gray-500">
             {t('compensation.wage')} {formatPrice(period.total_wage)} · {t('compensation.commission')} {formatPrice(period.total_commission)}
