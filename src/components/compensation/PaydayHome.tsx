@@ -122,6 +122,7 @@ const PaydayHome = () => {
   const navigate = useNavigate();
   const user = getStorageUser();
   const canAssign = hasPermission(user, PERMISSIONS.compensation.assign);
+  const canManage = hasPermission(user, PERMISSIONS.compensation.manage);
 
   const [periods, setPeriods] = useState<CompensationPeriod[]>([]);
   const [monthFrom, setMonthFrom] = useState(currentMonthValue);
@@ -202,9 +203,11 @@ const PaydayHome = () => {
           <button type="button" className={ghostButton} onClick={() => navigate('/payroll/worksheets')}>
             {t('compensation.worksheets')}
           </button>
-          <button type="button" className={ghostButton} onClick={() => navigate('/payroll/wages')}>
-            {t('compensation.wageConfig')}
-          </button>
+          {canManage ? (
+            <button type="button" className={ghostButton} onClick={() => navigate('/payroll/wages')}>
+              {t('compensation.wageConfig')}
+            </button>
+          ) : null}
           {canAssign ? (
             <button
               type="button"

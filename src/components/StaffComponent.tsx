@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -23,7 +23,8 @@ import {
 import { Add, AddCircleOutline } from '@mui/icons-material';
 import { useModal } from '../context/ModalContext';
 import { getStorageUser } from '@utils/storage';
-import { hasStaffPermission } from '@utils/permissions';
+import { hasPermission, hasStaffPermission } from '@utils/permissions';
+import { PERMISSIONS } from 'constants/permissions';
 import { showSuccessToast } from '@utils/toast';
 import { STAFF_ROLES, getRoleLabel } from '../constants/staffRoles';
 import { ListStaff, AssignRole, UnassignRole, DeactivateStaff, ActivateStaff } from '@requests/staff';
@@ -51,10 +52,12 @@ const DEFAULT_CONFIRM: ConfirmState = {
 
 const StaffManagementComponent = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { openModal } = useModal();
 
   const currentUser = getStorageUser();
   const canRead = hasStaffPermission(currentUser, 'read');
+  const canManageWages = hasPermission(currentUser, PERMISSIONS.compensation.manage);
   const canCreate = hasStaffPermission(currentUser, 'create');
   const canDelete = hasStaffPermission(currentUser, 'delete');
   const canRoleAssign = hasStaffPermission(currentUser, 'roleAssign');
@@ -188,7 +191,7 @@ const StaffManagementComponent = () => {
       {/* Header */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="p-6">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">
                 {t('staff.title', 'Staff Management')}
@@ -197,16 +200,27 @@ const StaffManagementComponent = () => {
                 {t('staff.subtitle', 'Manage staff members, roles, and access for your institution.')}
               </p>
             </div>
-            {canCreate && (
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleAddStaff}
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                {t('staff.addStaff', 'Add Staff')}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {canManageWages && (
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/payroll/wages')}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  {t('compensation.wageConfig')}
+                </Button>
+              )}
+              {canCreate && (
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={handleAddStaff}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  {t('staff.addStaff', 'Add Staff')}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Show inactive toggle */}

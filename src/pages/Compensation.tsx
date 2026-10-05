@@ -25,6 +25,18 @@ const CompensationLayout = () => (
   </CompensationNavProvider>
 );
 
+const WageRoute = () => {
+  const { t } = useTranslation();
+  if (!hasPermission(getStorageUser(), PERMISSIONS.compensation.manage)) {
+    return <Navigate to="/forbidden" replace state={{ message: t('compensation.wageForbidden') }} />;
+  }
+  return (
+    <ContentCard>
+      <WageConfig />
+    </ContentCard>
+  );
+};
+
 const CompensationPage = () => {
   const { t } = useTranslation();
   if (!hasPermission(getStorageUser(), PERMISSIONS.compensation.read)) {
@@ -36,7 +48,7 @@ const CompensationPage = () => {
         <Route index element={<ContentCard><PaydayHome /></ContentCard>} />
         <Route path="worksheets" element={<ContentCard><WorksheetList /></ContentCard>} />
         <Route path="worksheet/:worksheetId" element={<ContentCard><StaffPeriodDetail /></ContentCard>} />
-        <Route path="wages" element={<ContentCard><WageConfig /></ContentCard>} />
+        <Route path="wages" element={<WageRoute />} />
         <Route path="summary" element={<PeriodSummary />} />
         <Route path="period/:periodId" element={<PeriodDetail />} />
         <Route path="*" element={<Navigate to="/payroll" replace />} />
