@@ -31,7 +31,7 @@ New API surface: backend first, then `models/` types (JSON snake_case exact), `c
 - Tailwind `content` globs only components/layout/pages — new roots may need `tailwind.config.js` update or classes purged
 
 ## Domain-specific
-- Compensation feature is **mock** until backend exists — keep under `mocks/` + `CompensationMockContext`
+- Payroll screens use live `requests/*` (`compensationPeriod`, `worksheet`, `compensationWage`, `visitCommission`, `visitContributor`). Do not add new payroll behavior to `CompensationMockContext`.
 - Odontogram: prefer existing `editorjs-plugins` pipeline (normalizer/event generator/codes) over one-off tooth UI
 - Visit notes dirty-state: follow existing save bar / UnsavedNotesModal patterns
 
