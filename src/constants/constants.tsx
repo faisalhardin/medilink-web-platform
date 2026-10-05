@@ -31,6 +31,7 @@ export const RECALL_PATH = `/v1/recall`
 export const STAFF_PATH = `/v1/staff`
 
 export const COMPENSATION_PERIOD_PATH = `/v1/compensation-period`
+export const COMPENSATION_WAGE_PATH = `/v1/compensation/wages`
 export const WORKSHEET_PATH = `/v1/worksheet`
 export const VISIT_COMMISSIONS_PATH = `/v1/visit-commissions`
 

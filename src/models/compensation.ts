@@ -1,7 +1,7 @@
 export type CompensationPeriodStatus = 'open' | 'draft' | 'finalized';
 export type WorksheetStatus = 'pending' | 'open' | 'finalized';
 export type WorksheetGenerateStatus = 'idle' | 'running' | 'succeeded' | 'failed';
-export type WageCadence = 'monthly' | 'weekly';
+export type WageCadence = 'monthly' | 'weekly' | 'daily';
 export type CommissionType = 'percent' | 'flat';
 export type AssignmentStatus = 'unassigned' | 'partial' | 'complete';
 
@@ -18,7 +18,7 @@ export const COMPENSATION_PERIOD_STATUSES: CompensationPeriodStatus[] = [
   'finalized',
 ];
 
-export const WAGE_CADENCES: WageCadence[] = ['monthly', 'weekly'];
+export const WAGE_CADENCES: WageCadence[] = ['monthly', 'weekly', 'daily'];
 
 export interface ContributionSource {
   type: ContributionSourceType;
@@ -151,4 +151,35 @@ export interface VisitContributor {
 export interface ListVisitContributorsResponse {
   contributors: VisitContributor[];
   compensation_locked_at: string | null;
+}
+
+export interface StaffWage {
+  id: number;
+  staff_id: string;
+  wage_amount: number;
+  wage_cadence: WageCadence;
+  is_active: boolean;
+  effective_from: string;
+  effective_to: string | null;
+  created_at: string;
+}
+
+export interface ListStaffWagesResponse {
+  wages: StaffWage[];
+}
+
+export interface UpsertStaffWageRequest {
+  staff_id: string;
+  wage_amount: number;
+  wage_cadence: WageCadence;
+  effective_from: string;
+  effective_to?: string | null;
+}
+
+export interface UpsertStaffWageResponse {
+  wage: StaffWage;
+}
+
+export interface DeleteStaffWageResponse {
+  success: boolean;
 }
