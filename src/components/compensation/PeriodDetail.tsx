@@ -2,6 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@utils/common';
+import { getStorageUser } from '@utils/storage';
+import { hasPermission } from '@utils/permissions';
+import { PERMISSIONS } from 'constants/permissions';
 import { GetCompensationPeriod } from '@requests/compensationPeriod';
 import PeriodLifecycleActions from '@components/compensation/PeriodLifecycleActions';
 import { ListWorksheetsByDates, ListWorksheetsForPeriod } from '@requests/worksheet';
@@ -101,6 +104,7 @@ const PeriodDetail = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { periodId = '' } = useParams();
+  const canManage = hasPermission(getStorageUser(), PERMISSIONS.compensation.manage);
   const [period, setPeriod] = useState<CompensationPeriod | null>(null);
   const [worksheets, setWorksheets] = useState<Worksheet[]>([]);
   const [staffNames, setStaffNames] = useState<Map<string, string>>(new Map());
@@ -253,13 +257,25 @@ const PeriodDetail = () => {
                 <p className="mt-1.5 text-[13px] leading-snug text-[#5C6B80]">
                   {formatShortDate(period.period_start)} – {formatShortDate(period.period_end)}
                 </p>
-                {period.status === 'draft' || period.status === 'finalized' ? (
-                  <Link
-                    to={`/payroll/summary?period=${period.uuid}`}
-                    className="mt-2 inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline"
-                  >
-                    {t('compensation.paymentSummary')}
-                  </Link>
+                {canManage || period.status === 'draft' || period.status === 'finalized' ? (
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                    {canManage ? (
+                      <Link
+                        to={`/payroll/period/${period.uuid}/wages`}
+                        className="inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline"
+                      >
+                        {t('compensation.wageList')}
+                      </Link>
+                    ) : null}
+                    {period.status === 'draft' || period.status === 'finalized' ? (
+                      <Link
+                        to={`/payroll/summary?period=${period.uuid}`}
+                        className="inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline"
+                      >
+                        {t('compensation.paymentSummary')}
+                      </Link>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
               <PeriodLifecycleActions period={period} onPeriodChange={setPeriod} />

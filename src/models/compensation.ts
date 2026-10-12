@@ -183,3 +183,38 @@ export interface UpsertStaffWageResponse {
 export interface DeleteStaffWageResponse {
   success: boolean;
 }
+
+export interface StaffWageSnapshot {
+  id: number;
+  staff_id: string;
+  compensation_period_uuid: string;
+  period_start: string;
+  period_end: string;
+  wage_amount: number;
+  wage_cadence: WageCadence;
+  mandatory_working_days: number | null;
+  staff_working_days: number | null;
+  final_wage: number | null;
+  total_wage: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateStaffWageSnapshotRequest {
+  mandatory_working_days: number | null;
+  staff_working_days: number | null;
+  final_wage: number | null;
+}
+
+export interface GenerateStaffWageSnapshotsRequest {
+  compensation_period_uuid: string;
+  staff_ids?: string[];
+}
+
+export interface StaffWageSnapshotsResponse {
+  snapshots: StaffWageSnapshot[];
+}
+
+export interface DeleteStaffWageSnapshotResponse {
+  success: boolean;
+}

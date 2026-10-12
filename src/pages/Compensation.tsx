@@ -5,6 +5,7 @@ import StaffPeriodDetail from '@components/compensation/StaffPeriodDetail';
 import WageConfig from '@components/compensation/WageConfig';
 import PeriodSummary from '@components/compensation/PeriodSummary';
 import PeriodDetail from '@components/compensation/PeriodDetail';
+import WageSnapshotList from '@components/compensation/WageSnapshotList';
 import WorksheetList from '@components/compensation/WorksheetList';
 import ContentCard from '@components/compensation/ContentCard';
 import CompensationBreadcrumb, { CompensationNavProvider } from '@components/compensation/CompensationBreadcrumb';
@@ -37,6 +38,14 @@ const WageRoute = () => {
   );
 };
 
+const PeriodWageRoute = () => {
+  const { t } = useTranslation();
+  if (!hasPermission(getStorageUser(), PERMISSIONS.compensation.manage)) {
+    return <Navigate to="/forbidden" replace state={{ message: t('compensation.wageForbidden') }} />;
+  }
+  return <WageSnapshotList />;
+};
+
 const CompensationPage = () => {
   const { t } = useTranslation();
   if (!hasPermission(getStorageUser(), PERMISSIONS.compensation.read)) {
@@ -50,6 +59,7 @@ const CompensationPage = () => {
         <Route path="worksheet/:worksheetId" element={<ContentCard><StaffPeriodDetail /></ContentCard>} />
         <Route path="wages" element={<WageRoute />} />
         <Route path="summary" element={<PeriodSummary />} />
+        <Route path="period/:periodId/wages" element={<PeriodWageRoute />} />
         <Route path="period/:periodId" element={<PeriodDetail />} />
         <Route path="*" element={<Navigate to="/payroll" replace />} />
       </Route>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import {
@@ -10,6 +10,7 @@ import {
 const ApiErrorReportModal = () => {
   const { t } = useTranslation();
   const [payload, setPayload] = useState<ApiErrorReportPayload | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     setApiErrorReportListener(setPayload);
@@ -17,11 +18,14 @@ const ApiErrorReportModal = () => {
   }, []);
 
   useEffect(() => {
-    if (!payload) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const dialog = dialogRef.current;
+    if (!payload || !dialog) return;
+    const onDialogClose = () => clearApiErrorReport();
+    dialog.addEventListener('close', onDialogClose);
+    if (!dialog.open) dialog.showModal();
     return () => {
-      document.body.style.overflow = previous;
+      dialog.removeEventListener('close', onDialogClose);
+      if (dialog.open) dialog.close();
     };
   }, [payload]);
 
@@ -32,19 +36,21 @@ const ApiErrorReportModal = () => {
   if (!payload) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4"
+    <dialog
+      ref={dialogRef}
+      className="fixed inset-0 m-0 h-auto max-h-none w-auto max-w-none border-0 bg-transparent p-4 backdrop:bg-black/50 open:flex open:items-center open:justify-center"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
-      role="presentation"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') e.stopPropagation();
+      }}
+      aria-labelledby="api-error-title"
+      aria-describedby="api-error-message"
     >
       <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="api-error-title"
-        aria-describedby="api-error-message"
         className="relative w-full max-w-md rounded-xl border border-gray-200 bg-white shadow-xl"
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
@@ -88,7 +94,7 @@ const ApiErrorReportModal = () => {
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };
 
