@@ -1,3 +1,24 @@
+import { getApiErrorItems, getApiErrorMessage } from '@utils/apiErrors';
+
+const SNAPSHOT_ERROR_KEYS: Record<string, string> = {
+  WAGE_CONTRACT_NOT_FOUND: 'compensation.wageErrors.contractNotFound',
+  WAGE_SNAPSHOT_DAYS_INVALID: 'compensation.wageErrors.daysInvalid',
+  WAGE_SNAPSHOT_FINAL_WAGE_INVALID: 'compensation.wageErrors.finalInvalid',
+};
+
+export function snapshotWageErrorMessage(error: unknown, translate: (key: string) => string): string {
+  const items = getApiErrorItems(error);
+  if (items.length === 0) return getApiErrorMessage(error);
+  return items
+    .map((item) => {
+      const key = SNAPSHOT_ERROR_KEYS[item.error_name];
+      if (key) return translate(key);
+      return item.error_description || item.error_name;
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
 export type SnapshotWageCadence = 'monthly' | 'weekly' | 'daily';
 
 export type SnapshotWageInput = {
@@ -59,4 +80,12 @@ export function parseOptionalInt(raw: string): number | null | undefined {
   const value = Number(trimmed);
   if (!Number.isSafeInteger(value)) return undefined;
   return value;
+}
+
+export function displayedWage(snapshot: {
+  total_wage: number | null;
+  final_wage: number | null;
+  wage_amount: number;
+}): number {
+  return snapshot.total_wage ?? snapshot.final_wage ?? snapshot.wage_amount;
 }

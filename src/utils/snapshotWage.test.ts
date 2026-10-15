@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { latestSnapshotsForPeriod, parseOptionalInt, previewSnapshotWage } from './snapshotWage';
+import { latestSnapshotsForPeriod, parseOptionalInt, previewSnapshotWage, displayedWage } from './snapshotWage';
 
 describe('previewSnapshotWage', () => {
   it('prorates and keeps the flat wage from replacing that total', () => {
@@ -102,6 +102,14 @@ describe('latestSnapshotsForPeriod', () => {
       'p',
     );
     expect(rows.map((row) => row.id).sort((a, b) => a - b)).toEqual([2, 4]);
+  });
+});
+
+describe('displayedWage', () => {
+  it('uses the stored total, then the flat wage, and keeps zero', () => {
+    expect(displayedWage({ total_wage: 0, final_wage: 10, wage_amount: 20 })).toBe(0);
+    expect(displayedWage({ total_wage: null, final_wage: 10, wage_amount: 20 })).toBe(10);
+    expect(displayedWage({ total_wage: null, final_wage: null, wage_amount: 20 })).toBe(20);
   });
 });
 

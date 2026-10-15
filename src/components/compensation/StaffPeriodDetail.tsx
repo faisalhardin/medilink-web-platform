@@ -17,15 +17,19 @@ import {
 } from '@requests/worksheet';
 import { GetCompensationPeriod, ListCompensationPeriods } from '@requests/compensationPeriod';
 import { PatchVisitCommission } from '@requests/visitCommission';
+import { loadOrGenerateStaffSnapshot } from '@requests/compensationWage';
 import {
   useCompensationTrail,
   type CompensationCrumb,
   type CompensationNavState,
 } from '@components/compensation/CompensationBreadcrumb';
+import WageSnapshotEditor from '@components/compensation/WageSnapshotEditor';
+import { displayedWage, snapshotWageErrorMessage } from '@utils/snapshotWage';
 import type {
   CommissionType,
   CompensationPeriod,
   ContributionSourceType,
+  StaffWageSnapshot,
   VisitCommissionRow,
   Worksheet,
   WorksheetGenerateStatus,
@@ -78,6 +82,7 @@ const StaffPeriodDetail = () => {
   const user = getStorageUser();
   const canAssign = hasPermission(user, PERMISSIONS.compensation.assign);
   const canFinalize = hasPermission(user, PERMISSIONS.compensation.finalize);
+  const canManage = hasPermission(user, PERMISSIONS.compensation.manage);
   const locale = i18n.language.startsWith('id') ? 'id' : 'en';
 
   const [worksheet, setWorksheet] = useState<Worksheet | null>(null);
@@ -92,6 +97,9 @@ const StaffPeriodDetail = () => {
   const [linkedPeriodLabel, setLinkedPeriodLabel] = useState('');
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
+  const [snapshot, setSnapshot] = useState<StaffWageSnapshot | null>(null);
+  const [wageError, setWageError] = useState<string | null>(null);
+  const [wageLoading, setWageLoading] = useState(false);
 
   const load = useCallback(async () => {
     const [ws, commissions] = await Promise.all([
@@ -154,6 +162,37 @@ const StaffPeriodDetail = () => {
       cancelled = true;
     };
   }, [worksheet, canAssign, t]);
+
+  useEffect(() => {
+    const periodUuid = worksheet?.compensation_period_uuid;
+    const staffId = worksheet?.staff_id;
+    if (!canManage || !periodUuid || !staffId) {
+      setSnapshot(null);
+      setWageError(null);
+      setWageLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSnapshot(null);
+    setWageLoading(true);
+    setWageError(null);
+    (async () => {
+      try {
+        const next = await loadOrGenerateStaffSnapshot(periodUuid, staffId);
+        if (!cancelled) setSnapshot(next);
+      } catch (err) {
+        if (!cancelled) {
+          setSnapshot(null);
+          setWageError(snapshotWageErrorMessage(err, t));
+        }
+      } finally {
+        if (!cancelled) setWageLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canManage, worksheet?.compensation_period_uuid, worksheet?.staff_id, t]);
 
   useEffect(() => {
     if (worksheet?.generate_status !== 'running') return;
@@ -262,6 +301,7 @@ const StaffPeriodDetail = () => {
 
   const isFinalized = worksheet.status === 'finalized';
   const linked = Boolean(worksheet.compensation_period_uuid);
+  const wageShown = snapshot ? displayedWage(snapshot) : null;
   const lockedEdits = isFinalized || linked;
   const isGenerating = worksheet.generate_status === 'running';
 
@@ -422,19 +462,45 @@ const StaffPeriodDetail = () => {
         </div>
       ) : null}
 
-      <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
-        <div>
-          <dt className="text-[13px] text-[#5C6B80]">{t('compensation.wage')}</dt>
-          <dd className="mt-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A]">{formatPrice(0)}</dd>
-          <p className="mt-1 text-[13px] text-[#5C6B80]">{t('compensation.wageStub')}</p>
-        </div>
+      {canManage && !linked ? (
+        <p className="mt-4 text-[13px] text-[#5C6B80]">{t('compensation.wageLinkPayday')}</p>
+      ) : null}
+      {canManage && linked && wageLoading ? (
+        <p className="mt-4 text-[13px] text-[#5C6B80]">{t('common.loading')}</p>
+      ) : null}
+      {canManage && wageError ? (
+        <p className="mt-4 text-sm text-[#9B2C2C]">{wageError}</p>
+      ) : null}
+
+      <dl className={`mt-6 grid grid-cols-2 gap-x-6 gap-y-4 ${wageShown != null ? 'sm:grid-cols-3' : ''}`}>
+        {wageShown != null ? (
+          <div>
+            <dt className="text-[13px] text-[#5C6B80]">{t('compensation.wage')}</dt>
+            <dd className="mt-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A]">{formatPrice(wageShown)}</dd>
+          </div>
+        ) : null}
         <div>
           <dt className="text-[13px] text-[#5C6B80]">{t('compensation.commission')}</dt>
           <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
             {formatPrice(worksheet.total_commission)}
           </dd>
         </div>
+        {wageShown != null ? (
+          <div>
+            <dt className="text-[13px] text-[#5C6B80]">{t('compensation.payTotal')}</dt>
+            <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
+              {formatPrice(wageShown + worksheet.total_commission)}
+            </dd>
+          </div>
+        ) : null}
       </dl>
+      {snapshot ? (
+        <WageSnapshotEditor
+          key={`${snapshot.id}-${snapshot.updated_at}`}
+          snapshot={snapshot}
+          onSaved={setSnapshot}
+        />
+      ) : null}
 
       <div className="mt-6 border-t border-[#E6EEF8] pt-5">
         <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">

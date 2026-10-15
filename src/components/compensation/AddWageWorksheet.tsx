@@ -2,44 +2,45 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Drawer } from '@components/Drawer';
 import { useDrawer } from 'hooks/useDrawer';
-import { getStorageUser } from '@utils/storage';
-import { hasPermission } from '@utils/permissions';
-import { PERMISSIONS } from 'constants/permissions';
-import { getApiErrorMessage, getApiErrorStatus, isClientErrorStatus } from '@utils/apiErrors';
-import { showSuccessToast } from '@utils/toast';
+import { getApiErrorMessage } from '@utils/apiErrors';
 import { ListStaff } from '@requests/staff';
-import { GenerateStaffWageSnapshots, ListWages } from '@requests/compensationWage';
+import { ListWages } from '@requests/compensationWage';
+import { CreateWorksheet, PatchWorksheet } from '@requests/worksheet';
+import type { CompensationPeriod } from '@models/compensation';
 
 const fieldClass =
   'h-9 w-full rounded-full border border-[#D7E3F4] bg-white px-4 text-sm text-[#0D1B2A] outline-none transition-shadow placeholder:text-[#8A97AB] focus:border-[#0B57D0] focus:ring-4 focus:ring-[#0B57D0]/15';
 
-const primaryButton =
-  'h-9 shrink-0 rounded-full bg-[#0B57D0] px-4 text-sm font-semibold text-white outline-none transition-colors hover:bg-[#0847B0] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/25 disabled:opacity-50';
+const linkButton =
+  'inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline disabled:opacity-50';
 
 type StaffOption = { uuid: string; name: string };
 
-type WageSnapshotGenerateProps = {
-  periodUuid: string;
-  onGenerated?: () => void;
+type AddWageWorksheetProps = {
+  period: CompensationPeriod;
+  linkedStaffIds: string[];
+  onCreated: (worksheetUuid: string) => void;
 };
 
-const WageSnapshotGenerate = ({ periodUuid, onGenerated }: WageSnapshotGenerateProps) => {
+const AddWageWorksheet = ({ period, linkedStaffIds, onCreated }: AddWageWorksheetProps) => {
   const { t, i18n } = useTranslation();
-  const canManage = hasPermission(getStorageUser(), PERMISSIONS.compensation.manage);
   const drawer = useDrawer();
   const [staff, setStaff] = useState<StaffOption[]>([]);
   const [withContract, setWithContract] = useState<Set<string>>(new Set());
-  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [picked, setPicked] = useState('');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const linked = useMemo(() => new Set(linkedStaffIds), [linkedStaffIds]);
 
   useEffect(() => {
     if (!drawer.isOpen) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setPicked('');
     (async () => {
       try {
         const [staffResp, wageResp] = await Promise.all([ListStaff(false), ListWages()]);
@@ -60,49 +61,38 @@ const WageSnapshotGenerate = ({ periodUuid, onGenerated }: WageSnapshotGenerateP
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return [...staff]
+      .filter((row) => !linked.has(row.uuid))
       .sort((a, b) => a.name.localeCompare(b.name, i18n.language))
       .filter((row) => !q || row.name.toLowerCase().includes(q));
-  }, [staff, query, i18n.language]);
+  }, [staff, linked, query, i18n.language]);
 
-  if (!canManage) return null;
-
-  const toggle = (uuid: string) => {
-    setPicked((current) => {
-      const next = new Set(current);
-      if (next.has(uuid)) next.delete(uuid);
-      else next.add(uuid);
-      return next;
-    });
-  };
-
-  const generate = async () => {
+  const create = async () => {
+    const chosen = staff.find((row) => row.uuid === picked);
+    if (!chosen || !withContract.has(chosen.uuid)) return;
     setBusy(true);
     setError(null);
-    const staffIds = [...picked].filter((id) => withContract.has(id));
     try {
-      await GenerateStaffWageSnapshots({
-        compensation_period_uuid: periodUuid,
-        ...(staffIds.length > 0 ? { staff_ids: staffIds } : {}),
+      const created = await CreateWorksheet({
+        staff_id: chosen.uuid,
+        label: (chosen.name.trim() || chosen.uuid).slice(0, 100),
+        period_start: period.period_start.slice(0, 10),
+        period_end: period.period_end.slice(0, 10),
       });
-      showSuccessToast(t('compensation.generateWagesDone'));
-      setPicked(new Set());
+      await PatchWorksheet(created.uuid, { compensation_period_uuid: period.uuid });
       setQuery('');
       drawer.closeDrawer();
-      onGenerated?.();
+      onCreated(created.uuid);
     } catch (err) {
-      const status = getApiErrorStatus(err);
-      if (!isClientErrorStatus(status) || status === 401) {
-        setError(getApiErrorMessage(err) || t('compensation.loadError'));
-      }
+      setError(getApiErrorMessage(err) || t('compensation.loadError'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="mt-4">
-      <button type="button" className={primaryButton} onClick={drawer.openDrawer}>
-        {t('compensation.generateWages')}
+    <>
+      <button type="button" className={linkButton} onClick={drawer.openDrawer}>
+        {t('compensation.addWage')}
       </button>
       <Drawer
         isOpen={drawer.isOpen}
@@ -118,13 +108,15 @@ const WageSnapshotGenerate = ({ periodUuid, onGenerated }: WageSnapshotGenerateP
             placeholder={t('common.search')}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <p className="mt-3 text-[13px] text-[#5C6B80]">{t('compensation.generateWagesHint')}</p>
+          <p className="mt-3 text-[13px] text-[#5C6B80]">{t('compensation.addWageHint')}</p>
           {error ? (
             <p className="mt-3 rounded-2xl bg-[#FDECEC] px-4 py-3 text-sm text-[#9B2C2C]">{error}</p>
           ) : null}
           <ul className="mt-3 flex-1 overflow-auto rounded-2xl bg-white">
             {loading ? (
               <li className="px-4 py-3 text-sm text-[#5C6B80]">{t('common.loading')}</li>
+            ) : rows.length === 0 ? (
+              <li className="px-4 py-3 text-sm text-[#5C6B80]">{t('compensation.addWageEmpty')}</li>
             ) : (
               rows.map((row) => {
                 const selectable = withContract.has(row.uuid);
@@ -140,7 +132,7 @@ const WageSnapshotGenerate = ({ periodUuid, onGenerated }: WageSnapshotGenerateP
                     </li>
                   );
                 }
-                const selected = picked.has(row.uuid);
+                const selected = picked === row.uuid;
                 return (
                   <li key={row.uuid} className="border-b border-[#E6EEF8] last:border-b-0">
                     <button
@@ -149,7 +141,7 @@ const WageSnapshotGenerate = ({ periodUuid, onGenerated }: WageSnapshotGenerateP
                       className={`w-full px-4 py-3 text-left text-sm text-[#0D1B2A] hover:bg-[#F4F8FF] ${
                         selected ? 'bg-[#E8F1FF]' : ''
                       }`}
-                      onClick={() => toggle(row.uuid)}
+                      onClick={() => setPicked(row.uuid)}
                     >
                       {row.name}
                     </button>
@@ -158,13 +150,18 @@ const WageSnapshotGenerate = ({ periodUuid, onGenerated }: WageSnapshotGenerateP
               })
             )}
           </ul>
-          <button type="button" className={`${primaryButton} mt-3`} disabled={busy || loading} onClick={generate}>
-            {t('compensation.generateWages')}
+          <button
+            type="button"
+            className="mt-3 h-9 shrink-0 rounded-full bg-[#0B57D0] px-4 text-sm font-semibold text-white outline-none transition-colors hover:bg-[#0847B0] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/25 disabled:opacity-50"
+            disabled={busy || loading || !picked}
+            onClick={create}
+          >
+            {t('compensation.addWage')}
           </button>
         </div>
       </Drawer>
-    </div>
+    </>
   );
 };
 
-export default WageSnapshotGenerate;
+export default AddWageWorksheet;
