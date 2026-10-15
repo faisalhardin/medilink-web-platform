@@ -125,8 +125,8 @@ const PaydayHome = () => {
   const canManage = hasPermission(user, PERMISSIONS.compensation.manage);
 
   const [periods, setPeriods] = useState<CompensationPeriod[]>([]);
-  const [monthFrom, setMonthFrom] = useState(currentMonthValue);
-  const [monthTo, setMonthTo] = useState(currentMonthValue);
+  const [monthFrom, setMonthFrom] = useState(() => `${new Date().getFullYear()}-01`);
+  const [monthTo, setMonthTo] = useState(() => `${new Date().getFullYear()}-12`);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

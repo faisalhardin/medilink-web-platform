@@ -158,6 +158,13 @@ const MonthRange = ({ from, to, onChange }: Props) => {
     setVisibleYear(yearOf(month));
   };
 
+  const applyThisYear = () => {
+    const year = new Date().getFullYear();
+    setDraftFrom(`${year}-01`);
+    setDraftTo(`${year}-12`);
+    setVisibleYear(year);
+  };
+
   const apply = () => {
     if (!draftFrom || !draftTo || spanTooLong(draftFrom, draftTo)) return;
     onChange(draftFrom, draftTo);
@@ -205,6 +212,13 @@ const MonthRange = ({ from, to, onChange }: Props) => {
               className="rounded-full px-3 py-2 text-left text-[13px] font-medium text-[#3D4F6F] hover:bg-[#F4F8FF] hover:text-[#0B57D0]"
             >
               {t('compensation.thisMonth')}
+            </button>
+            <button
+              type="button"
+              onClick={applyThisYear}
+              className="rounded-full px-3 py-2 text-left text-[13px] font-medium text-[#3D4F6F] hover:bg-[#F4F8FF] hover:text-[#0B57D0]"
+            >
+              {t('compensation.thisYear')}
             </button>
           </div>
           <div className="mb-3 mt-4 grid grid-cols-2 gap-2">

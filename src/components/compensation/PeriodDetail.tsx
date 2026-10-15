@@ -2,10 +2,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@utils/common';
+import { getStorageUser } from '@utils/storage';
+import { hasPermission } from '@utils/permissions';
+import { PERMISSIONS } from 'constants/permissions';
 import { GetCompensationPeriod } from '@requests/compensationPeriod';
 import PeriodLifecycleActions from '@components/compensation/PeriodLifecycleActions';
 import { ListWorksheetsByDates, ListWorksheetsForPeriod } from '@requests/worksheet';
 import { ListStaff } from '@requests/staff';
+import AddWageWorksheet from '@components/compensation/AddWageWorksheet';
 import ContentCard from '@components/compensation/ContentCard';
 import { useCompensationTrail, type CompensationNavState } from '@components/compensation/CompensationBreadcrumb';
 import type {
@@ -101,6 +105,9 @@ const PeriodDetail = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { periodId = '' } = useParams();
+  const user = getStorageUser();
+  const canManage = hasPermission(user, PERMISSIONS.compensation.manage);
+  const canAssign = hasPermission(user, PERMISSIONS.compensation.assign);
   const [period, setPeriod] = useState<CompensationPeriod | null>(null);
   const [worksheets, setWorksheets] = useState<Worksheet[]>([]);
   const [staffNames, setStaffNames] = useState<Map<string, string>>(new Map());
@@ -222,6 +229,7 @@ const PeriodDetail = () => {
       } satisfies CompensationNavState,
     });
   };
+  const canAddWage = canManage && canAssign && period?.status !== 'finalized';
 
   return (
     <div className="space-y-4">
@@ -253,13 +261,24 @@ const PeriodDetail = () => {
                 <p className="mt-1.5 text-[13px] leading-snug text-[#5C6B80]">
                   {formatShortDate(period.period_start)} – {formatShortDate(period.period_end)}
                 </p>
-                {period.status === 'draft' || period.status === 'finalized' ? (
-                  <Link
-                    to={`/payroll/summary?period=${period.uuid}`}
-                    className="mt-2 inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline"
-                  >
-                    {t('compensation.paymentSummary')}
-                  </Link>
+                {canAddWage || period.status === 'draft' || period.status === 'finalized' ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    {canAddWage ? (
+                      <AddWageWorksheet
+                        period={period}
+                        linkedStaffIds={worksheets.map((row) => row.staff_id)}
+                        onCreated={openWorksheet}
+                      />
+                    ) : null}
+                    {period.status === 'draft' || period.status === 'finalized' ? (
+                      <Link
+                        to={`/payroll/summary?period=${period.uuid}`}
+                        className="inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline"
+                      >
+                        {t('compensation.paymentSummary')}
+                      </Link>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
               <PeriodLifecycleActions period={period} onPeriodChange={setPeriod} />
