@@ -49,13 +49,13 @@ export function previewSnapshotWage(input: SnapshotWageInput): SnapshotWagePrevi
     (mandatoryWorkingDays != null && staffWorkingDays != null && mandatoryWorkingDays <= 0);
   if (daysInvalid) return { ok: false, reason: 'days' };
   if (finalWage != null && finalWage < 0) return { ok: false, reason: 'final' };
+  if (finalWage != null) return { ok: true, total: finalWage };
   if (mandatoryWorkingDays != null && staffWorkingDays != null) {
     return {
       ok: true,
       total: Math.trunc((wageAmount * staffWorkingDays) / unitDays(wageCadence, mandatoryWorkingDays)),
     };
   }
-  if (finalWage != null) return { ok: true, total: finalWage };
   return { ok: true, total: null };
 }
 

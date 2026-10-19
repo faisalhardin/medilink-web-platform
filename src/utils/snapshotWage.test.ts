@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { latestSnapshotsForPeriod, parseOptionalInt, previewSnapshotWage, displayedWage } from './snapshotWage';
 
 describe('previewSnapshotWage', () => {
-  it('prorates and keeps the flat wage from replacing that total', () => {
+  it('prorates when no flat wage is set, and uses the flat wage when it is', () => {
+    expect(
+      previewSnapshotWage({
+        wageAmount: 1000,
+        wageCadence: 'monthly',
+        mandatoryWorkingDays: 22,
+        staffWorkingDays: 20,
+        finalWage: null,
+      }),
+    ).toEqual({ ok: true, total: 909 });
     expect(
       previewSnapshotWage({
         wageAmount: 1000,
@@ -11,7 +20,7 @@ describe('previewSnapshotWage', () => {
         staffWorkingDays: 20,
         finalWage: 500,
       }),
-    ).toEqual({ ok: true, total: 909 });
+    ).toEqual({ ok: true, total: 500 });
   });
 
   it('copies the flat wage when either day count is missing', () => {
