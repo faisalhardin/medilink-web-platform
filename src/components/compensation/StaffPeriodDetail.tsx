@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@utils/common';
-import { getApiErrorMessage } from '@utils/apiErrors';
+import { getApiErrorItems, getApiErrorMessage } from '@utils/apiErrors';
 import { formatSourceChip } from '@utils/compensationSources';
 import { getStorageUser } from '@utils/storage';
 import { hasPermission } from '@utils/permissions';
@@ -17,7 +17,7 @@ import {
 } from '@requests/worksheet';
 import { GetCompensationPeriod, ListCompensationPeriods } from '@requests/compensationPeriod';
 import { PatchVisitCommission } from '@requests/visitCommission';
-import { loadOrGenerateStaffSnapshot } from '@requests/compensationWage';
+import { GenerateStaffWageSnapshots, ListWages, UpdateStaffWageSnapshot, loadStaffWageSnapshot } from '@requests/compensationWage';
 import {
   useCompensationTrail,
   type CompensationCrumb,
@@ -29,7 +29,9 @@ import type {
   CommissionType,
   CompensationPeriod,
   ContributionSourceType,
+  StaffWage,
   StaffWageSnapshot,
+  UpdateStaffWageSnapshotRequest,
   VisitCommissionRow,
   Worksheet,
   WorksheetGenerateStatus,
@@ -44,6 +46,40 @@ const formatShortDate = (iso: string) => {
   const d = new Date(iso + (iso.length === 10 ? 'T00:00:00' : ''));
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 };
+
+// shortcut: preview uses the active wage. Generate copies the contract that covers the payday.
+function activeWage(wages: StaffWage[], staffId: string): StaffWage | null {
+  let best: StaffWage | null = null;
+  for (const wage of wages) {
+    if (wage.staff_id !== staffId) continue;
+    if (
+      !best ||
+      wage.effective_from > best.effective_from ||
+      (wage.effective_from === best.effective_from && wage.id > best.id)
+    ) {
+      best = wage;
+    }
+  }
+  return best;
+}
+
+function draftSnapshot(wage: StaffWage, periodUuid: string, staffId: string): StaffWageSnapshot {
+  return {
+    id: 0,
+    staff_id: staffId,
+    compensation_period_uuid: periodUuid,
+    period_start: wage.effective_from,
+    period_end: wage.effective_to ?? '',
+    wage_amount: wage.wage_amount,
+    wage_cadence: wage.wage_cadence,
+    mandatory_working_days: null,
+    staff_working_days: null,
+    final_wage: null,
+    total_wage: null,
+    created_at: '',
+    updated_at: '',
+  };
+}
 
 const statusTone: Record<WorksheetStatus, string> = {
   pending: 'bg-[#F3F6FB] text-[#3D4F6F]',
@@ -75,6 +111,118 @@ const ghostButton =
 const primaryButton =
   'h-9 shrink-0 rounded-full bg-[#0B57D0] px-4 text-sm font-semibold text-white outline-none transition-colors hover:bg-[#0847B0] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/25 disabled:opacity-50';
 
+function Subsection({
+  title,
+  loud = false,
+  busy = false,
+  children,
+}: {
+  title: string;
+  loud?: boolean;
+  busy?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      className={
+        loud
+          ? 'mt-6 border-l-[3px] border-[#0B57D0] bg-[#F4F8FF] px-5 py-5'
+          : 'mt-6 rounded-2xl border border-[#E6EEF8] bg-white px-5 py-4'
+      }
+      aria-busy={busy}
+    >
+      <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">{title}</h2>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
+
+function WageSnapshotBand({
+  linked,
+  loading,
+  error,
+  snapshot,
+  draft,
+  commission,
+  onGenerate,
+  onCancel,
+  onCommit,
+  onSaved,
+}: {
+  linked: boolean;
+  loading: boolean;
+  error: string | null;
+  snapshot: StaffWageSnapshot | null;
+  draft: StaffWageSnapshot | null;
+  commission: number;
+  onGenerate: () => void;
+  onCancel: () => void;
+  onCommit: (body: UpdateStaffWageSnapshotRequest) => Promise<StaffWageSnapshot>;
+  onSaved: (next: StaffWageSnapshot) => void;
+}) {
+  const { t } = useTranslation();
+  const wageShown = snapshot ? (snapshot.final_wage ?? displayedWage(snapshot)) : null;
+
+  return loading ? (
+    <p className="text-[13px] text-[#5C6B80]">{t('common.loading')}</p>
+  ) : snapshot && wageShown != null ? (
+        <>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+            <div>
+              <dt className="text-[13px] text-[#5C6B80]">
+                {t(snapshot.final_wage != null ? 'compensation.flatWage' : 'compensation.wage')}
+              </dt>
+              <dd className="mt-1 text-xl font-semibold tabular-nums text-[#0D1B2A]">{formatPrice(wageShown)}</dd>
+            </div>
+            <div>
+              <dt className="text-[13px] text-[#5C6B80]">{t('compensation.commission')}</dt>
+              <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
+                {formatPrice(commission)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[13px] text-[#5C6B80]">{t('compensation.payTotal')}</dt>
+              <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
+                {formatPrice(wageShown + commission)}
+              </dd>
+            </div>
+          </dl>
+          <WageSnapshotEditor
+            key={`${snapshot.id}-${snapshot.updated_at}`}
+            snapshot={snapshot}
+            onSaved={onSaved}
+          />
+        </>
+      ) : draft ? (
+        <WageSnapshotEditor
+          key={`draft-${draft.wage_amount}`}
+          snapshot={draft}
+          commit={onCommit}
+          onCancel={onCancel}
+          onSaved={onSaved}
+        />
+      ) : (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-xl">
+            <p className="text-[15px] font-semibold leading-snug text-[#0D1B2A]">
+              {linked ? t('compensation.wageSnapshotMissing') : t('compensation.wageLinkPayday')}
+            </p>
+            {linked ? (
+              <p className="mt-1 text-[13px] leading-snug text-[#5C6B80]">
+                {t('compensation.wageSnapshotMissingHint')}
+              </p>
+            ) : null}
+            {error ? <p className="mt-2 text-sm text-[#9B2C2C]">{error}</p> : null}
+          </div>
+          {linked ? (
+            <button type="button" className={primaryButton} onClick={onGenerate}>
+              {t('compensation.generateWageSnapshot')}
+            </button>
+          ) : null}
+        </div>
+  );
+}
+
 const StaffPeriodDetail = () => {
   const { t, i18n } = useTranslation();
   const { worksheetId = '' } = useParams();
@@ -98,6 +246,8 @@ const StaffPeriodDetail = () => {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
   const [snapshot, setSnapshot] = useState<StaffWageSnapshot | null>(null);
+  const [contract, setContract] = useState<StaffWage | null>(null);
+  const [drafting, setDrafting] = useState(false);
   const [wageError, setWageError] = useState<string | null>(null);
   const [wageLoading, setWageLoading] = useState(false);
 
@@ -168,21 +318,30 @@ const StaffPeriodDetail = () => {
     const staffId = worksheet?.staff_id;
     if (!canManage || !periodUuid || !staffId) {
       setSnapshot(null);
+      setContract(null);
+      setDrafting(false);
       setWageError(null);
       setWageLoading(false);
       return;
     }
     let cancelled = false;
     setSnapshot(null);
+    setContract(null);
+    setDrafting(false);
     setWageLoading(true);
     setWageError(null);
     (async () => {
       try {
-        const next = await loadOrGenerateStaffSnapshot(periodUuid, staffId);
-        if (!cancelled) setSnapshot(next);
+        const next = await loadStaffWageSnapshot(periodUuid, staffId);
+        if (cancelled) return;
+        setSnapshot(next);
+        if (next) return;
+        const listed = await ListWages(staffId);
+        if (!cancelled) setContract(activeWage(listed.wages ?? [], staffId));
       } catch (err) {
         if (!cancelled) {
           setSnapshot(null);
+          setContract(null);
           setWageError(snapshotWageErrorMessage(err, t));
         }
       } finally {
@@ -301,9 +460,36 @@ const StaffPeriodDetail = () => {
 
   const isFinalized = worksheet.status === 'finalized';
   const linked = Boolean(worksheet.compensation_period_uuid);
-  const wageShown = snapshot ? displayedWage(snapshot) : null;
   const lockedEdits = isFinalized || linked;
   const isGenerating = worksheet.generate_status === 'running';
+
+  const openWageDraft = () => {
+    if (!contract) {
+      setWageError(t('compensation.wageErrors.contractNotFound'));
+      return;
+    }
+    setWageError(null);
+    setDrafting(true);
+  };
+
+  const commitWageDraft = async (body: UpdateStaffWageSnapshotRequest) => {
+    const periodUuid = worksheet.compensation_period_uuid;
+    if (!periodUuid) throw new Error('wage snapshot was not created');
+    try {
+      await GenerateStaffWageSnapshots({
+        compensation_period_uuid: periodUuid,
+        staff_ids: [worksheet.staff_id],
+      });
+    } catch (err) {
+      const alreadyExists = getApiErrorItems(err).some(
+        (item) => item.error_name === 'WAGE_SNAPSHOT_ALREADY_EXISTS',
+      );
+      if (!alreadyExists) throw err;
+    }
+    const created = await loadStaffWageSnapshot(periodUuid, worksheet.staff_id);
+    if (!created) throw new Error('wage snapshot was not created');
+    return UpdateStaffWageSnapshot(created.id, body);
+  };
 
   const handleGenerate = async () => {
     await GenerateWorksheetCommissions(worksheet.uuid);
@@ -407,12 +593,10 @@ const StaffPeriodDetail = () => {
       ) : null}
 
       {(linked || (canAssign && worksheet.status === 'open')) ? (
-        <div className="mt-4">
+        <Subsection title={t('compensation.payday')}>
           {linked ? (
             <div className="flex flex-col gap-2 rounded-full bg-[#F4F8FF] p-1 sm:flex-row sm:items-center sm:justify-between">
-              <p className="px-3 text-[13px] text-[#5C6B80]">
-                {t('compensation.payday')}
-                <span className="mx-2 text-[#C5D0E0]">/</span>
+              <p className="px-3 text-[13px]">
                 <Link
                   to={`/payroll/period/${worksheet.compensation_period_uuid}`}
                   className="font-semibold text-[#0B57D0] hover:underline"
@@ -457,58 +641,54 @@ const StaffPeriodDetail = () => {
             </div>
           )}
           {linked && !isFinalized ? (
-            <p className="mt-2 px-1 text-[13px] text-[#5C6B80]">{t('compensation.paydayLinkedHint')}</p>
+            <p className="mt-2 text-[13px] text-[#5C6B80]">{t('compensation.paydayLinkedHint')}</p>
           ) : null}
-        </div>
+        </Subsection>
       ) : null}
 
-      {canManage && !linked ? (
-        <p className="mt-4 text-[13px] text-[#5C6B80]">{t('compensation.wageLinkPayday')}</p>
-      ) : null}
-      {canManage && linked && wageLoading ? (
-        <p className="mt-4 text-[13px] text-[#5C6B80]">{t('common.loading')}</p>
-      ) : null}
-      {canManage && wageError ? (
-        <p className="mt-4 text-sm text-[#9B2C2C]">{wageError}</p>
-      ) : null}
-
-      <dl className={`mt-6 grid grid-cols-2 gap-x-6 gap-y-4 ${wageShown != null ? 'sm:grid-cols-3' : ''}`}>
-        {wageShown != null ? (
-          <div>
-            <dt className="text-[13px] text-[#5C6B80]">{t('compensation.wage')}</dt>
-            <dd className="mt-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A]">{formatPrice(wageShown)}</dd>
-          </div>
-        ) : null}
-        <div>
-          <dt className="text-[13px] text-[#5C6B80]">{t('compensation.commission')}</dt>
-          <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
-            {formatPrice(worksheet.total_commission)}
-          </dd>
-        </div>
-        {wageShown != null ? (
-          <div>
-            <dt className="text-[13px] text-[#5C6B80]">{t('compensation.payTotal')}</dt>
-            <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
-              {formatPrice(wageShown + worksheet.total_commission)}
-            </dd>
-          </div>
-        ) : null}
-      </dl>
-      {snapshot ? (
-        <WageSnapshotEditor
-          key={`${snapshot.id}-${snapshot.updated_at}`}
-          snapshot={snapshot}
-          onSaved={setSnapshot}
-        />
+      {canManage ? (
+        <Subsection
+          title={t('compensation.wage')}
+          loud={!wageLoading && snapshot == null && !drafting}
+          busy={linked && wageLoading}
+        >
+          <WageSnapshotBand
+            linked={linked}
+            loading={linked && wageLoading}
+            error={wageError}
+            snapshot={snapshot}
+            draft={
+              drafting && contract && worksheet.compensation_period_uuid
+                ? draftSnapshot(contract, worksheet.compensation_period_uuid, worksheet.staff_id)
+                : null
+            }
+            commission={worksheet.total_commission}
+            onGenerate={openWageDraft}
+            onCancel={() => {
+              setDrafting(false);
+              setWageError(null);
+            }}
+            onCommit={commitWageDraft}
+            onSaved={(next) => {
+              setDrafting(false);
+              setSnapshot(next);
+            }}
+          />
+        </Subsection>
       ) : null}
 
-      <div className="mt-6 border-t border-[#E6EEF8] pt-5">
-        <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">
-          {t('compensation.visitCommissions')}
-        </h2>
-        <p className="mt-1 max-w-xl text-[13px] leading-snug text-[#5C6B80]">
+      <Subsection title={t('compensation.visitCommissions')}>
+        <p className="max-w-xl text-[13px] leading-snug text-[#5C6B80]">
           {t('compensation.visitCommissionsHint')}
         </p>
+        {canManage ? null : (
+          <p className="mt-3">
+            <span className="text-[13px] text-[#5C6B80]">{t('compensation.commission')}</span>
+            <span className="mt-1 block text-[15px] font-semibold tabular-nums text-[#0D1B2A]">
+              {formatPrice(worksheet.total_commission)}
+            </span>
+          </p>
+        )}
 
         {isGenerating ? (
           <div className="mt-4 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
@@ -531,7 +711,7 @@ const StaffPeriodDetail = () => {
             ))}
           </ul>
         )}
-      </div>
+      </Subsection>
     </div>
   );
 };
