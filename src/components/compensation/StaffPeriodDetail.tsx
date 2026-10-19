@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@utils/common';
-import { getApiErrorItems, getApiErrorMessage } from '@utils/apiErrors';
+import { getApiErrorItems } from '@utils/apiErrors';
 import { formatSourceChip } from '@utils/compensationSources';
 import { getStorageUser } from '@utils/storage';
 import { hasPermission } from '@utils/permissions';
@@ -13,9 +13,8 @@ import {
   GenerateWorksheetCommissions,
   GetWorksheet,
   ListWorksheetCommissions,
-  PatchWorksheet,
 } from '@requests/worksheet';
-import { GetCompensationPeriod, ListCompensationPeriods } from '@requests/compensationPeriod';
+import { GetCompensationPeriod } from '@requests/compensationPeriod';
 import { PatchVisitCommission } from '@requests/visitCommission';
 import { GenerateStaffWageSnapshots, ListWages, UpdateStaffWageSnapshot, loadStaffWageSnapshot } from '@requests/compensationWage';
 import {
@@ -24,10 +23,10 @@ import {
   type CompensationNavState,
 } from '@components/compensation/CompensationBreadcrumb';
 import WageSnapshotEditor from '@components/compensation/WageSnapshotEditor';
-import { displayedWage, snapshotWageErrorMessage } from '@utils/snapshotWage';
+import { snapshotWageErrorMessage } from '@utils/snapshotWage';
 import type {
   CommissionType,
-  CompensationPeriod,
+  CompensationPeriodStatus,
   ContributionSourceType,
   StaffWage,
   StaffWageSnapshot,
@@ -102,9 +101,6 @@ const sourceTone: Record<ContributionSourceType, string> = {
   manual: 'bg-white text-[#0B57D0] ring-1 ring-[#D7E3F4]',
 };
 
-const fieldClass =
-  'h-9 w-full rounded-full border border-[#D7E3F4] bg-white px-4 text-sm text-[#0D1B2A] outline-none transition-shadow placeholder:text-[#8A97AB] focus:border-[#0B57D0] focus:ring-4 focus:ring-[#0B57D0]/15';
-
 const ghostButton =
   'h-9 shrink-0 rounded-full bg-white px-4 text-sm font-semibold text-[#0B57D0] outline-none ring-1 ring-[#D7E3F4] transition-colors hover:bg-[#E8F1FF] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/20 disabled:opacity-50';
 
@@ -144,6 +140,7 @@ function WageSnapshotBand({
   snapshot,
   draft,
   commission,
+  editable,
   onGenerate,
   onCancel,
   onCommit,
@@ -155,13 +152,14 @@ function WageSnapshotBand({
   snapshot: StaffWageSnapshot | null;
   draft: StaffWageSnapshot | null;
   commission: number;
+  editable: boolean;
   onGenerate: () => void;
   onCancel: () => void;
   onCommit: (body: UpdateStaffWageSnapshotRequest) => Promise<StaffWageSnapshot>;
   onSaved: (next: StaffWageSnapshot) => void;
 }) {
   const { t } = useTranslation();
-  const wageShown = snapshot ? (snapshot.final_wage ?? displayedWage(snapshot)) : null;
+  const wageShown = snapshot ? (snapshot.total_wage ?? 0) : null;
 
   return loading ? (
     <p className="text-[13px] text-[#5C6B80]">{t('common.loading')}</p>
@@ -187,11 +185,13 @@ function WageSnapshotBand({
               </dd>
             </div>
           </dl>
-          <WageSnapshotEditor
-            key={`${snapshot.id}-${snapshot.updated_at}`}
-            snapshot={snapshot}
-            onSaved={onSaved}
-          />
+          {editable ? (
+            <WageSnapshotEditor
+              key={`${snapshot.id}-${snapshot.updated_at}`}
+              snapshot={snapshot}
+              onSaved={onSaved}
+            />
+          ) : null}
         </>
       ) : draft ? (
         <WageSnapshotEditor
@@ -205,7 +205,7 @@ function WageSnapshotBand({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-xl">
             <p className="text-[15px] font-semibold leading-snug text-[#0D1B2A]">
-              {linked ? t('compensation.wageSnapshotMissing') : t('compensation.wageLinkPayday')}
+              {linked ? t('compensation.wageSnapshotMissing') : t('compensation.wageNoPayday')}
             </p>
             {linked ? (
               <p className="mt-1 text-[13px] leading-snug text-[#5C6B80]">
@@ -214,7 +214,7 @@ function WageSnapshotBand({
             ) : null}
             {error ? <p className="mt-2 text-sm text-[#9B2C2C]">{error}</p> : null}
           </div>
-          {linked ? (
+          {linked && editable ? (
             <button type="button" className={primaryButton} onClick={onGenerate}>
               {t('compensation.generateWageSnapshot')}
             </button>
@@ -240,11 +240,8 @@ const StaffPeriodDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [periods, setPeriods] = useState<CompensationPeriod[]>([]);
-  const [selectedPeriodId, setSelectedPeriodId] = useState('');
-  const [linkedPeriodLabel, setLinkedPeriodLabel] = useState('');
-  const [linkError, setLinkError] = useState<string | null>(null);
-  const [linking, setLinking] = useState(false);
+  const [paydayLabel, setPaydayLabel] = useState('');
+  const [paydayStatus, setPaydayStatus] = useState<CompensationPeriodStatus | null>(null);
   const [snapshot, setSnapshot] = useState<StaffWageSnapshot | null>(null);
   const [contract, setContract] = useState<StaffWage | null>(null);
   const [drafting, setDrafting] = useState(false);
@@ -285,33 +282,30 @@ const StaffPeriodDetail = () => {
     if (!worksheet) return;
     let cancelled = false;
     (async () => {
-      if (worksheet.compensation_period_uuid) {
-        try {
-          const period = await GetCompensationPeriod(worksheet.compensation_period_uuid);
-          if (!cancelled) setLinkedPeriodLabel(period.label);
-        } catch {
-          if (!cancelled) setLinkedPeriodLabel('');
+      if (!worksheet.compensation_period_uuid) {
+        if (!cancelled) {
+          setPaydayLabel('');
+          setPaydayStatus(null);
         }
         return;
       }
-      if (!cancelled) setLinkedPeriodLabel('');
-      if (worksheet.status !== 'open' || !canAssign) return;
       try {
-        const list = await ListCompensationPeriods();
-        if (cancelled) return;
-        const options = (list.periods ?? []).filter((period) => period.status !== 'finalized');
-        setPeriods(options);
-        setSelectedPeriodId((current) =>
-          options.some((period) => period.uuid === current) ? current : options[0]?.uuid ?? ''
-        );
+        const period = await GetCompensationPeriod(worksheet.compensation_period_uuid);
+        if (!cancelled) {
+          setPaydayLabel(period.label);
+          setPaydayStatus(period.status);
+        }
       } catch {
-        if (!cancelled) setLinkError(t('compensation.linkError'));
+        if (!cancelled) {
+          setPaydayLabel('');
+          setPaydayStatus(null);
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [worksheet, canAssign, t]);
+  }, [worksheet]);
 
   useEffect(() => {
     const periodUuid = worksheet?.compensation_period_uuid;
@@ -391,6 +385,7 @@ const StaffPeriodDetail = () => {
     const leafLabel = (worksheet?.label || staffName).trim();
     const leaf: CompensationCrumb[] = leafLabel ? [{ label: leafLabel }] : [];
     const linkedPeriodId = worksheet?.compensation_period_uuid || '';
+    const periodName = paydayLabel || nav?.periodLabel || t('compensation.period');
     const fromWorksheets = nav?.via === 'worksheets';
     const fromSummary = nav?.via === 'summary';
     const fromPeriod = nav?.via === 'period';
@@ -400,7 +395,7 @@ const StaffPeriodDetail = () => {
       const summaryTo = periodId ? `/payroll/summary?period=${periodId}` : '/payroll/summary';
       const periodCrumb: CompensationCrumb[] = periodId
         ? [{
-            label: linkedPeriodLabel || nav?.periodLabel || t('compensation.period'),
+            label: periodName,
             to: `/payroll/period/${periodId}`,
           }]
         : [];
@@ -417,7 +412,7 @@ const StaffPeriodDetail = () => {
       return [
         payroll,
         {
-          label: linkedPeriodLabel || nav?.periodLabel || t('compensation.period'),
+          label: periodName,
           to: `/payroll/period/${periodId}`,
         },
         ...leaf,
@@ -434,7 +429,7 @@ const StaffPeriodDetail = () => {
     worksheet?.label,
     worksheet?.compensation_period_uuid,
     staffName,
-    linkedPeriodLabel,
+    paydayLabel,
     nav?.via,
     nav?.periodId,
     nav?.periodLabel,
@@ -460,8 +455,9 @@ const StaffPeriodDetail = () => {
 
   const isFinalized = worksheet.status === 'finalized';
   const linked = Boolean(worksheet.compensation_period_uuid);
-  const lockedEdits = isFinalized || linked;
   const isGenerating = worksheet.generate_status === 'running';
+  const paydayFinalized = paydayStatus === 'finalized';
+  const lockedEdits = isFinalized || isGenerating || paydayFinalized;
 
   const openWageDraft = () => {
     if (!contract) {
@@ -501,21 +497,6 @@ const StaffPeriodDetail = () => {
     const resp = await FinalizeWorksheet(worksheet.uuid);
     setToast(t('compensation.worksheetFinalized', { count: resp.locked_visit_count }));
     await load();
-  };
-
-  const patchPaydayLink = async (compensationPeriodUuid: string, successMessage: string) => {
-    setLinking(true);
-    setLinkError(null);
-    try {
-      await PatchWorksheet(worksheet.uuid, { compensation_period_uuid: compensationPeriodUuid });
-      setToast(successMessage);
-      await load();
-    } catch (err) {
-      const message = getApiErrorMessage(err);
-      setLinkError(message === 'Something went wrong.' ? t('compensation.linkError') : message);
-    } finally {
-      setLinking(false);
-    }
   };
 
   return (
@@ -583,66 +564,16 @@ const StaffPeriodDetail = () => {
           <p>{worksheet.generate_error || t('compensation.generateFailed')}</p>
         </div>
       ) : null}
-      {linkError ? (
-        <div className="mt-4 flex items-start justify-between gap-4 rounded-2xl bg-[#FDECEC] px-4 py-3 text-sm text-[#9B2C2C]">
-          <p>{linkError}</p>
-          <button type="button" onClick={() => setLinkError(null)} className="font-medium underline">
-            {t('common.close')}
-          </button>
-        </div>
-      ) : null}
-
-      {(linked || (canAssign && worksheet.status === 'open')) ? (
+      {linked ? (
         <Subsection title={t('compensation.payday')}>
-          {linked ? (
-            <div className="flex flex-col gap-2 rounded-full bg-[#F4F8FF] p-1 sm:flex-row sm:items-center sm:justify-between">
-              <p className="px-3 text-[13px]">
-                <Link
-                  to={`/payroll/period/${worksheet.compensation_period_uuid}`}
-                  className="font-semibold text-[#0B57D0] hover:underline"
-                >
-                  {linkedPeriodLabel || t('compensation.payday')}
-                </Link>
-              </p>
-              {canAssign && worksheet.status === 'open' ? (
-                <button
-                  type="button"
-                  className={ghostButton}
-                  disabled={linking}
-                  onClick={() => patchPaydayLink('', t('compensation.detachedMsg'))}
-                >
-                  {t('compensation.detach')}
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2 rounded-full bg-[#F4F8FF] p-1 sm:flex-row sm:items-center">
-              <label className="sr-only" htmlFor="link-period">{t('compensation.payday')}</label>
-              <select
-                id="link-period"
-                className={`${fieldClass} sm:w-72 sm:border-0 sm:bg-transparent sm:px-3 sm:focus:ring-0`}
-                value={selectedPeriodId}
-                onChange={(e) => setSelectedPeriodId(e.target.value)}
-              >
-                {periods.map((period) => (
-                  <option key={period.uuid} value={period.uuid}>
-                    {period.label} / {formatShortDate(period.period_start)} – {formatShortDate(period.period_end)}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className={ghostButton}
-                disabled={linking || !selectedPeriodId}
-                onClick={() => patchPaydayLink(selectedPeriodId, t('compensation.linkedMsg'))}
-              >
-                {t('compensation.linkPayday')}
-              </button>
-            </div>
-          )}
-          {linked && !isFinalized ? (
-            <p className="mt-2 text-[13px] text-[#5C6B80]">{t('compensation.paydayLinkedHint')}</p>
-          ) : null}
+          <p className="text-[13px]">
+            <Link
+              to={`/payroll/period/${worksheet.compensation_period_uuid}`}
+              className="font-semibold text-[#0B57D0] hover:underline"
+            >
+              {paydayLabel || t('compensation.payday')}
+            </Link>
+          </p>
         </Subsection>
       ) : null}
 
@@ -654,6 +585,7 @@ const StaffPeriodDetail = () => {
         >
           <WageSnapshotBand
             linked={linked}
+            editable={!paydayFinalized}
             loading={linked && wageLoading}
             error={wageError}
             snapshot={snapshot}
