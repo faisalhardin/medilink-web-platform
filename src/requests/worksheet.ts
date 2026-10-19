@@ -16,8 +16,7 @@ function data<T>(response: { data: { data: T } }): T {
 export const CreateWorksheet = async (body: {
   staff_id: string;
   label: string;
-  period_start: string;
-  period_end: string;
+  compensation_period_uuid: string;
 }): Promise<Worksheet> => {
   const response = await authedClient.post(WORKSHEET_PATH, body);
   return data(response);
@@ -56,26 +55,6 @@ export const ListWorksheetsForPeriod = async (
   return worksheets;
 };
 
-export const ListWorksheetsByDates = async (
-  periodStart: string,
-  periodEnd: string
-): Promise<Worksheet[]> => {
-  const worksheets: Worksheet[] = [];
-  let cursor: string | undefined;
-  for (let page = 0; page < 20; page += 1) {
-    const resp = await ListWorksheets({
-      period_start: periodStart.slice(0, 10),
-      period_end: periodEnd.slice(0, 10),
-      limit: 100,
-      cursor,
-    });
-    worksheets.push(...(resp.worksheets ?? []));
-    if (!resp.next_cursor) break;
-    cursor = resp.next_cursor;
-  }
-  return worksheets;
-};
-
 export const GetWorksheet = async (id: string): Promise<Worksheet> => {
   const response = await authedClient.get(`${WORKSHEET_PATH}/${id}`);
   return data(response);
@@ -101,12 +80,7 @@ export const GenerateWorksheetCommissions = async (id: string): Promise<{
 
 export const PatchWorksheet = async (
   id: string,
-  body: {
-    label?: string;
-    period_start?: string;
-    period_end?: string;
-    compensation_period_uuid?: string | null;
-  }
+  body: { label?: string }
 ): Promise<Worksheet> => {
   const response = await authedClient.patch(`${WORKSHEET_PATH}/${id}`, body);
   return data(response);

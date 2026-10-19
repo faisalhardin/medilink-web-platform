@@ -7,9 +7,10 @@ import { getStorageUser } from '@utils/storage';
 import { hasPermission } from '@utils/permissions';
 import { PERMISSIONS } from 'constants/permissions';
 import { ListStaff } from '@requests/staff';
-import { CreateWorksheet, ListWorksheets, PatchWorksheet } from '@requests/worksheet';
+import { CreateWorksheet, ListWorksheets } from '@requests/worksheet';
+import { ListCompensationPeriods } from '@requests/compensationPeriod';
 import type { CompensationNavState } from '@components/compensation/CompensationBreadcrumb';
-import type { Worksheet, WorksheetGenerateStatus, WorksheetStatus } from '@models/compensation';
+import type { CompensationPeriod, Worksheet, WorksheetGenerateStatus, WorksheetStatus } from '@models/compensation';
 import WorksheetDateRange from '@components/compensation/WorksheetDateRange';
 import { getApiErrorMessage } from '@utils/apiErrors';
 
@@ -37,27 +38,17 @@ type StaffOption = { uuid: string; name: string };
 type WorksheetRowProps = {
   row: Worksheet;
   staffName: string;
-  canDetach: boolean;
-  busy: boolean;
   onOpen: (uuid: string) => void;
-  onDetach: (worksheet: Worksheet) => void;
   statusLabel: string;
   generateLabel: string;
-  paydayLabel: string;
-  detachLabel: string;
 };
 
 const WorksheetRow = ({
   row,
   staffName,
-  canDetach,
-  busy,
   onOpen,
-  onDetach,
   statusLabel,
   generateLabel,
-  paydayLabel,
-  detachLabel,
 }: WorksheetRowProps) => (
   <li className="[content-visibility:auto]">
     <div className="group flex flex-col gap-2 border-b border-[#E6EEF8] px-1 py-2.5 transition-colors duration-150 hover:bg-[#F7FAFF] sm:flex-row sm:items-center sm:justify-between sm:px-3">
@@ -82,19 +73,6 @@ const WorksheetRow = ({
         <span className={`px-1 text-[12px] font-medium ${generateTone[row.generate_status]}`}>
           {generateLabel}
         </span>
-        <span className="rounded-full bg-white px-2.5 py-1 text-[12px] font-medium text-[#3D4F6F] ring-1 ring-[#D7E3F4]">
-          {paydayLabel}
-        </span>
-        {canDetach ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onDetach(row)}
-            className="rounded-full px-3 py-1 text-[12px] font-medium text-[#0B57D0] outline-none hover:bg-[#E8F1FF] focus-visible:ring-2 focus-visible:ring-[#0B57D0] disabled:opacity-40"
-          >
-            {detachLabel}
-          </button>
-        ) : null}
       </div>
     </div>
   </li>
@@ -122,8 +100,8 @@ const WorksheetList = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [label, setLabel] = useState('');
   const [createStaffId, setCreateStaffId] = useState(currentUserId);
-  const [createStart, setCreateStart] = useState('');
-  const [createEnd, setCreateEnd] = useState('');
+  const [periods, setPeriods] = useState<CompensationPeriod[]>([]);
+  const [periodId, setPeriodId] = useState('');
   const [staffQuery, setStaffQuery] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -178,33 +156,21 @@ const WorksheetList = () => {
     try {
       const chosenStaffId = isAdmin ? createStaffId : currentUserId;
       const staffName = names.get(chosenStaffId) ?? currentUser?.name ?? chosenStaffId;
+      if (!periodId) return;
       const created = await CreateWorksheet({
         staff_id: chosenStaffId,
-        label: label.trim() || `${staffName} ${createStart}`.trim(),
-        period_start: createStart,
-        period_end: createEnd,
+        label: label.trim() || staffName,
+        compensation_period_uuid: periodId,
       });
       setCreateOpen(false);
       setLabel('');
       setCreateStaffId(currentUserId);
-      setCreateStart('');
-      setCreateEnd('');
       setStaffQuery('');
       navigate(`/payroll/worksheet/${created.uuid}`, {
         state: { via: 'worksheets' } satisfies CompensationNavState,
       });
     } catch (err) {
       setCreateError(getApiErrorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const detach = async (worksheet: Worksheet) => {
-    setBusy(true);
-    try {
-      await PatchWorksheet(worksheet.uuid, { compensation_period_uuid: '' });
-      await load();
     } finally {
       setBusy(false);
     }
@@ -234,6 +200,15 @@ const WorksheetList = () => {
                 setCreateStaffId(currentUserId);
                 setStaffQuery('');
                 setCreateOpen(true);
+                void ListCompensationPeriods()
+                  .then((list) => {
+                    const options = (list.periods ?? []).filter((period) => period.status !== 'finalized');
+                    setPeriods(options);
+                    setPeriodId((current) =>
+                      options.some((period) => period.uuid === current) ? current : options[0]?.uuid ?? ''
+                    );
+                  })
+                  .catch(() => setCreateError(t('compensation.loadError')));
               }}
               className="h-9 shrink-0 rounded-full bg-[#0B57D0] px-4 text-sm font-semibold text-white outline-none transition-colors hover:bg-[#0847B0] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/25"
             >
@@ -301,14 +276,9 @@ const WorksheetList = () => {
                   key={row.uuid}
                   row={row}
                   staffName={names.get(row.staff_id) ?? row.staff_id}
-                  canDetach={canAssign && row.status === 'open' && Boolean(row.compensation_period_uuid)}
-                  busy={busy}
                   onOpen={openWorksheet}
-                  onDetach={detach}
                   statusLabel={t(`compensation.worksheetStatus.${row.status}`)}
                   generateLabel={t(`compensation.generateStatus.${row.generate_status}`)}
-                  paydayLabel={row.compensation_period_uuid ? t('compensation.attached') : t('compensation.notAttached')}
-                  detachLabel={t('compensation.detach')}
                 />
               ))}
             </ul>
@@ -340,7 +310,7 @@ const WorksheetList = () => {
               {t('compensation.newWorksheet')}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-[#5C6B80]">
-              {t('compensation.createUnattachedHint')}
+              {t('compensation.worksheetDatesHint')}
             </p>
             <label className="mt-5 block text-[13px] font-medium text-[#3D4F6F]" htmlFor="ws-staff-create">
               {t('compensation.staff')}
@@ -362,15 +332,21 @@ const WorksheetList = () => {
                 readOnly
               />
             )}
-            <p className="mb-1 mt-4 text-[13px] font-medium text-[#3D4F6F]">{t('compensation.dateRange')}</p>
-            <WorksheetDateRange
-              start={createStart}
-              end={createEnd}
-              onChange={(nextStart, nextEnd) => {
-                setCreateStart(nextStart);
-                setCreateEnd(nextEnd);
-              }}
-            />
+            <label className="mb-1 mt-4 block text-[13px] font-medium text-[#3D4F6F]" htmlFor="ws-payday">
+              {t('compensation.payday')}
+            </label>
+            <select
+              id="ws-payday"
+              className={`${fieldClass} mt-2`}
+              value={periodId}
+              onChange={(e) => setPeriodId(e.target.value)}
+            >
+              {periods.map((period) => (
+                <option key={period.uuid} value={period.uuid}>
+                  {period.label} / {formatShortDate(period.period_start)} – {formatShortDate(period.period_end)}
+                </option>
+              ))}
+            </select>
             <label className="mt-4 block text-[13px] font-medium text-[#3D4F6F]" htmlFor="ws-label">
               {t('compensation.worksheetLabel')}
             </label>
@@ -391,7 +367,7 @@ const WorksheetList = () => {
               </button>
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !periodId}
                 onClick={create}
                 className="h-11 rounded-full bg-[#0B57D0] px-5 text-sm font-semibold text-white hover:bg-[#0847B0] disabled:opacity-50"
               >

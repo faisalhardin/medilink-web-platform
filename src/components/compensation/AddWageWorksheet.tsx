@@ -5,7 +5,7 @@ import { useDrawer } from 'hooks/useDrawer';
 import { getApiErrorMessage } from '@utils/apiErrors';
 import { ListStaff } from '@requests/staff';
 import { ListWages } from '@requests/compensationWage';
-import { CreateWorksheet, PatchWorksheet } from '@requests/worksheet';
+import { CreateWorksheet } from '@requests/worksheet';
 import type { CompensationPeriod } from '@models/compensation';
 
 const fieldClass =
@@ -75,10 +75,8 @@ const AddWageWorksheet = ({ period, linkedStaffIds, onCreated }: AddWageWorkshee
       const created = await CreateWorksheet({
         staff_id: chosen.uuid,
         label: (chosen.name.trim() || chosen.uuid).slice(0, 100),
-        period_start: period.period_start.slice(0, 10),
-        period_end: period.period_end.slice(0, 10),
+        compensation_period_uuid: period.uuid,
       });
-      await PatchWorksheet(created.uuid, { compensation_period_uuid: period.uuid });
       setQuery('');
       drawer.closeDrawer();
       onCreated(created.uuid);
