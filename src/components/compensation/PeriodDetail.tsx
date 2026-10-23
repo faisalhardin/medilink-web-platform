@@ -188,27 +188,22 @@ const PeriodDetail = () => {
                 <p className="mt-1.5 text-[13px] leading-snug text-[#5C6B80]">
                   {formatShortDate(period.period_start)} – {formatShortDate(period.period_end)}
                 </p>
-                {canAddWage || period.status === 'draft' || period.status === 'finalized' ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-                    {canAddWage ? (
-                      <AddWageWorksheet
-                        period={period}
-                        linkedStaffIds={worksheets.map((row) => row.staff_id)}
-                        onCreated={openWorksheet}
-                      />
-                    ) : null}
-                    {period.status === 'draft' || period.status === 'finalized' ? (
-                      <Link
-                        to={`/payroll/summary?period=${period.uuid}`}
-                        className="inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline"
-                      >
-                        {t('compensation.paymentSummary')}
-                      </Link>
-                    ) : null}
+                {period.status === 'draft' || period.status === 'finalized' ? (
+                  <div className="mt-2">
+                    <Link
+                      to={`/payroll/summary?period=${period.uuid}`}
+                      className="inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline"
+                    >
+                      {t('compensation.paymentSummary')}
+                    </Link>
                   </div>
                 ) : null}
               </div>
-              <PeriodLifecycleActions period={period} onPeriodChange={setPeriod} />
+              <PeriodLifecycleActions
+                period={period}
+                hasWorksheets={worksheets.length > 0}
+                onPeriodChange={setPeriod}
+              />
             </div>
             <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
               <div>
@@ -249,12 +244,31 @@ const PeriodDetail = () => {
           </ContentCard>
 
           <ContentCard>
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">
-              {t('compensation.worksheets')}
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">
+                {t('compensation.worksheets')}
+              </h2>
+              {canAddWage && worksheets.length > 0 ? (
+                <AddWageWorksheet
+                  period={period}
+                  linkedStaffIds={worksheets.map((row) => row.staff_id)}
+                  onCreated={openWorksheet}
+                />
+              ) : null}
+            </div>
             {worksheets.length === 0 ? (
               <div className="mt-3 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
-                <p className="text-[15px] text-[#5C6B80]">{t('compensation.noWorksheets')}</p>
+                <p className="text-[15px] text-[#5C6B80]">{t('compensation.noWagesOnPayday')}</p>
+                {canAddWage ? (
+                  <div className="mt-4">
+                    <AddWageWorksheet
+                      period={period}
+                      linkedStaffIds={worksheets.map((row) => row.staff_id)}
+                      onCreated={openWorksheet}
+                      variant={period.status === 'open' ? 'primary' : 'ghost'}
+                    />
+                  </div>
+                ) : null}
               </div>
             ) : (
               <ul className="mt-2">
