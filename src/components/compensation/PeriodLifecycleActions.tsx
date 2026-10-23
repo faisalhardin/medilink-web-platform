@@ -25,12 +25,17 @@ const dangerButton =
 
 type PeriodLifecycleActionsProps = {
   period: CompensationPeriod;
+  hasWorksheets?: boolean;
   onPeriodChange: (period: CompensationPeriod) => void;
 };
 
 type DialogKind = 'finalize' | 'delete';
 
-const PeriodLifecycleActions = ({ period, onPeriodChange }: PeriodLifecycleActionsProps) => {
+const PeriodLifecycleActions = ({
+  period,
+  hasWorksheets = true,
+  onPeriodChange,
+}: PeriodLifecycleActionsProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = getStorageUser();
@@ -138,7 +143,7 @@ const PeriodLifecycleActions = ({ period, onPeriodChange }: PeriodLifecycleActio
         {showDraft ? (
           <button
             type="button"
-            className={period.status === 'open' ? primaryButton : ghostButton}
+            className={period.status === 'open' && hasWorksheets ? primaryButton : ghostButton}
             disabled={busy}
             onClick={handleDraft}
           >

@@ -11,8 +11,11 @@ import type { CompensationPeriod } from '@models/compensation';
 const fieldClass =
   'h-9 w-full rounded-full border border-[#D7E3F4] bg-white px-4 text-sm text-[#0D1B2A] outline-none transition-shadow placeholder:text-[#8A97AB] focus:border-[#0B57D0] focus:ring-4 focus:ring-[#0B57D0]/15';
 
-const linkButton =
-  'inline-flex text-[13px] font-semibold text-[#0B57D0] hover:underline disabled:opacity-50';
+const ghostButton =
+  'h-9 shrink-0 rounded-full bg-white px-4 text-sm font-semibold text-[#0B57D0] outline-none ring-1 ring-[#D7E3F4] transition-colors hover:bg-[#E8F1FF] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/20 disabled:opacity-50';
+
+const primaryButton =
+  'h-9 shrink-0 rounded-full bg-[#0B57D0] px-4 text-sm font-semibold text-white outline-none transition-colors hover:bg-[#0847B0] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/25 disabled:opacity-50';
 
 type StaffOption = { uuid: string; name: string };
 
@@ -20,9 +23,15 @@ type AddWageWorksheetProps = {
   period: CompensationPeriod;
   linkedStaffIds: string[];
   onCreated: (worksheetUuid: string) => void;
+  variant?: 'primary' | 'ghost';
 };
 
-const AddWageWorksheet = ({ period, linkedStaffIds, onCreated }: AddWageWorksheetProps) => {
+const AddWageWorksheet = ({
+  period,
+  linkedStaffIds,
+  onCreated,
+  variant = 'ghost',
+}: AddWageWorksheetProps) => {
   const { t, i18n } = useTranslation();
   const drawer = useDrawer();
   const [staff, setStaff] = useState<StaffOption[]>([]);
@@ -89,7 +98,11 @@ const AddWageWorksheet = ({ period, linkedStaffIds, onCreated }: AddWageWorkshee
 
   return (
     <>
-      <button type="button" className={linkButton} onClick={drawer.openDrawer}>
+      <button
+        type="button"
+        className={variant === 'primary' ? primaryButton : ghostButton}
+        onClick={drawer.openDrawer}
+      >
         {t('compensation.addWage')}
       </button>
       <Drawer
