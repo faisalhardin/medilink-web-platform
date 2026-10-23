@@ -28,3 +28,7 @@ dist-ssr
 .firebase/*
 
 deploy.sh
+
+source-example/*
+
+.e2e-session.json

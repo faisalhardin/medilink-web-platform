@@ -1,6 +1,11 @@
 import authedClient from '@utils/apiClient';
 import { VISIT_COMMISSIONS_PATH } from 'constants/constants';
-import type { PatchCommissionRequest, PatchCommissionResponse } from '@models/compensation';
+import type {
+  BlanketCommissionRequest,
+  BlanketCommissionResponse,
+  PatchCommissionRequest,
+  PatchCommissionResponse,
+} from '@models/compensation';
 
 function data<T>(response: { data: { data: T } }): T {
   return response.data.data;
@@ -11,6 +16,13 @@ export const PatchVisitCommission = async (
   body: PatchCommissionRequest
 ): Promise<PatchCommissionResponse> => {
   const response = await authedClient.patch(`${VISIT_COMMISSIONS_PATH}/${id}`, body);
+  return data(response);
+};
+
+export const ApplyBlanketCommission = async (
+  body: BlanketCommissionRequest
+): Promise<BlanketCommissionResponse> => {
+  const response = await authedClient.post(`${VISIT_COMMISSIONS_PATH}/blanket`, body);
   return data(response);
 };
 
