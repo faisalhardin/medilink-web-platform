@@ -113,54 +113,33 @@ const WageSnapshotEditor = ({ snapshot, onSaved, onCancel, commit }: WageSnapsho
     }
   };
 
-  const cadence = t(`compensation.wageCadenceValue.${snapshot.wage_cadence}`);
-  const wageFromDays =
-    totalWage != null && typeof finalValue === 'number' && finalValue !== totalWage ? (
-      <>
-        <span className="text-[#C5D0E0]">·</span>
-        <span>
-          {t('compensation.wageFromDays')}{' '}
-          <span className="font-medium tabular-nums text-[#0D1B2A]">{formatPrice(totalWage)}</span>
-        </span>
-      </>
-    ) : null;
+  const shownFinal = typeof finalValue === 'number' ? finalValue : snapshot.wage_amount;
 
-  if (locked) {
-    return (
-      <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[#5C6B80]">
-        <span>{cadence}</span>
-        {typeof mandatoryValue === 'number' ? (
-          <>
-            <span className="text-[#C5D0E0]">·</span>
-            <span>
-              {t('compensation.mandatoryWorkingDays')} {mandatoryValue}
-            </span>
-          </>
-        ) : null}
-        {typeof staffDaysValue === 'number' ? (
-          <>
-            <span className="text-[#C5D0E0]">·</span>
-            <span>
-              {t('compensation.staffWorkingDays')} {staffDaysValue}
-            </span>
-          </>
-        ) : null}
-        <button
-          type="button"
-          className="h-9 text-[13px] font-semibold text-[#0B57D0] hover:underline"
-          onClick={() => setLocked(false)}
-        >
-          {t('common.edit')}
-        </button>
-      </div>
-    );
-  }
+  const cancelEdit = () => {
+    if (snapshot.id === 0 && onCancel) {
+      onCancel();
+      return;
+    }
+    setMandatory(fieldText(snapshot.mandatory_working_days));
+    setStaffDays(fieldText(snapshot.staff_working_days));
+    setFinalWage(initialFinal(snapshot));
+    setFinalFocused(false);
+    setError(null);
+    setLocked(true);
+  };
 
   return (
     <div className="mt-4">
-      <p className="flex flex-wrap items-center gap-x-2 text-[13px] text-[#5C6B80]">
-        <span>{cadence}</span>
-        {wageFromDays}
+      <p className="text-[13px] text-[#5C6B80]">
+        {t(`compensation.wageCadenceValue.${snapshot.wage_cadence}`)}
+        <span className="mx-2 text-[#C5D0E0]">/</span>
+        {t('compensation.flatWage')} {formatPrice(shownFinal)}
+        {totalWage != null && typeof finalValue === 'number' && finalValue !== totalWage ? (
+          <>
+            <span className="mx-2 text-[#C5D0E0]">/</span>
+            {t('compensation.wageFromDays')} {formatPrice(totalWage)}
+          </>
+        ) : null}
       </p>
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <label className="w-36 text-[13px] font-medium text-[#3D4F6F]" htmlFor={`${baseId}-mandatory`}>
@@ -168,8 +147,9 @@ const WageSnapshotEditor = ({ snapshot, onSaved, onCancel, commit }: WageSnapsho
           <input
             id={`${baseId}-mandatory`}
             inputMode="numeric"
-            className={`${fieldClass} mt-1`}
+            className={`${fieldClass} mt-1 disabled:bg-[#F4F8FF] disabled:text-[#8A97AB]`}
             value={mandatory}
+            disabled={locked}
             onChange={(event) => {
               const next = event.target.value;
               setMandatory(next);
@@ -182,8 +162,9 @@ const WageSnapshotEditor = ({ snapshot, onSaved, onCancel, commit }: WageSnapsho
           <input
             id={`${baseId}-staff-days`}
             inputMode="numeric"
-            className={`${fieldClass} mt-1`}
+            className={`${fieldClass} mt-1 disabled:bg-[#F4F8FF] disabled:text-[#8A97AB]`}
             value={staffDays}
+            disabled={locked}
             onChange={(event) => {
               const next = event.target.value;
               setStaffDays(next);
@@ -196,8 +177,9 @@ const WageSnapshotEditor = ({ snapshot, onSaved, onCancel, commit }: WageSnapsho
           <input
             id={`${baseId}-final`}
             inputMode="numeric"
-            className={`${fieldClass} mt-1`}
+            className={`${fieldClass} mt-1 disabled:bg-[#F4F8FF] disabled:text-[#8A97AB]`}
             value={!finalFocused && typeof finalValue === 'number' ? formatPrice(finalValue) : finalWage}
+            disabled={locked}
             onFocus={() => setFinalFocused(true)}
             onChange={(event) => setFinalWage(event.target.value)}
             onBlur={() => {
@@ -206,21 +188,31 @@ const WageSnapshotEditor = ({ snapshot, onSaved, onCancel, commit }: WageSnapsho
             }}
           />
         </label>
-        {onCancel ? (
+        {locked ? (
           <button
             type="button"
-            className="h-9 text-[13px] font-semibold text-[#5C6B80] hover:underline disabled:opacity-40"
-            disabled={busy}
-            onClick={onCancel}
+            className="h-9 text-[13px] font-semibold text-[#0B57D0] hover:underline"
+            onClick={() => setLocked(false)}
           >
-            {t('common.cancel')}
+            {t('common.edit')}
           </button>
-        ) : null}
-        <button type="button" className={primaryButton} disabled={busy || Boolean(liveError)} onClick={save}>
-          {t('compensation.saveWage')}
-        </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="h-9 text-[13px] font-semibold text-[#5C6B80] hover:underline disabled:opacity-40"
+              disabled={busy}
+              onClick={cancelEdit}
+            >
+              {t('common.cancel')}
+            </button>
+            <button type="button" className={primaryButton} disabled={busy || Boolean(liveError)} onClick={save}>
+              {t('compensation.saveWage')}
+            </button>
+          </>
+        )}
       </div>
-      {liveError || error ? <p className="mt-2 text-sm text-[#9B2C2C]">{error ?? liveError}</p> : null}
+      {!locked && (liveError || error) ? <p className="mt-2 text-sm text-[#9B2C2C]">{error ?? liveError}</p> : null}
     </div>
   );
 };
