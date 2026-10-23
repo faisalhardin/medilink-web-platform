@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@utils/common';
-import { getApiErrorItems } from '@utils/apiErrors';
+import { getApiErrorItems, getApiErrorMessage } from '@utils/apiErrors';
 import { formatSourceChip } from '@utils/compensationSources';
 import { getStorageUser } from '@utils/storage';
 import { hasPermission } from '@utils/permissions';
@@ -15,7 +16,7 @@ import {
   ListWorksheetCommissions,
 } from '@requests/worksheet';
 import { GetCompensationPeriod } from '@requests/compensationPeriod';
-import { PatchVisitCommission } from '@requests/visitCommission';
+import { ApplyBlanketCommission, PatchVisitCommission } from '@requests/visitCommission';
 import { GenerateStaffWageSnapshots, ListWages, UpdateStaffWageSnapshot, loadStaffWageSnapshot } from '@requests/compensationWage';
 import {
   useCompensationTrail,
@@ -111,11 +112,13 @@ function Subsection({
   title,
   loud = false,
   busy = false,
+  action,
   children,
 }: {
   title: string;
   loud?: boolean;
   busy?: boolean;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -127,7 +130,10 @@ function Subsection({
       }
       aria-busy={busy}
     >
-      <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">{title}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">{title}</h2>
+        {action}
+      </div>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -139,7 +145,6 @@ function WageSnapshotBand({
   error,
   snapshot,
   draft,
-  commission,
   editable,
   onGenerate,
   onCancel,
@@ -151,7 +156,6 @@ function WageSnapshotBand({
   error: string | null;
   snapshot: StaffWageSnapshot | null;
   draft: StaffWageSnapshot | null;
-  commission: number;
   editable: boolean;
   onGenerate: () => void;
   onCancel: () => void;
@@ -159,67 +163,44 @@ function WageSnapshotBand({
   onSaved: (next: StaffWageSnapshot) => void;
 }) {
   const { t } = useTranslation();
-  const wageShown = snapshot ? (snapshot.total_wage ?? 0) : null;
 
   return loading ? (
     <p className="text-[13px] text-[#5C6B80]">{t('common.loading')}</p>
-  ) : snapshot && wageShown != null ? (
-        <>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-            <div>
-              <dt className="text-[13px] text-[#5C6B80]">
-                {t(snapshot.final_wage != null ? 'compensation.flatWage' : 'compensation.wage')}
-              </dt>
-              <dd className="mt-1 text-xl font-semibold tabular-nums text-[#0D1B2A]">{formatPrice(wageShown)}</dd>
-            </div>
-            <div>
-              <dt className="text-[13px] text-[#5C6B80]">{t('compensation.commission')}</dt>
-              <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
-                {formatPrice(commission)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[13px] text-[#5C6B80]">{t('compensation.payTotal')}</dt>
-              <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
-                {formatPrice(wageShown + commission)}
-              </dd>
-            </div>
-          </dl>
-          {editable ? (
-            <WageSnapshotEditor
-              key={`${snapshot.id}-${snapshot.updated_at}`}
-              snapshot={snapshot}
-              onSaved={onSaved}
-            />
-          ) : null}
-        </>
-      ) : draft ? (
-        <WageSnapshotEditor
-          key={`draft-${draft.wage_amount}`}
-          snapshot={draft}
-          commit={onCommit}
-          onCancel={onCancel}
-          onSaved={onSaved}
-        />
-      ) : (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-xl">
-            <p className="text-[15px] font-semibold leading-snug text-[#0D1B2A]">
-              {linked ? t('compensation.wageSnapshotMissing') : t('compensation.wageNoPayday')}
-            </p>
-            {linked ? (
-              <p className="mt-1 text-[13px] leading-snug text-[#5C6B80]">
-                {t('compensation.wageSnapshotMissingHint')}
-              </p>
-            ) : null}
-            {error ? <p className="mt-2 text-sm text-[#9B2C2C]">{error}</p> : null}
-          </div>
-          {linked && editable ? (
-            <button type="button" className={primaryButton} onClick={onGenerate}>
-              {t('compensation.generateWageSnapshot')}
-            </button>
-          ) : null}
-        </div>
+  ) : snapshot ? (
+    editable ? (
+      <WageSnapshotEditor
+        key={`${snapshot.id}-${snapshot.updated_at}`}
+        snapshot={snapshot}
+        onSaved={onSaved}
+      />
+    ) : null
+  ) : draft ? (
+    <WageSnapshotEditor
+      key={`draft-${draft.wage_amount}`}
+      snapshot={draft}
+      commit={onCommit}
+      onCancel={onCancel}
+      onSaved={onSaved}
+    />
+  ) : (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="max-w-xl">
+        <p className="text-[15px] font-semibold leading-snug text-[#0D1B2A]">
+          {linked ? t('compensation.wageSnapshotMissing') : t('compensation.wageNoPayday')}
+        </p>
+        {linked ? (
+          <p className="mt-1 text-[13px] leading-snug text-[#5C6B80]">
+            {t('compensation.wageSnapshotMissingHint')}
+          </p>
+        ) : null}
+        {error ? <p className="mt-2 text-sm text-[#9B2C2C]">{error}</p> : null}
+      </div>
+      {linked && editable ? (
+        <button type="button" className={primaryButton} onClick={onGenerate}>
+          {t('compensation.generateWageSnapshot')}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -235,6 +216,11 @@ const StaffPeriodDetail = () => {
 
   const [worksheet, setWorksheet] = useState<Worksheet | null>(null);
   const [visits, setVisits] = useState<VisitCommissionRow[]>([]);
+  const [checkedIds, setCheckedIds] = useState<number[]>([]);
+  const [blanketType, setBlanketType] = useState<CommissionType>('percent');
+  const [blanketValue, setBlanketValue] = useState('');
+  const [blanketBusy, setBlanketBusy] = useState(false);
+  const [blanketError, setBlanketError] = useState<string | null>(null);
   const [staffName, setStaffName] = useState('');
   const [roles, setRoles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -367,16 +353,65 @@ const StaffPeriodDetail = () => {
       prev.map((v) =>
         v.id === saved.id
           ? {
-              ...v,
-              commission_type: saved.commission_type,
-              commission_percent: saved.commission_percent,
-              commission_flat_amount: saved.commission_flat_amount,
-              commission_amount: saved.commission_amount,
-            }
+            ...v,
+            commission_type: saved.commission_type,
+            commission_percent: saved.commission_percent,
+            commission_flat_amount: saved.commission_flat_amount,
+            commission_amount: saved.commission_amount,
+          }
           : v,
       ),
     );
     setWorksheet((ws) => (ws ? { ...ws, total_commission: saved.commission_subtotal } : ws));
+  };
+
+  const checkedVisits = visits.filter((visit) => checkedIds.includes(visit.id));
+  const allChecked = visits.length > 0 && visits.every((visit) => checkedIds.includes(visit.id));
+  const toggleChecked = (id: number) => {
+    setCheckedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  };
+  const toggleAllChecked = () => {
+    setCheckedIds(allChecked ? [] : visits.map((visit) => visit.id));
+  };
+  const applyBlanket = async (scope: 'selected' | 'unset') => {
+    const amount = Number(blanketValue);
+    if (!worksheet || blanketValue === '' || Number.isNaN(amount) || amount < 0) return;
+    setBlanketBusy(true);
+    setBlanketError(null);
+    try {
+      const resp = await ApplyBlanketCommission({
+        worksheet_id: worksheet.uuid,
+        scope,
+        ids: scope === 'selected' ? checkedVisits.map((visit) => visit.id) : undefined,
+        commission_type: blanketType,
+        commission_percent: blanketType === 'percent' ? amount : null,
+        commission_flat_amount: blanketType === 'flat' ? amount : null,
+      });
+      const byID = new Map(resp.commissions.map((row) => [row.id, row]));
+      setVisits((prev) =>
+        prev.map((visit) => {
+          const saved = byID.get(visit.id);
+          if (!saved) return visit;
+          return {
+            ...visit,
+            revenue_base: saved.revenue_base,
+            commission_type: saved.commission_type,
+            commission_percent: saved.commission_percent,
+            commission_flat_amount: saved.commission_flat_amount,
+            commission_amount: saved.commission_amount,
+            approved_at: saved.approved_at,
+          };
+        }),
+      );
+      if (resp.updated_count > 0) {
+        setWorksheet((ws) => (ws ? { ...ws, total_commission: resp.commission_subtotal } : ws));
+      }
+      setCheckedIds([]);
+    } catch (err) {
+      setBlanketError(getApiErrorMessage(err));
+    } finally {
+      setBlanketBusy(false);
+    }
   };
 
   const nav = location.state as CompensationNavState | null;
@@ -395,9 +430,9 @@ const StaffPeriodDetail = () => {
       const summaryTo = periodId ? `/payroll/summary?period=${periodId}` : '/payroll/summary';
       const periodCrumb: CompensationCrumb[] = periodId
         ? [{
-            label: periodName,
-            to: `/payroll/period/${periodId}`,
-          }]
+          label: periodName,
+          to: `/payroll/period/${periodId}`,
+        }]
         : [];
       return [
         payroll,
@@ -456,8 +491,14 @@ const StaffPeriodDetail = () => {
   const isFinalized = worksheet.status === 'finalized';
   const linked = Boolean(worksheet.compensation_period_uuid);
   const isGenerating = worksheet.generate_status === 'running';
+  const commissionsGenerated = worksheet.generate_status === 'succeeded';
+  const showCommissionEmpty = visits.length === 0 && !isGenerating && !commissionsGenerated;
   const paydayFinalized = paydayStatus === 'finalized';
   const lockedEdits = isFinalized || isGenerating || paydayFinalized;
+  const canCheckVisits = canAssign && !lockedEdits && visits.length > 0;
+  const showBlanket = canCheckVisits && checkedVisits.length > 0;
+  const wageTotal = snapshot?.total_wage ?? null;
+  const payTotal = (wageTotal ?? 0) + (worksheet.total_commission ?? 0);
 
   const openWageDraft = () => {
     if (!contract) {
@@ -500,150 +541,258 @@ const StaffPeriodDetail = () => {
   };
 
   return (
-    <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold leading-none tracking-[-0.03em] text-[#0D1B2A]">
-              {worksheet.label || staffName}
-            </h1>
-            <span className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${statusTone[worksheet.status]}`}>
-              {t(`compensation.worksheetStatus.${worksheet.status}`)}
-            </span>
+    <div className={showBlanket ? 'relative max-h-[calc(100vh-11rem)]' : undefined}>
+      <div className={showBlanket ? 'max-h-[calc(100vh-11rem)] overflow-y-auto pb-32' : undefined}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-7 sm:items-start">
+          <div className="min-w-0 sm:col-span-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold leading-none tracking-[-0.03em] text-[#0D1B2A]">
+                {worksheet.label || staffName}
+              </h1>
+              <span className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${statusTone[worksheet.status]}`}>
+                {t(`compensation.worksheetStatus.${worksheet.status}`)}
+              </span>
+            </div>
+            <p className="mt-1.5 text-[13px] leading-snug text-[#5C6B80]">
+              {staffName}
+              {roles.length > 0 ? (
+                <>
+                  <span className="mx-2 text-[#C5D0E0]">/</span>
+                  {roles.join(', ')}
+                </>
+              ) : null}
+              <span className="mx-2 text-[#C5D0E0]">/</span>
+              {formatShortDate(worksheet.period_start)} – {formatShortDate(worksheet.period_end)}
+              <span className="mx-2 text-[#C5D0E0]">/</span>
+              {visits.length} {t('compensation.visits')}
+            </p>
+            <p className={`mt-1 text-[12px] font-medium ${generateTone[worksheet.generate_status]}`}>
+              {t(`compensation.generateStatus.${worksheet.generate_status}`)}
+            </p>
           </div>
-          <p className="mt-1.5 text-[13px] leading-snug text-[#5C6B80]">
-            {staffName}
-            {roles.length > 0 ? (
-              <>
-                <span className="mx-2 text-[#C5D0E0]">/</span>
-                {roles.join(', ')}
-              </>
+          <div className="grid grid-cols-1 content-start gap-2 sm:col-span-2">
+            {canAssign && !lockedEdits && !showCommissionEmpty && !commissionsGenerated ? (
+              <button type="button" className={`${ghostButton} !h-auto min-h-9 w-full whitespace-normal px-3 py-2 text-center leading-snug`} onClick={handleGenerate}>
+                {t('compensation.generate')}
+              </button>
             ) : null}
-            <span className="mx-2 text-[#C5D0E0]">/</span>
-            {formatShortDate(worksheet.period_start)} – {formatShortDate(worksheet.period_end)}
-            <span className="mx-2 text-[#C5D0E0]">/</span>
-            {visits.length} {t('compensation.visits')}
-          </p>
-          <p className={`mt-1 text-[12px] font-medium ${generateTone[worksheet.generate_status]}`}>
-            {t(`compensation.generateStatus.${worksheet.generate_status}`)}
-          </p>
+            {canFinalize && !isFinalized ? (
+              <button
+                type="button"
+                className={`${primaryButton} !h-auto min-h-9 w-full whitespace-normal px-3 py-2 text-center leading-snug`}
+                disabled={isGenerating || visits.length === 0}
+                onClick={handleFinalize}
+              >
+                {t('compensation.finalizeWorksheet')}
+              </button>
+            ) : null}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {canAssign && !lockedEdits ? (
-            <button type="button" className={ghostButton} disabled={isGenerating} onClick={handleGenerate}>
-              {isGenerating
-                ? t('compensation.generating')
-                : visits.length === 0
-                  ? t('compensation.generate')
-                  : t('compensation.addMissingVisits')}
+
+        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+          <div>
+            <dt className="text-[13px] text-[#5C6B80]">{t('compensation.totalCommission')}</dt>
+            <dd className="mt-1 text-xl font-semibold tabular-nums text-[#0D1B2A]">
+              {formatPrice(worksheet.total_commission)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[13px] text-[#5C6B80]">
+              {t(snapshot?.final_wage != null ? 'compensation.flatWage' : 'compensation.wage')}
+            </dt>
+            <dd className="mt-1 text-xl font-semibold tabular-nums text-[#0D1B2A]">
+              {wageLoading ? t('common.loading') : wageTotal == null ? '—' : formatPrice(wageTotal)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[13px] text-[#5C6B80]">{t('compensation.payTotal')}</dt>
+            <dd className="mt-1 inline-flex rounded-full bg-white px-3 py-1 text-[15px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
+              {wageLoading ? t('common.loading') : formatPrice(payTotal)}
+            </dd>
+          </div>
+        </dl>
+
+        {toast ? (
+          <div className="mt-4 flex items-start justify-between gap-4 rounded-2xl bg-[#E8F1FF] px-4 py-3 text-sm text-[#0B57D0]">
+            <p>{toast}</p>
+            <button type="button" onClick={() => setToast(null)} className="font-medium underline">
+              {t('common.close')}
             </button>
-          ) : null}
-          {canFinalize && !isFinalized ? (
+          </div>
+        ) : null}
+        {worksheet.generate_status === 'failed' ? (
+          <div className="mt-4 rounded-2xl bg-[#FDECEC] px-4 py-3 text-sm text-[#9B2C2C]">
+            <p>{worksheet.generate_error || t('compensation.generateFailed')}</p>
+          </div>
+        ) : null}
+        {linked ? (
+          <Subsection title={t('compensation.payday')}>
+            <p className="text-[13px]">
+              <Link
+                to={`/payroll/period/${worksheet.compensation_period_uuid}`}
+                className="font-semibold text-[#0B57D0] hover:underline"
+              >
+                {paydayLabel || t('compensation.payday')}
+              </Link>
+            </p>
+          </Subsection>
+        ) : null}
+
+        {canManage && (!snapshot || drafting || !paydayFinalized || wageLoading) ? (
+          <Subsection
+            title={t('compensation.wage')}
+            loud={!wageLoading && snapshot == null && !drafting}
+            busy={linked && wageLoading}
+          >
+            <WageSnapshotBand
+              linked={linked}
+              editable={!paydayFinalized}
+              loading={linked && wageLoading}
+              error={wageError}
+              snapshot={snapshot}
+              draft={
+                drafting && contract && worksheet.compensation_period_uuid
+                  ? draftSnapshot(contract, worksheet.compensation_period_uuid, worksheet.staff_id)
+                  : null
+              }
+              onGenerate={openWageDraft}
+              onCancel={() => {
+                setDrafting(false);
+                setWageError(null);
+              }}
+              onCommit={commitWageDraft}
+              onSaved={(next) => {
+                setDrafting(false);
+                setSnapshot(next);
+              }}
+            />
+          </Subsection>
+        ) : null}
+
+        <Subsection
+          title={t('compensation.visitCommissions')}
+          loud={showCommissionEmpty}
+          action={
+            canAssign && !lockedEdits && commissionsGenerated ? (
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center !rounded-full !border-0 !bg-white !p-0 text-[#0B57D0] outline-none ring-1 ring-[#D7E3F4] hover:!bg-[#E8F1FF] focus-visible:ring-4 focus-visible:ring-[#0B57D0]/20"
+                aria-label={t('compensation.synchronizeVisitCommissions')}
+                onClick={handleGenerate}
+              >
+                <ArrowPathIcon className="h-5 w-5" />
+              </button>
+            ) : null
+          }
+        >
+          {isGenerating ? (
+            <div className="mt-4 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
+              <p className="text-[15px] text-[#5C6B80]">{t('compensation.generating')}</p>
+            </div>
+          ) : showCommissionEmpty ? (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-xl">
+                <p className="text-[15px] font-semibold leading-snug text-[#0D1B2A]">
+                  {t('compensation.noVisitCommissions')}
+                </p>
+                <p className="mt-1 text-[13px] leading-snug text-[#5C6B80]">
+                  {t('compensation.noVisitCommissionsHint')}
+                </p>
+              </div>
+              {canAssign && !lockedEdits ? (
+                <button type="button" className={primaryButton} onClick={handleGenerate}>
+                  {t('compensation.generate')}
+                </button>
+              ) : null}
+            </div>
+          ) : visits.length === 0 ? (
+            <div className="mt-4 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
+              <p className="text-[15px] text-[#5C6B80]">{t('compensation.noCommissions')}</p>
+            </div>
+          ) : (
+            <>
+              {canCheckVisits ? (
+                <label className="mt-3 grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-3 px-1 sm:px-3">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-[#0B57D0]"
+                    checked={allChecked}
+                    ref={(node) => {
+                      if (node) node.indeterminate = checkedVisits.length > 0 && !allChecked;
+                    }}
+                    onChange={toggleAllChecked}
+                  />
+                  <span className="text-left text-[13px] font-medium text-[#0D1B2A]">{t('compensation.selectAll')}</span>
+                </label>
+              ) : null}
+              <ul className="mt-2">
+                {visits.map((visit) => (
+                  <CommissionRow
+                    key={visit.id}
+                    visit={visit}
+                    locale={locale}
+                    disabled={!canAssign || lockedEdits || isGenerating}
+                    checked={checkedIds.includes(visit.id)}
+                    onChecked={canAssign && !lockedEdits && !isGenerating ? toggleChecked : undefined}
+                    onSaved={applyCommissionPatch}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
+        </Subsection>
+      </div>
+      {showBlanket ? (
+        <div className="absolute inset-x-0 bottom-0 z-10 border-t border-[#E6EEF8] bg-white pt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-full bg-[#F4F8FF] p-0.5" role="group">
+              {(['percent', 'flat'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`h-8 rounded-full px-3 text-[12px] font-semibold ${blanketType === option ? 'bg-[#0B57D0] text-white' : 'text-[#3D4F6F]'
+                    }`}
+                  onClick={() => {
+                    setBlanketType(option);
+                    setBlanketValue('');
+                  }}
+                >
+                  {option === 'percent' ? '%' : 'Rp'}
+                </button>
+              ))}
+            </div>
+            <input
+              type="number"
+              min={0}
+              inputMode="decimal"
+              value={blanketValue}
+              onChange={(event) => setBlanketValue(event.target.value)}
+              className="h-9 w-28 rounded-full border border-[#D7E3F4] bg-white px-3 text-sm tabular-nums text-[#0D1B2A] outline-none focus:border-[#0B57D0]"
+            />
             <button
               type="button"
               className={primaryButton}
-              disabled={isGenerating || visits.length === 0}
-              onClick={handleFinalize}
+              disabled={blanketBusy || blanketValue === '' || checkedVisits.length === 0}
+              onClick={() => {
+                void applyBlanket('selected');
+              }}
             >
-              {t('compensation.finalizeWorksheet')}
+              {t('compensation.setVisits', { count: checkedVisits.length })}
             </button>
-          ) : null}
-        </div>
-      </div>
-
-      {toast ? (
-        <div className="mt-4 flex items-start justify-between gap-4 rounded-2xl bg-[#E8F1FF] px-4 py-3 text-sm text-[#0B57D0]">
-          <p>{toast}</p>
-          <button type="button" onClick={() => setToast(null)} className="font-medium underline">
-            {t('common.close')}
-          </button>
-        </div>
-      ) : null}
-      {worksheet.generate_status === 'failed' ? (
-        <div className="mt-4 rounded-2xl bg-[#FDECEC] px-4 py-3 text-sm text-[#9B2C2C]">
-          <p>{worksheet.generate_error || t('compensation.generateFailed')}</p>
-        </div>
-      ) : null}
-      {linked ? (
-        <Subsection title={t('compensation.payday')}>
-          <p className="text-[13px]">
-            <Link
-              to={`/payroll/period/${worksheet.compensation_period_uuid}`}
-              className="font-semibold text-[#0B57D0] hover:underline"
+            <button
+              type="button"
+              className={ghostButton}
+              disabled={blanketBusy || blanketValue === ''}
+              onClick={() => {
+                void applyBlanket('unset');
+              }}
             >
-              {paydayLabel || t('compensation.payday')}
-            </Link>
-          </p>
-        </Subsection>
-      ) : null}
-
-      {canManage ? (
-        <Subsection
-          title={t('compensation.wage')}
-          loud={!wageLoading && snapshot == null && !drafting}
-          busy={linked && wageLoading}
-        >
-          <WageSnapshotBand
-            linked={linked}
-            editable={!paydayFinalized}
-            loading={linked && wageLoading}
-            error={wageError}
-            snapshot={snapshot}
-            draft={
-              drafting && contract && worksheet.compensation_period_uuid
-                ? draftSnapshot(contract, worksheet.compensation_period_uuid, worksheet.staff_id)
-                : null
-            }
-            commission={worksheet.total_commission}
-            onGenerate={openWageDraft}
-            onCancel={() => {
-              setDrafting(false);
-              setWageError(null);
-            }}
-            onCommit={commitWageDraft}
-            onSaved={(next) => {
-              setDrafting(false);
-              setSnapshot(next);
-            }}
-          />
-        </Subsection>
-      ) : null}
-
-      <Subsection title={t('compensation.visitCommissions')}>
-        <p className="max-w-xl text-[13px] leading-snug text-[#5C6B80]">
-          {t('compensation.visitCommissionsHint')}
-        </p>
-        {canManage ? null : (
-          <p className="mt-3">
-            <span className="text-[13px] text-[#5C6B80]">{t('compensation.commission')}</span>
-            <span className="mt-1 block text-[15px] font-semibold tabular-nums text-[#0D1B2A]">
-              {formatPrice(worksheet.total_commission)}
-            </span>
-          </p>
-        )}
-
-        {isGenerating ? (
-          <div className="mt-4 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
-            <p className="text-[15px] text-[#5C6B80]">{t('compensation.generating')}</p>
+              {t('compensation.setUnsetVisits')}
+            </button>
           </div>
-        ) : visits.length === 0 ? (
-          <div className="mt-4 rounded-[28px] border border-dashed border-[#D7E3F4] px-6 py-16 text-center">
-            <p className="text-[15px] text-[#5C6B80]">{t('compensation.noCommissions')}</p>
-          </div>
-        ) : (
-          <ul className="mt-2">
-            {visits.map((visit) => (
-              <CommissionRow
-                key={visit.id}
-                visit={visit}
-                locale={locale}
-                disabled={!canAssign || lockedEdits || isGenerating}
-                onSaved={applyCommissionPatch}
-              />
-            ))}
-          </ul>
-        )}
-      </Subsection>
+          {blanketError ? <p className="mt-2 text-sm text-[#9B2C2C]">{blanketError}</p> : null}
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -652,11 +801,15 @@ function CommissionRow({
   visit,
   locale,
   disabled,
+  checked,
+  onChecked,
   onSaved,
 }: {
   visit: VisitCommissionRow;
   locale: 'en' | 'id';
   disabled: boolean;
+  checked: boolean;
+  onChecked?: (id: number) => void;
   onSaved: (saved: {
     id: number;
     commission_subtotal: number;
@@ -718,8 +871,17 @@ function CommissionRow({
 
   return (
     <li className="[content-visibility:auto]">
-      <div className="flex flex-col gap-3 border-b border-[#E6EEF8] px-1 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-3">
-        <div className="min-w-0">
+      <div className={`grid items-start gap-x-3 border-b border-[#E6EEF8] px-1 py-3 sm:px-3 ${onChecked ? 'grid-cols-[1rem_minmax(7rem,1fr)_13rem]' : 'grid-cols-[minmax(7rem,1fr)_13rem]'}`}>
+        {onChecked ? (
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 accent-[#0B57D0]"
+            checked={checked}
+            onChange={() => onChecked(visit.id)}
+            aria-label={visit.patient_name}
+          />
+        ) : null}
+        <div className="min-w-0 text-left">
           <p className="truncate text-[15px] font-semibold tracking-[-0.01em] text-[#0D1B2A]">
             {visit.patient_name}
           </p>
@@ -749,49 +911,50 @@ function CommissionRow({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <div className="inline-flex rounded-full bg-[#F4F8FF] p-0.5" role="group" aria-label={t('compensation.type')}>
-            {(['percent', 'flat'] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={type === option}
-                disabled={locked}
-                onClick={() => {
-                  if (type === option) return;
-                  setType(option);
-                  setValue('');
-                }}
-                className={`h-8 rounded-full px-3 text-[12px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[#0B57D0] disabled:opacity-40 ${
-                  type === option ? 'bg-[#0B57D0] text-white' : 'text-[#3D4F6F] hover:bg-white'
-                }`}
-              >
-                {option === 'percent' ? '%' : 'Rp'}
-              </button>
-            ))}
+        <div className="flex w-[13rem] flex-col items-end gap-1.5">
+          <div className="flex w-full items-center justify-end gap-2">
+            <div className="inline-flex shrink-0 rounded-full bg-[#F4F8FF] p-0.5" role="group" aria-label={t('compensation.type')}>
+              {(['percent', 'flat'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={type === option}
+                  disabled={locked}
+                  onClick={() => {
+                    if (type === option) return;
+                    setType(option);
+                    setValue('');
+                  }}
+                  className={`h-8 rounded-full px-3 text-[12px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[#0B57D0] disabled:opacity-40 ${type === option ? 'bg-[#0B57D0] text-white' : 'text-[#3D4F6F] hover:bg-white'
+                    }`}
+                >
+                  {option === 'percent' ? '%' : 'Rp'}
+                </button>
+              ))}
+            </div>
+            <label className="sr-only" htmlFor={`commission-value-${visit.id}`}>
+              {t('compensation.value')}
+            </label>
+            <input
+              id={`commission-value-${visit.id}`}
+              type="number"
+              min={0}
+              inputMode="decimal"
+              disabled={locked}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onBlur={() => {
+                void save();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                }
+              }}
+              className="h-8 w-28 shrink-0 rounded-full border border-[#D7E3F4] bg-white px-3 text-sm tabular-nums text-[#0D1B2A] outline-none focus:border-[#0B57D0] focus:ring-4 focus:ring-[#0B57D0]/15 disabled:bg-[#F4F8FF] disabled:text-[#5C6B80]"
+            />
           </div>
-          <label className="sr-only" htmlFor={`commission-value-${visit.id}`}>
-            {t('compensation.value')}
-          </label>
-          <input
-            id={`commission-value-${visit.id}`}
-            type="number"
-            min={0}
-            inputMode="decimal"
-            disabled={locked}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={() => {
-              void save();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.currentTarget.blur();
-              }
-            }}
-            className="h-8 w-28 rounded-full border border-[#D7E3F4] bg-white px-3 text-sm tabular-nums text-[#0D1B2A] outline-none focus:border-[#0B57D0] focus:ring-4 focus:ring-[#0B57D0]/15 disabled:bg-[#F4F8FF] disabled:text-[#5C6B80]"
-          />
-          <span className="rounded-full bg-white px-2.5 py-1 text-[13px] font-semibold tabular-nums text-[#0D1B2A] ring-1 ring-[#D7E3F4]">
+          <span className="max-w-full text-right text-[13px] font-semibold tabular-nums text-[#0D1B2A]">
             {shownAmount == null ? '—' : formatPrice(shownAmount)}
           </span>
         </div>

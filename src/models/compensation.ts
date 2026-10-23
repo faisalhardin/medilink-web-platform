@@ -131,6 +131,31 @@ export interface PatchCommissionRequest {
   note?: string | null;
 }
 
+export interface BlanketCommissionRequest {
+  worksheet_id: string;
+  scope: 'selected' | 'unset';
+  ids?: number[];
+  commission_type: CommissionType;
+  commission_percent?: number | null;
+  commission_flat_amount?: number | null;
+}
+
+export interface BlanketCommissionItem {
+  id: number;
+  revenue_base: number;
+  commission_type: CommissionType;
+  commission_percent: number | null;
+  commission_flat_amount: number | null;
+  commission_amount: number;
+  approved_at: string | null;
+}
+
+export interface BlanketCommissionResponse {
+  updated_count: number;
+  commission_subtotal: number;
+  commissions: BlanketCommissionItem[];
+}
+
 export interface FinalizeWorksheetResponse {
   worksheet: Worksheet;
   locked_visit_count: number;
