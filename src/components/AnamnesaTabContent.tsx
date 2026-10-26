@@ -25,6 +25,7 @@ import {
   PainPattern,
   SaveAnamnesaRequest,
   defaultAnamnesa,
+  anamnesaSaveButtonVisible,
   CONSCIOUSNESS_OPTIONS,
   TRIAGE_OPTIONS,
   PAIN_QUALITY_OPTIONS,
@@ -280,6 +281,10 @@ export const AnamnesaTabContent = ({ visitId, patient: _patient }: AnamnesaTabCo
   const [form, setForm] = useState<AnamnesaData>(defaultAnamnesa());
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const baselineRef = useRef(JSON.stringify(defaultAnamnesa()));
+  const [saveLatched, setSaveLatched] = useState(false);
+  const formJson = JSON.stringify(form);
+  const showSave = anamnesaSaveButtonVisible(saveLatched, formJson, baselineRef.current);
 
   const formDefaults = defaultAnamnesa();
   const vitalSigns = form.vital_signs ?? formDefaults.vital_signs!;
@@ -298,11 +303,18 @@ export const AnamnesaTabContent = ({ visitId, patient: _patient }: AnamnesaTabCo
     const fetch = async () => {
       setIsLoading(true);
       const data = await getAnamnesa(visitId);
-      if (data) setForm(data);
+      const next = data ?? defaultAnamnesa();
+      baselineRef.current = JSON.stringify(next);
+      setSaveLatched(false);
+      setForm(next);
       setIsLoading(false);
     };
     fetch();
   }, [visitId]);
+
+  useEffect(() => {
+    if (!saveLatched && formJson !== baselineRef.current) setSaveLatched(true);
+  }, [formJson, saveLatched]);
 
   // Generic patch helpers
   const patch = (partial: Partial<AnamnesaData>) => setForm((f) => ({ ...f, ...partial }));
@@ -396,6 +408,8 @@ export const AnamnesaTabContent = ({ visitId, patient: _patient }: AnamnesaTabCo
     setIsSaving(true);
     try {
       await saveAnamnesa(visitId, payload);
+      baselineRef.current = JSON.stringify(form);
+      setSaveLatched(false);
       toast.success('Anamnesa berhasil disimpan');
     } catch (err) {
       console.error('Error saving anamnesa:', err);
@@ -903,29 +917,30 @@ export const AnamnesaTabContent = ({ visitId, patient: _patient }: AnamnesaTabCo
         </div>
       </Section>
 
-      {/* ── Save ─────────────────────────────────────────────────────────── */}
-      <div className="flex justify-end pt-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center justify-center gap-2 rounded-md bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSaving ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Menyimpan...
-            </>
-          ) : (
-            <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Simpan Anamnesa
-            </>
-          )}
-        </button>
-      </div>
+      {showSave && (
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center justify-center gap-2 rounded-md bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Simpan Anamnesa
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
