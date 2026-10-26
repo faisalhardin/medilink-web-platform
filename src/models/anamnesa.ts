@@ -171,6 +171,11 @@ export const defaultAnamnesa = (): AnamnesaData => ({
   },
 });
 
+/** Visible once the form differs from the last load or save, and stays up until that save succeeds. */
+export function anamnesaSaveButtonVisible(latched: boolean, formJson: string, baselineJson: string): boolean {
+  return latched || formJson !== baselineJson;
+}
+
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === 'object' && !Array.isArray(v);
 
